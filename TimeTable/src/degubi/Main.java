@@ -4,6 +4,7 @@ import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.SystemTray;
+import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -17,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -29,7 +29,7 @@ import degubi.gui.ClassDataButton;
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
-	public static final TrayIcon tray = getTray();
+	public static final TrayIcon tray = new TrayIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("icons/tray.png")));
 	public static final Path dataFilePath = Paths.get("classData.txt");
 	
 	public static long trayClickTimer;
@@ -90,14 +90,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public void windowIconified(WindowEvent e) {
 		frame.setExtendedState(JFrame.ICONIFIED);
 		frame.setVisible(false);
-	}
-	
-	private static TrayIcon getTray() {
-		try {
-			return new TrayIcon(ImageIO.read(Main.class.getClassLoader().getResource("icons/tray.png")));
-		} catch (IOException e) {
-			return null;
-		}
 	}
 	
 	private static JButton newDayButton(String dayName, int xCoord, Font bigFont) {
