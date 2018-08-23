@@ -109,18 +109,18 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			editFrame.setLocationRelativeTo(null);
 			editFrame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y - 4, 32, 96);
 			
-			editFrame.add(newEditButton(32, ButtonEditorGui.deleteIcon, e -> {
+			editFrame.add(newEditButton(32, "Törlés", ButtonEditorGui.deleteIcon, e -> {
 				if(JOptionPane.showConfirmDialog(Main.frame, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
 					classData.remove(this);
 					Main.frame.remove(this);
 					rewriteFile();
 				}
 			}));
-			editFrame.add(newEditButton(64, unImportant ? ButtonEditorGui.unIgnore : ButtonEditorGui.ignoreIcon, e -> {
+			editFrame.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? ButtonEditorGui.unIgnore : ButtonEditorGui.ignoreIcon, e -> {
 				fullData = day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant;
 				rewriteFile();
 			}));
-			editFrame.add(newEditButton(0, ButtonEditorGui.editIcon, e -> ButtonEditorGui.showEditorGui(this)));
+			editFrame.add(newEditButton(0, "Szerkesztés", ButtonEditorGui.editIcon, e -> ButtonEditorGui.showEditorGui(this)));
 			editFrame.setVisible(true);
 		}
 	}
@@ -174,8 +174,9 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		@Override public void windowGainedFocus(WindowEvent e) {}
 	}
 	
-	private static JButton newEditButton(int yPos, ImageIcon icon, ActionListener listener) {
+	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
 		JButton butt = new JButton(icon);
+		butt.setToolTipText(tooltip);
 		butt.setBounds(0, yPos, 32, 32);
 		butt.addActionListener(listener);
 		return butt;

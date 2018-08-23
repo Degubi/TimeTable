@@ -42,7 +42,9 @@ public final class Main extends WindowAdapter implements MouseListener{
 		label.setBounds(400, 10, 300, 40);
 		label.setFont(bigFont);
 		
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));}, 0, 1, TimeUnit.SECONDS);
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+			if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
+		}, 0, 1, TimeUnit.SECONDS);
 
 		Main main = new Main();
 		frame.addWindowListener(main);
