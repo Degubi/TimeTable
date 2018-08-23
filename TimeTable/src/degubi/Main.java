@@ -59,6 +59,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 		addClassButton.setForeground(Color.BLACK);
 		addClassButton.addActionListener(e -> ButtonEditorGui.openNewButtonGui());
 		
+		frame.setIconImage(tray.getImage());
 		frame.add(addClassButton);
 		frame.add(newDayButton("Hétfõ", 60, bigFont));
 		frame.add(newDayButton("Kedd", 230, bigFont));
