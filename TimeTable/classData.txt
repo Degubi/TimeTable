@@ -1,9 +1,11 @@
-MONDAY Prog_alap Előadás 12:40 14:10 Kongresszusi
-MONDAY Kalkulus_I. Gyakorlat 14:30 16:00 FarkasTerem
-MONDAY Dimat_I. Előadás 18:00 20:00 Kongresszusi
-TUESDAY Számháló Előadás 08:00 10:00 Kongresszusi
-WEDNESDAY Prog_alap Előadás 08:00 09:00 Kongresszusi
-WEDNESDAY Számháló Gyakorlat 10:00 11:00 224
-WEDNESDAY Kalkulus_I. Előadás 16:00 18:00 Kongresszusi
-THURSDAY Dimat_I. Gyakorlat 12:00 14:00 Szőkefalvi
-THURSDAY Prog_alap Gyakorlat 17:00 20:00 217
+MONDAY RendszerFejl Előadás 08:00 10:00 Alagsor1 true
+MONDAY Kalkulus Gyakorlat 14:30 16:00 Farkas false
+MONDAY Algoritmusok Gyakorlat 18:00 19:00 219 false
+MONDAY Dimat Előadás 18:00 20:00 Kongresszusi true
+TUESDAY Prog2 Előadás 08:00 10:00 Alagsor1 false
+TUESDAY Számháló Előadás 08:00 10:00 Kongresszusi false
+TUESDAY Prog2 Gyakorlat 16:00 17:00 222 false
+TUESDAY Algoritmusok Előadás 18:00 20:00 Kongresszusi false
+WEDNESDAY Kalkulus Előadás 16:00 18:00 Kongresszusi true
+THURSDAY RendszerFejl Gyakorlat 09:00 10:00 222 false
+THURSDAY Dimat Gyakorlat 12:00 14:00 Kerékjártó false

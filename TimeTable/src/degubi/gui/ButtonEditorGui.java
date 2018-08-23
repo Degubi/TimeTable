@@ -1,13 +1,13 @@
-package degubi.data;
+package degubi.gui;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.time.LocalTime;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -15,9 +15,13 @@ import javax.swing.table.DefaultTableModel;
 import degubi.Main;
 
 public final class ButtonEditorGui{
-	
+	public static final ImageIcon editIcon = new ImageIcon(Main.class.getClassLoader().getResource("icons/edit.png"));
+	public static final ImageIcon deleteIcon = new ImageIcon(Main.class.getClassLoader().getResource("icons/delete.png"));
+	public static final ImageIcon ignoreIcon = new ImageIcon(Main.class.getClassLoader().getResource("icons/ignore.png"));
+	public static final ImageIcon unIgnore = new ImageIcon(Main.class.getClassLoader().getResource("icons/unignore.png"));
+
 	public static void showEditorGui(ClassDataButton dataButton) {
-		JDialog frame = new JDialog((JFrame)null, "Editor Gui");
+		JDialog frame = new JDialog(Main.frame, "Editor Gui");
 		frame.setLayout(null);
 		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		frame.setBounds(0, 0, 400, 300);
@@ -46,7 +50,7 @@ public final class ButtonEditorGui{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		JButton saveButton = new JButton("Save");
+		JButton saveButton = new JButton("Mentés");
 		saveButton.setBounds(125, 210, 120, 40);
 		saveButton.setForeground(Color.BLACK);
 		saveButton.setBackground(Color.LIGHT_GRAY);
@@ -63,7 +67,7 @@ public final class ButtonEditorGui{
 	}
 	
 	public static void openNewButtonGui() {
-		ClassDataButton butt = new ClassDataButton("NAP ÓRANÉV Elõadás/Gyak 08:00 10:00 Terem");
+		ClassDataButton butt = new ClassDataButton("DAY ÓRANÉV Elõadás/Gyakorlat 08:00 10:00 Terem false");
 		ClassDataButton.classData.add(butt);
 		ButtonEditorGui.showEditorGui(butt);
 	}

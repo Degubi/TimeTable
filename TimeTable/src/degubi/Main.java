@@ -23,8 +23,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
-import degubi.data.ButtonEditorGui;
-import degubi.data.ClassDataButton;
+import degubi.gui.ButtonEditorGui;
+import degubi.gui.ClassDataButton;
 
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
@@ -42,18 +42,16 @@ public final class Main extends WindowAdapter implements MouseListener{
 		label.setBounds(400, 10, 300, 40);
 		label.setFont(bigFont);
 		
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-			if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
-		}, 0, 1, TimeUnit.SECONDS);
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));}, 0, 1, TimeUnit.SECONDS);
 
 		Main main = new Main();
 		frame.addWindowListener(main);
 		tray.addMouseListener(main);
 		SystemTray.getSystemTray().add(tray);
 		
-		JButton addClassButton = new JButton("Add New Class");
+		JButton addClassButton = new JButton("Új Óra Hozzáadása");
 		addClassButton.setFocusable(false);
-		addClassButton.setBounds(800, 650, 150, 60);
+		addClassButton.setBounds(840, 650, 150, 60);
 		addClassButton.setBorder(blackBorder);
 		addClassButton.setBackground(Color.GRAY);
 		addClassButton.setForeground(Color.BLACK);
@@ -94,7 +92,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 	
 	private static TrayIcon getTray() {
 		try {
-			return new TrayIcon(ImageIO.read(Main.class.getClassLoader().getResource("timetable.png")));
+			return new TrayIcon(ImageIO.read(Main.class.getClassLoader().getResource("icons/tray.png")));
 		} catch (IOException e) {
 			return null;
 		}
