@@ -14,6 +14,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -34,9 +36,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
-import degubi.gui.ButtonEditorGui;
-import degubi.gui.ClassDataButton;
-
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
@@ -55,23 +54,26 @@ public final class Main extends WindowAdapter implements MouseListener{
 		label.setFont(bigFont);
 		
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-			if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
+			if(frame.isVisible()) {
+				label.setText(LocalDateTime.now().format(displayTimeFormat));
+			}
 		}, 0, 1, TimeUnit.SECONDS);
 
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-			LocalTime now = LocalTime.now();
-			ClassDataButton current = ClassDataButton.currentClassButton;
-
-			if(current != null && now.isBefore(current.startTime)) {
-				long timeBetween = ChronoUnit.MINUTES.between(LocalTime.now(), current.startTime);
-				if(timeBetween < 60) {
-					beepBoop.setMicrosecondPosition(0);
-					beepBoop.start();
-					Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
+			if(!frame.isVisible()) {
+				LocalTime now = LocalTime.now();
+				ClassDataButton current = ClassDataButton.currentClassButton;
+	
+				if(current != null && now.isBefore(current.startTime)) {
+					long timeBetween = ChronoUnit.MINUTES.between(LocalTime.now(), current.startTime);
+					if(timeBetween < 60) {
+						beepBoop.setMicrosecondPosition(0);
+						beepBoop.start();
+						Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
+					}
 				}
+				ClassDataButton.updateAllButtons(false);
 			}
-			ClassDataButton.updateAllButtons(false);
-			
 		}, 10, 10, TimeUnit.MINUTES);
 		
 		Main main = new Main();
@@ -105,7 +107,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 		frame.setBounds(0, 0, 1024, 768);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
-		ClassDataButton.reloadDataFile();
+		
+		ClassDataButton.reloadData(Files.readAllLines(dataFilePath, StandardCharsets.UTF_8));
 	}
 	
 	private static Clip getBeepSound() {

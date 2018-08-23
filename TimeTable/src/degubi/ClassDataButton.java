@@ -1,4 +1,4 @@
-package degubi.gui;
+package degubi;
 
 import java.awt.Color;
 import java.awt.event.ActionListener;
@@ -19,15 +19,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
-
-import degubi.Main;
 
 public final class ClassDataButton extends JButton implements MouseListener{
 	private static final Comparator<ClassDataButton> sorter = Comparator.<ClassDataButton>comparingInt(button -> DayOfWeek.valueOf(button.day).ordinal()).thenComparing(button -> button.startTime);
@@ -35,8 +31,6 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	private static boolean nextHourFound = false;
 	public static final List<ClassDataButton> classData = new ArrayList<>();
 	public static ClassDataButton currentClassButton;
-	
-	private String fullData;
 	
 	public final String day;
 	public final LocalTime startTime, endTime;
@@ -46,7 +40,6 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	public ClassDataButton(String line) {
 		String[] data = line.split(" ");
 		
-		fullData = line;
 		day = data[0];
 		className = data[1];
 		classType = data[2];
@@ -66,35 +59,27 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		setBorder(unImportant ? null : data[2].contains("ad") ? Main.blackBorder : Main.redBorder);
 	}
 	
-	public void updateButton(LocalDateTime today, LocalTime todayTime) {
+	private void updateButton(LocalDateTime today, LocalTime todayTime) {
 		boolean isToday = day.equals(today.getDayOfWeek().name());
 		boolean isBefore = isToday && todayTime.isBefore(startTime);
 		boolean isBetween = isToday && todayTime.isAfter(startTime) && todayTime.isBefore(endTime);
 		boolean isAfter = isToday && (todayTime.isAfter(endTime) || todayTime.equals(endTime));
-		boolean isCurrent = !nextHourFound && isBefore || isBetween || (isToday && todayTime.equals(startTime));
+		boolean isCurrent = !nextHourFound && !unImportant && isBefore || isBetween || (isToday && todayTime.equals(startTime));
 		
 		if(isCurrent) {
 			nextHourFound = true;
+			currentClassButton = this;
 			Main.tray.setToolTip("Következõ óra: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
 		setBackground(unImportant ? Color.LIGHT_GRAY : isCurrent ? Color.RED : isBefore ? Color.GREEN : isAfter ? Color.YELLOW : Color.GRAY);
 	}
 	
-	public void refreshDataFromTable(JTable table) {
-		String newData = table.getValueAt(0, 1) + " " + table.getValueAt(1, 1) + " " + table.getValueAt(4, 1) + " " + table.getValueAt(2, 1) + " " + table.getValueAt(3, 1) + " " + table.getValueAt(5, 1) + " " + unImportant;
-		
-		if(isDataValid(newData)) {
-			fullData = newData;
-			rewriteFile();
-		}else{
-			JOptionPane.showMessageDialog(null, "Input data fucked up!");
-		}
-	}
-	
 	private static void rewriteFile() {
+		List<String> dataLines = classData.stream().map(ClassDataButton::toString).collect(Collectors.toList());
+		reloadData(dataLines);
+		
 		try {
-			Files.write(Main.dataFilePath, ClassDataButton.classData.stream().map(button -> button.fullData).collect(Collectors.toList()), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-			reloadDataFile();
+			Files.write(Main.dataFilePath, dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -118,15 +103,14 @@ public final class ClassDataButton extends JButton implements MouseListener{
 				}
 			}));
 			editFrame.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? ButtonEditorGui.unIgnore : ButtonEditorGui.ignoreIcon, e -> {
-				fullData = day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant;
-				rewriteFile();
+				replaceButton(this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant);
 			}));
 			editFrame.add(newEditButton(0, "Szerkesztés", ButtonEditorGui.editIcon, e -> ButtonEditorGui.showEditorGui(this)));
 			editFrame.setVisible(true);
 		}
 	}
 
-	public static void reloadDataFile() throws IOException {
+	public static void reloadData(List<String> dataLines) {
 		if(!ClassDataButton.classData.isEmpty()) {
 			ClassDataButton.classData.forEach(Main.frame::remove);
 			Arrays.fill(ClassDataButton.dayIndexers, 40);
@@ -136,19 +120,21 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		}
 		
 		if(!Files.exists(Main.dataFilePath)) {
-			Files.write(Main.dataFilePath, "MONDAY Dimat Elõadás 18:00 20:00 Kongresszusi false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+			try {
+				Files.write(Main.dataFilePath, "MONDAY Dimat Elõadás 18:00 20:00 Kongresszusi false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+			} catch (IOException e) {}
 		}
 		
-		try(Stream<String> lines = Files.lines(Main.dataFilePath, StandardCharsets.UTF_8)){
-			lines.map(ClassDataButton::new)
-				 .sorted(ClassDataButton.sorter)
+		dataLines.stream()
+				 .map(ClassDataButton::new)
+				 .sorted(sorter)
 				 .forEach(button -> {
 					 button.setBounds(60 + DayOfWeek.valueOf(button.day).ordinal() * 170, dayIndexers[DayOfWeek.valueOf(button.day).ordinal()] += 95, 150, 90);
 					 Main.frame.add(button);
 					 classData.add(button);
 				 });
-			ClassDataButton.updateAllButtons(true);
-		}
+		
+		ClassDataButton.updateAllButtons(true);
 	}
 	
 	public static void updateAllButtons(boolean setVisible) {
@@ -161,10 +147,43 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		LocalTime todayTime = today.toLocalTime();
 		
 		classData.forEach(button -> button.updateButton(today, todayTime));
-		if(!nextHourFound) Main.tray.setToolTip("Nincs mára több óra! :)");
+		if(!nextHourFound) {
+			Main.tray.setToolTip("Nincs mára több óra! :)");
+		}
 		
 		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
 	}
+	
+	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
+		JButton butt = new JButton(icon);
+		butt.setToolTipText(tooltip);
+		butt.setBounds(0, yPos, 32, 32);
+		butt.addActionListener(listener);
+		return butt;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof ClassDataButton) {
+			ClassDataButton button = (ClassDataButton) obj;
+			return className.equals(button.className) && day.equals(button.day) && classType.equals(button.classType) && startTime.equals(button.startTime) && endTime.equals(button.endTime) && room.equals(button.room);
+		}
+		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
+	}
+	
+	public static void replaceButton(ClassDataButton toRemove, String newDataForButton) {
+		classData.remove(toRemove);
+		Main.frame.remove(toRemove);
+		classData.add(new ClassDataButton(newDataForButton));
+		rewriteFile();
+	}
+	
+	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 	
 	public static final class ButtonFocusListener implements WindowFocusListener{
 		private final JDialog frame;
@@ -176,27 +195,4 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		@Override public void windowLostFocus(WindowEvent e) { frame.dispose(); }
 		@Override public void windowGainedFocus(WindowEvent e) {}
 	}
-	
-	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
-		JButton butt = new JButton(icon);
-		butt.setToolTipText(tooltip);
-		butt.setBounds(0, yPos, 32, 32);
-		butt.addActionListener(listener);
-		return butt;
-	}
-	
-	private static boolean isDataValid(String line) {
-		try {
-			String[] data = line.split(" ");
-			DayOfWeek.valueOf(data[0]);
-			LocalTime.parse(data[3], DateTimeFormatter.ISO_LOCAL_TIME);
-			LocalTime.parse(data[4], DateTimeFormatter.ISO_LOCAL_TIME);
-			
-			return true;
-		}catch (Exception e) {
-			return false;
-		}
-	}
-	
-	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 }
