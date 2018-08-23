@@ -3,6 +3,8 @@ package degubi;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
@@ -50,6 +52,11 @@ public final class Main extends WindowAdapter implements MouseListener{
 		frame.addWindowListener(main);
 		tray.addMouseListener(main);
 		SystemTray.getSystemTray().add(tray);
+		PopupMenu popMenu = new PopupMenu();
+		MenuItem exitItem = new MenuItem("Bezárás");
+		exitItem.addActionListener(e -> System.exit(0));
+		popMenu.add(exitItem);
+		tray.setPopupMenu(popMenu);
 		
 		JButton addClassButton = new JButton("Új Óra Hozzáadása");
 		addClassButton.setFocusable(false);
@@ -83,8 +90,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 				frame.setVisible(true);
 				ClassDataButton.updateAllButtons();
 			}
+			trayClickTimer = System.currentTimeMillis();
 		}
-		trayClickTimer = System.currentTimeMillis();
 	}
 	
 	@Override
