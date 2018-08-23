@@ -8,6 +8,7 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
+import java.awt.TrayIcon.MessageType;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -16,10 +17,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,10 +40,11 @@ import degubi.gui.ClassDataButton;
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
-	public static final TrayIcon tray = new TrayIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("icons/tray.png")));
+	public static final TrayIcon tray = new TrayIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png")));
 	public static final Path dataFilePath = Paths.get("classData.txt");
+	private static final Clip beepBoop = getBeepSound();
 	
-	public static long trayClickTimer;
+	private static long trayClickTimer;
 	
 	public static void main(String[] args) throws AWTException, IOException {
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
@@ -48,6 +58,22 @@ public final class Main extends WindowAdapter implements MouseListener{
 			if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
 		}, 0, 1, TimeUnit.SECONDS);
 
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+			LocalTime now = LocalTime.now();
+			ClassDataButton current = ClassDataButton.currentClassButton;
+
+			if(current != null && now.isBefore(current.startTime)) {
+				long timeBetween = ChronoUnit.MINUTES.between(LocalTime.now(), current.startTime);
+				if(timeBetween < 60) {
+					beepBoop.setMicrosecondPosition(0);
+					beepBoop.start();
+					Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
+				}
+			}
+			ClassDataButton.updateAllButtons(false);
+			
+		}, 10, 10, TimeUnit.MINUTES);
+		
 		Main main = new Main();
 		frame.addWindowListener(main);
 		tray.addMouseListener(main);
@@ -82,13 +108,25 @@ public final class Main extends WindowAdapter implements MouseListener{
 		ClassDataButton.reloadDataFile();
 	}
 	
+	private static Clip getBeepSound() {
+		try(AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"))){
+			Clip clip = AudioSystem.getClip();
+			clip.open(audioInputStream);
+			((FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
+			
+			return clip;
+		} catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
+			return null;
+		}
+	}
+
 	@Override
 	public void mousePressed(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON1) {
 			if(System.currentTimeMillis() - trayClickTimer < 250L) {
 				frame.setExtendedState(JFrame.NORMAL);
 				frame.setVisible(true);
-				ClassDataButton.updateAllButtons();
+				ClassDataButton.updateAllButtons(true);
 			}
 			trayClickTimer = System.currentTimeMillis();
 		}

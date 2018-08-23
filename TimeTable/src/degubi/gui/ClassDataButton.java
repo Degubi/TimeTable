@@ -34,6 +34,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	private static final int[] dayIndexers = {40, 40, 40, 40, 40};
 	private static boolean nextHourFound = false;
 	public static final List<ClassDataButton> classData = new ArrayList<>();
+	public static ClassDataButton currentClassButton;
 	
 	private String fullData;
 	
@@ -146,12 +147,14 @@ public final class ClassDataButton extends JButton implements MouseListener{
 					 Main.frame.add(button);
 					 classData.add(button);
 				 });
-			ClassDataButton.updateAllButtons();
+			ClassDataButton.updateAllButtons(true);
 		}
 	}
 	
-	public static void updateAllButtons() {
-		Main.frame.setVisible(true);
+	public static void updateAllButtons(boolean setVisible) {
+		if(setVisible) {
+			Main.frame.setVisible(true);
+		}
 		nextHourFound = false;
 		
 		LocalDateTime today = LocalDateTime.now();

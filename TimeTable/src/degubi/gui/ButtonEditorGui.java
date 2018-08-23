@@ -15,10 +15,10 @@ import javax.swing.table.DefaultTableModel;
 import degubi.Main;
 
 public final class ButtonEditorGui{
-	public static final ImageIcon editIcon = new ImageIcon(Main.class.getClassLoader().getResource("icons/edit.png"));
-	public static final ImageIcon deleteIcon = new ImageIcon(Main.class.getClassLoader().getResource("icons/delete.png"));
-	public static final ImageIcon ignoreIcon = new ImageIcon(Main.class.getClassLoader().getResource("icons/ignore.png"));
-	public static final ImageIcon unIgnore = new ImageIcon(Main.class.getClassLoader().getResource("icons/unignore.png"));
+	public static final ImageIcon editIcon = new ImageIcon(Main.class.getClassLoader().getResource("assets/edit.png"));
+	public static final ImageIcon deleteIcon = new ImageIcon(Main.class.getClassLoader().getResource("assets/delete.png"));
+	public static final ImageIcon ignoreIcon = new ImageIcon(Main.class.getClassLoader().getResource("assets/ignore.png"));
+	public static final ImageIcon unIgnore = new ImageIcon(Main.class.getClassLoader().getResource("assets/unignore.png"));
 
 	public static void showEditorGui(ClassDataButton dataButton) {
 		JDialog frame = new JDialog(Main.frame, "Editor Gui");
