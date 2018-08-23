@@ -50,12 +50,15 @@ public final class ButtonEditorGui{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
+		
+		
 		JButton saveButton = new JButton("Mentés");
 		saveButton.setBounds(125, 210, 120, 40);
 		saveButton.setForeground(Color.BLACK);
 		saveButton.setBackground(Color.LIGHT_GRAY);
 		saveButton.setBorder(Main.blackBorder);
 		saveButton.addActionListener(e -> {
+			dataTable.getCellEditor().stopCellEditing();
 			dataButton.refreshDataFromTable(dataTable);
 			frame.dispose();
 		});
