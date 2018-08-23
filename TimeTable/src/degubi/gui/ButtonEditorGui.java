@@ -50,8 +50,6 @@ public final class ButtonEditorGui{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		
-		
 		JButton saveButton = new JButton("Mentés");
 		saveButton.setBounds(125, 210, 120, 40);
 		saveButton.setForeground(Color.BLACK);
@@ -70,7 +68,7 @@ public final class ButtonEditorGui{
 	}
 	
 	public static void openNewButtonGui() {
-		ClassDataButton butt = new ClassDataButton("DAY ÓRANÉV Elõadás/Gyakorlat 08:00 10:00 Terem false");
+		ClassDataButton butt = new ClassDataButton("NAP ÓRANÉV Elõadás/Gyakorlat 08:00 10:00 Terem false");
 		ClassDataButton.classData.add(butt);
 		ButtonEditorGui.showEditorGui(butt);
 	}
