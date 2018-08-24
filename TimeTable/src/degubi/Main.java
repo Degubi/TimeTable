@@ -3,6 +3,7 @@ package degubi;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -39,11 +40,9 @@ import javax.swing.border.LineBorder;
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
-	public static final TrayIcon tray = new TrayIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png")));
+	public static final TrayIcon tray = new TrayIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png")).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final Path dataFilePath = Paths.get("classData.txt");
 	private static final Clip beepBoop = getBeepSound();
-	
-	private static long trayClickTimer;
 	
 	public static void main(String[] args) throws AWTException, IOException {
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
@@ -81,10 +80,19 @@ public final class Main extends WindowAdapter implements MouseListener{
 		tray.addMouseListener(main);
 		SystemTray.getSystemTray().add(tray);
 		PopupMenu popMenu = new PopupMenu();
+		tray.setPopupMenu(popMenu);
+		
 		MenuItem exitItem = new MenuItem("Bezárás");
 		exitItem.addActionListener(e -> System.exit(0));
+		
+		MenuItem openItem = new MenuItem("Megnyitás");
+		openItem.addActionListener(e -> {
+			frame.setExtendedState(JFrame.NORMAL);
+			frame.setVisible(true);
+			ClassDataButton.updateAllButtons(true);
+		});
+		popMenu.add(openItem);
 		popMenu.add(exitItem);
-		tray.setPopupMenu(popMenu);
 		
 		JButton addClassButton = new JButton("Új Óra Hozzáadása");
 		addClassButton.setFocusable(false);
@@ -125,13 +133,10 @@ public final class Main extends WindowAdapter implements MouseListener{
 
 	@Override
 	public void mousePressed(MouseEvent event) {
-		if(event.getButton() == MouseEvent.BUTTON1) {
-			if(System.currentTimeMillis() - trayClickTimer < 250L) {
-				frame.setExtendedState(JFrame.NORMAL);
-				frame.setVisible(true);
-				ClassDataButton.updateAllButtons(true);
-			}
-			trayClickTimer = System.currentTimeMillis();
+		if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
+			frame.setExtendedState(JFrame.NORMAL);
+			frame.setVisible(true);
+			ClassDataButton.updateAllButtons(true);
 		}
 	}
 	
