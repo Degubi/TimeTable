@@ -103,9 +103,9 @@ public final class ClassDataButton extends JButton implements MouseListener{
 				}
 			}));
 			editFrame.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? ButtonEditorGui.unIgnore : ButtonEditorGui.ignoreIcon, e -> {
-				replaceButton(this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant);
+				addOrReplaceButton(false, this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant);
 			}));
-			editFrame.add(newEditButton(0, "Szerkesztés", ButtonEditorGui.editIcon, e -> ButtonEditorGui.showEditorGui(this)));
+			editFrame.add(newEditButton(0, "Szerkesztés", ButtonEditorGui.editIcon, e -> ButtonEditorGui.showEditorGui(false, this)));
 			editFrame.setVisible(true);
 		}
 	}
@@ -154,9 +154,11 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
 	}
 	
-	public static void replaceButton(ClassDataButton toRemove, String newDataForButton) {
-		classData.remove(toRemove);
-		Main.frame.remove(toRemove);
+	public static void addOrReplaceButton(boolean add, ClassDataButton toRemove, String newDataForButton) {
+		if(!add) {
+			classData.remove(toRemove);
+			Main.frame.remove(toRemove);
+		}
 		classData.add(new ClassDataButton(newDataForButton));
 		rewriteFile();
 	}
@@ -184,6 +186,8 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
 		JButton butt = new JButton(icon);
 		butt.setToolTipText(tooltip);
+		butt.setBorder(Main.blackThinBorder);
+		butt.setBackground(new Color(240, 240, 240));
 		butt.setBounds(0, yPos, 32, 32);
 		butt.addActionListener(listener);
 		return butt;

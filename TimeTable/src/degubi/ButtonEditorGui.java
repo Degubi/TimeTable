@@ -3,6 +3,8 @@ package degubi;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.time.DayOfWeek;
@@ -17,12 +19,12 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public final class ButtonEditorGui{
-	public static final ImageIcon editIcon = new ImageIcon(Main.class.getClassLoader().getResource("assets/edit.png"));
-	public static final ImageIcon deleteIcon = new ImageIcon(Main.class.getClassLoader().getResource("assets/delete.png"));
-	public static final ImageIcon ignoreIcon = new ImageIcon(Main.class.getClassLoader().getResource("assets/ignore.png"));
-	public static final ImageIcon unIgnore = new ImageIcon(Main.class.getClassLoader().getResource("assets/unignore.png"));
+	public static final ImageIcon editIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon deleteIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon ignoreIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon unIgnore = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 
-	public static void showEditorGui(ClassDataButton dataButton) {
+	public static void showEditorGui(boolean isNew, ClassDataButton dataButton) {
 		JDialog frame = new JDialog(Main.frame, "Editor Gui");
 		frame.setLayout(null);
 		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -67,9 +69,8 @@ public final class ButtonEditorGui{
 		frame.add(Main.newButton("Mentés", 125, 210, 120, 40, e -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
-			ClassDataButton.classData.add(dataButton);
 			String newData = getEnglishDay((String)dataTable.getValueAt(1, 1)) + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
-			ClassDataButton.replaceButton(dataButton, newData);
+			ClassDataButton.addOrReplaceButton(isNew, dataButton, newData);
 			frame.dispose();
 		}));
 		

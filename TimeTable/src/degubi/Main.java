@@ -39,9 +39,10 @@ import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
 public final class Main extends WindowAdapter implements MouseListener{
-	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
+	public static final LineBorder blackThinBorder = new LineBorder(Color.BLACK, 1), blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
-	public static final TrayIcon tray = new TrayIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png")).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
+	public static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png"));
+	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final Path dataFilePath = Paths.get("classData.txt");
 	private static final Clip beepBoop = getBeepSound();
 	
@@ -95,8 +96,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 		popMenu.add(openItem);
 		popMenu.add(exitItem);
 		
-		frame.setIconImage(tray.getImage());
-		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false"))));
+		frame.setIconImage(icon);
+		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(true, new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false"))));
 		frame.add(newDayButton("Hétfõ", 60, bigFont));
 		frame.add(newDayButton("Kedd", 230, bigFont));
 		frame.add(newDayButton("Szerda", 400, bigFont));
