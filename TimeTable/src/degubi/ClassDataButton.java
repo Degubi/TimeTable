@@ -88,8 +88,8 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	@Override
 	public void mousePressed(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON3) {
-			JDialog editFrame = new JDialog(Main.frame, "Meow");
-			editFrame.addWindowFocusListener(new ButtonFocusListener(editFrame));
+			JDialog editFrame = new JDialog(Main.frame);
+			editFrame.addWindowFocusListener(new ButtonFocusHandler(editFrame));
 			editFrame.setLayout(null);
 			editFrame.setUndecorated(true);
 			editFrame.setLocationRelativeTo(null);
@@ -154,6 +154,33 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
 	}
 	
+	public static void replaceButton(ClassDataButton toRemove, String newDataForButton) {
+		classData.remove(toRemove);
+		Main.frame.remove(toRemove);
+		classData.add(new ClassDataButton(newDataForButton));
+		rewriteFile();
+	}
+	
+	
+	
+	public static final class ButtonFocusHandler implements WindowFocusListener{
+		private final JDialog frame;
+		
+		public ButtonFocusHandler(JDialog frame) {
+			this.frame = frame;
+		}
+
+		@Override
+		public void windowGainedFocus(WindowEvent event) {}
+
+		@Override
+		public void windowLostFocus(WindowEvent event) {
+			frame.dispose();
+		}
+	}
+	
+	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
+	
 	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
 		JButton butt = new JButton(icon);
 		butt.setToolTipText(tooltip);
@@ -174,25 +201,5 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	@Override
 	public String toString() {
 		return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
-	}
-	
-	public static void replaceButton(ClassDataButton toRemove, String newDataForButton) {
-		classData.remove(toRemove);
-		Main.frame.remove(toRemove);
-		classData.add(new ClassDataButton(newDataForButton));
-		rewriteFile();
-	}
-	
-	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
-	
-	public static final class ButtonFocusListener implements WindowFocusListener{
-		private final JDialog frame;
-		
-		public ButtonFocusListener(JDialog frame) {
-			this.frame = frame;
-		}
-		
-		@Override public void windowLostFocus(WindowEvent e) { frame.dispose(); }
-		@Override public void windowGainedFocus(WindowEvent e) {}
 	}
 }

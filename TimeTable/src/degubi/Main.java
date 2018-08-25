@@ -10,6 +10,7 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -94,16 +95,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 		popMenu.add(openItem);
 		popMenu.add(exitItem);
 		
-		JButton addClassButton = new JButton("Új Óra Hozzáadása");
-		addClassButton.setFocusable(false);
-		addClassButton.setBounds(840, 650, 150, 60);
-		addClassButton.setBorder(blackBorder);
-		addClassButton.setBackground(Color.GRAY);
-		addClassButton.setForeground(Color.BLACK);
-		addClassButton.addActionListener(e -> ButtonEditorGui.openNewButtonGui());
-		
 		frame.setIconImage(tray.getImage());
-		frame.add(addClassButton);
+		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false"))));
 		frame.add(newDayButton("Hétfõ", 60, bigFont));
 		frame.add(newDayButton("Kedd", 230, bigFont));
 		frame.add(newDayButton("Szerda", 400, bigFont));
@@ -146,7 +139,18 @@ public final class Main extends WindowAdapter implements MouseListener{
 		frame.setVisible(false);
 	}
 	
-	private static JButton newDayButton(String dayName, int xCoord, Font bigFont) {
+	public static JButton newButton(String text, int x, int y, int width, int height, ActionListener listener) {
+		JButton toReturn = new JButton(text);
+		toReturn.setFocusable(false);
+		toReturn.setBounds(x, y, width, height);
+		toReturn.setBorder(blackBorder);
+		toReturn.setBackground(Color.GRAY);
+		toReturn.setForeground(Color.BLACK);
+		toReturn.addActionListener(listener);
+		return toReturn;
+	}
+	
+	public static JButton newDayButton(String dayName, int xCoord, Font bigFont) {
 		JButton dayButton = new JButton(dayName);
 		dayButton.setBounds(xCoord, 60, 150, 60);
 		dayButton.setFont(bigFont);

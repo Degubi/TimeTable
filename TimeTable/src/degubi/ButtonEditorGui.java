@@ -10,7 +10,6 @@ import java.time.LocalTime;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -63,29 +62,18 @@ public final class ButtonEditorGui{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		JButton saveButton = new JButton("Mentés");
-		saveButton.setBounds(125, 210, 120, 40);
-		saveButton.setForeground(Color.BLACK);
-		saveButton.setBackground(Color.LIGHT_GRAY);
-		saveButton.setBorder(Main.blackBorder);
-		saveButton.addActionListener(e -> {
+		frame.getContentPane().setBackground(LocalTime.now().isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		frame.add(dataTable);
+		frame.add(Main.newButton("Mentés", 125, 210, 120, 40, e -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
+			ClassDataButton.classData.add(dataButton);
 			String newData = getEnglishDay((String)dataTable.getValueAt(1, 1)) + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
 			ClassDataButton.replaceButton(dataButton, newData);
 			frame.dispose();
-		});
+		}));
 		
-		frame.getContentPane().setBackground(LocalTime.now().isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
-		frame.add(dataTable);
-		frame.add(saveButton);
 		frame.setVisible(true);
-	}
-	
-	public static void openNewButtonGui() {
-		ClassDataButton butt = new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false");
-		ClassDataButton.classData.add(butt);
-		ButtonEditorGui.showEditorGui(butt);
 	}
 	
 	private static String getHungarianDay(String engDay) {
@@ -96,6 +84,12 @@ public final class ButtonEditorGui{
 			case "THURSDAY": return "Csütörtök";
 			default: return "Péntek";
 		}
+	}
+	
+	private static String getNextOrPrevHunDay(boolean isNext, String day) {
+		int currentIndex = DayOfWeek.valueOf(getEnglishDay(day)).ordinal();
+		return isNext ? getHungarianDay(DayOfWeek.values()[currentIndex == 4 ? 0 : ++currentIndex].name()) : 
+						getHungarianDay(DayOfWeek.values()[currentIndex == 0 ? 4 : --currentIndex].name());
 	}
 	
 	private static String getEnglishDay(String hunDay) {
@@ -137,9 +131,9 @@ public final class ButtonEditorGui{
 			
 			if(row == 1) {
 				if(key == 'R') {
-					dataTable.setValueAt(getHungarianDay(getDay(true, dataTable.getValueAt(1, 1).toString())), 1, 1);
+					dataTable.setValueAt(getNextOrPrevHunDay(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
 				}else if(key == 'L') {
-					dataTable.setValueAt(getHungarianDay(getDay(false, dataTable.getValueAt(1, 1).toString())), 1, 1);
+					dataTable.setValueAt(getNextOrPrevHunDay(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
 				}
 			}else if(row == 2) {
 				if(key == 'R' || key == 'L') {
@@ -166,11 +160,6 @@ public final class ButtonEditorGui{
 					dataTable.setValueAt(nextHour + ":" + split[1], row, 1);
 				}
 			}
-		}
-		
-		private static String getDay(boolean isNext, String day) {
-			int currentIndex = DayOfWeek.valueOf(getEnglishDay(day)).ordinal();
-			return isNext ? DayOfWeek.values()[currentIndex == 4 ? 0 : ++currentIndex].name() : DayOfWeek.values()[currentIndex == 0 ? 4 : --currentIndex].name();
 		}
 	}
 }
