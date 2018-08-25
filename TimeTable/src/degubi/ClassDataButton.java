@@ -4,10 +4,9 @@ import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.time.DayOfWeek;
@@ -119,12 +118,6 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			ClassDataButton.classData.clear();
 		}
 		
-		if(!Files.exists(Main.dataFilePath)) {
-			try {
-				Files.write(Main.dataFilePath, "MONDAY Dimat Elõadás 18:00 20:00 Kongresszusi false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
-			} catch (IOException e) {}
-		}
-		
 		dataLines.stream()
 				 .map(ClassDataButton::new)
 				 .sorted(sorter)
@@ -151,7 +144,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			Main.tray.setToolTip("Nincs mára több óra! :)");
 		}
 		
-		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(19, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
 	}
 	
 	public static void addOrReplaceButton(boolean add, ClassDataButton toRemove, String newDataForButton) {
@@ -165,15 +158,12 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	
 	
 	
-	public static final class ButtonFocusHandler implements WindowFocusListener{
+	public static final class ButtonFocusHandler extends WindowAdapter{
 		private final JDialog frame;
 		
 		public ButtonFocusHandler(JDialog frame) {
 			this.frame = frame;
 		}
-
-		@Override
-		public void windowGainedFocus(WindowEvent event) {}
 
 		@Override
 		public void windowLostFocus(WindowEvent event) {

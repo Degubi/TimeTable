@@ -18,12 +18,20 @@ import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-public final class ButtonEditorGui{
+public final class ButtonEditorGui extends AbstractAction{
 	public static final ImageIcon editIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon deleteIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon unIgnore = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 
+	private final JTable dataTable;
+	private final char key;
+	
+	public ButtonEditorGui(char key, JTable dataTable) {
+		this.key = key;
+		this.dataTable = dataTable;
+	}
+	
 	public static void showEditorGui(boolean isNew, ClassDataButton dataButton) {
 		JDialog frame = new JDialog(Main.frame, "Editor Gui");
 		frame.setLayout(null);
@@ -38,13 +46,13 @@ public final class ButtonEditorGui{
 		CustomCellRenderer cellRenderer = new CustomCellRenderer();
 		
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "DOWN");
-		dataTable.getActionMap().put("DOWN", new TableListener('D', dataTable));
+		dataTable.getActionMap().put("DOWN", new ButtonEditorGui('D', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "LEFT");
-		dataTable.getActionMap().put("LEFT", new TableListener('L', dataTable));
+		dataTable.getActionMap().put("LEFT", new ButtonEditorGui('L', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "RIGHT");
-		dataTable.getActionMap().put("RIGHT", new TableListener('R', dataTable));
+		dataTable.getActionMap().put("RIGHT", new ButtonEditorGui('R', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "UP");
-		dataTable.getActionMap().put("UP", new TableListener('U', dataTable));
+		dataTable.getActionMap().put("UP", new ButtonEditorGui('U', dataTable));
 		
 		dataTable.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);
 		dataTable.getColumnModel().getColumn(1).setCellRenderer(cellRenderer);
@@ -64,7 +72,7 @@ public final class ButtonEditorGui{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		frame.getContentPane().setBackground(LocalTime.now().isAfter(LocalTime.of(18, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		frame.getContentPane().setBackground(LocalTime.now().isAfter(LocalTime.of(19, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
 		frame.add(dataTable);
 		frame.add(Main.newButton("Mentés", 125, 210, 120, 40, e -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
@@ -103,6 +111,39 @@ public final class ButtonEditorGui{
 		}
 	}
 	
+	@Override
+	public void actionPerformed(ActionEvent event) {
+		int row = dataTable.getSelectedRow();
+		
+		if(row == 1) {
+			if(key == 'R') {
+				dataTable.setValueAt(getNextOrPrevHunDay(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
+			}else if(key == 'L') {
+				dataTable.setValueAt(getNextOrPrevHunDay(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
+			}
+		}else if(row == 2) {
+			if(key == 'R' || key == 'L') {
+				dataTable.setValueAt(dataTable.getValueAt(2, 1).toString().charAt(0) == 'E' ? "Gyakorlat" : "Elõadás", 2, 1);
+			}
+		}else if(row == 3 || row == 4) {
+			String[] split = dataTable.getValueAt(row, 1).toString().split(":");
+			
+			if(key == 'D') {
+				int hours = Integer.parseInt(split[0]);
+				dataTable.setValueAt((hours == 0 ? "23" : hours < 11 ? "0" + --hours : Integer.toString(--hours)) + ":" + split[1], row, 1);
+			}else if(key == 'L') {
+				int minutes = Integer.parseInt(split[1]);
+				dataTable.setValueAt(split[0] + ":" + (minutes == 0 ? "59" : minutes < 11 ? "0" + --minutes : Integer.toString(--minutes)), row, 1);
+			}else if(key == 'R') {
+				int minutes = Integer.parseInt(split[1]);
+				dataTable.setValueAt(split[0] + ":" + (minutes == 59 ? "00" : minutes < 9 ? "0" + ++minutes : Integer.toString(++minutes)), row, 1);
+			}else if(key == 'U'){
+				int hours = Integer.parseInt(split[0]);
+				dataTable.setValueAt((hours == 23 ? "00" : hours < 9 ? "0" + ++hours : Integer.toString(++hours)) + ":" + split[1], row, 1);
+			}
+		}
+	}
+	
 	public static final class TableModel extends DefaultTableModel{
 		@Override public int getRowCount() { return 6; }
 		@Override public int getColumnCount() { return 2; }
@@ -114,53 +155,6 @@ public final class ButtonEditorGui{
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 			cell.setForeground(column == 0 ? Color.DARK_GRAY : Color.BLACK);
 			return cell;
-		}
-	}
-	
-	public static final class TableListener extends AbstractAction{
-		private final JTable dataTable;
-		private final char key;
-		
-		public TableListener(char key, JTable dataTable) {
-			this.key = key;
-			this.dataTable = dataTable;
-		}
-
-		@Override
-		public void actionPerformed(ActionEvent event) {
-			int row = dataTable.getSelectedRow();
-			
-			if(row == 1) {
-				if(key == 'R') {
-					dataTable.setValueAt(getNextOrPrevHunDay(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
-				}else if(key == 'L') {
-					dataTable.setValueAt(getNextOrPrevHunDay(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
-				}
-			}else if(row == 2) {
-				if(key == 'R' || key == 'L') {
-					dataTable.setValueAt(dataTable.getValueAt(2, 1).toString().charAt(0) == 'E' ? "Gyakorlat" : "Elõadás", 2, 1);
-				}
-			}else if(row == 3 || row == 4) {
-				String[] split = dataTable.getValueAt(row, 1).toString().split(":");
-				
-				if(key == 'D') {
-					int hours = Integer.parseInt(split[0]);
-					String nextHour = hours == 0 ? "23" : hours < 11 ? "0" + --hours : Integer.toString(--hours);
-					dataTable.setValueAt(nextHour + ":" + split[1], row, 1);
-				}else if(key == 'L') {
-					int minutes = Integer.parseInt(split[1]);
-					String nextHour = minutes == 0 ? "59" : minutes < 11 ? "0" + --minutes : Integer.toString(--minutes);
-					dataTable.setValueAt(split[0] + ":" + nextHour, row, 1);
-				}else if(key == 'R') {
-					int minutes = Integer.parseInt(split[1]);
-					String nextHour = minutes == 59 ? "00" : minutes < 9 ? "0" + ++minutes : Integer.toString(++minutes);
-					dataTable.setValueAt(split[0] + ":" + nextHour, row, 1);
-				}else if(key == 'U'){
-					int hours = Integer.parseInt(split[0]);
-					String nextHour = hours == 23 ? "00" : hours < 9 ? "0" + ++hours : Integer.toString(++hours);
-					dataTable.setValueAt(nextHour + ":" + split[1], row, 1);
-				}
-			}
 		}
 	}
 }

@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -47,12 +48,36 @@ public final class Main extends WindowAdapter implements MouseListener{
 	private static final Clip beepBoop = getBeepSound();
 	
 	public static void main(String[] args) throws AWTException, IOException {
-		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
 		Font bigFont = new Font("TimesRoman", Font.PLAIN, 20);
+		Main main = new Main();
+		
+		frame.setLayout(null);
+		frame.add(newDayButton("Hétfõ", 60, bigFont));
+		frame.add(newDayButton("Kedd", 230, bigFont));
+		frame.add(newDayButton("Szerda", 400, bigFont));
+		frame.add(newDayButton("Csütörtök", 570, bigFont));
+		frame.add(newDayButton("Péntek", 740, bigFont));
+		frame.setBounds(0, 0, 1024, 768);
+		frame.setLocationRelativeTo(null);
+		
+		if(!Files.exists(dataFilePath)) {
+			Files.write(Main.dataFilePath, "MONDAY Dimat Elõadás 18:00 20:00 Kongresszusi false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+		}
+		
+		ClassDataButton.reloadData(Files.readAllLines(dataFilePath, StandardCharsets.UTF_8));
+		
+		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
 		JLabel label = new JLabel(LocalDateTime.now().format(displayTimeFormat));
 		label.setForeground(Color.BLACK);
 		label.setBounds(400, 10, 300, 40);
 		label.setFont(bigFont);
+		
+		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(true, new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false"))));
+		frame.setResizable(false);
+		frame.add(label);
+		frame.addWindowListener(main);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setIconImage(icon);
 		
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
 			if(frame.isVisible()) {
@@ -77,40 +102,17 @@ public final class Main extends WindowAdapter implements MouseListener{
 			}
 		}, 10, 10, TimeUnit.MINUTES);
 		
-		Main main = new Main();
-		frame.addWindowListener(main);
-		tray.addMouseListener(main);
 		SystemTray.getSystemTray().add(tray);
 		PopupMenu popMenu = new PopupMenu();
-		tray.setPopupMenu(popMenu);
-		
 		MenuItem exitItem = new MenuItem("Bezárás");
 		exitItem.addActionListener(e -> System.exit(0));
-		
 		MenuItem openItem = new MenuItem("Megnyitás");
-		openItem.addActionListener(e -> {
-			frame.setExtendedState(JFrame.NORMAL);
-			frame.setVisible(true);
-			ClassDataButton.updateAllButtons(true);
-		});
+		openItem.addActionListener(e -> ClassDataButton.updateAllButtons(true));
 		popMenu.add(openItem);
 		popMenu.add(exitItem);
 		
-		frame.setIconImage(icon);
-		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(true, new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false"))));
-		frame.add(newDayButton("Hétfõ", 60, bigFont));
-		frame.add(newDayButton("Kedd", 230, bigFont));
-		frame.add(newDayButton("Szerda", 400, bigFont));
-		frame.add(newDayButton("Csütörtök", 570, bigFont));
-		frame.add(newDayButton("Péntek", 740, bigFont));
-		frame.add(label);
-		frame.setLayout(null);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setBounds(0, 0, 1024, 768);
-		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
-		
-		ClassDataButton.reloadData(Files.readAllLines(dataFilePath, StandardCharsets.UTF_8));
+		tray.addMouseListener(main);
+		tray.setPopupMenu(popMenu);
 	}
 	
 	private static Clip getBeepSound() {
@@ -136,7 +138,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 	
 	@Override
 	public void windowIconified(WindowEvent e) {
-		frame.setExtendedState(JFrame.ICONIFIED);
 		frame.setVisible(false);
 	}
 	
