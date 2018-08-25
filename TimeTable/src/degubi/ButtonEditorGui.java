@@ -7,12 +7,19 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -33,7 +40,7 @@ public final class ButtonEditorGui extends AbstractAction{
 	}
 	
 	public static void showEditorGui(boolean isNew, ClassDataButton dataButton) {
-		JDialog frame = new JDialog(Main.frame, "Editor Gui");
+		JDialog frame = new JDialog(Main.frame, "Editor Gui", true);
 		frame.setLayout(null);
 		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		frame.setBounds(0, 0, 400, 300);
@@ -41,6 +48,7 @@ public final class ButtonEditorGui extends AbstractAction{
 		frame.setLocationRelativeTo(null);
 		
 		JTable dataTable = new JTable(new TableModel());
+		dataTable.addMouseListener(new TableClickListener(dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
 		dataTable.setRowHeight(20);
 		CustomCellRenderer cellRenderer = new CustomCellRenderer();
@@ -144,10 +152,76 @@ public final class ButtonEditorGui extends AbstractAction{
 		}
 	}
 	
+	public static void showRoomFinder(JTable dataTable) {
+		JDialog frame = new JDialog(Main.frame, "Temerválasztó", true);
+		frame.setLayout(null);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setBounds(0, 0, 800, 600);
+		frame.setLocationRelativeTo(null);
+		
+		List<JButton> dayButtonList = new ArrayList<>();
+		String currentRoom = (String) dataTable.getValueAt(5, 1);
+		
+		ClassDataButton.roomData.forEach((building, rooms) -> {
+			int buildingPosition = 20 + ClassDataButton.buildingData.indexOf(building) * 60;
+			JLabel buildLabel = new JLabel(building);
+			buildLabel.setFont(Main.bigFont);
+			buildLabel.setBounds(10, buildingPosition + 10, 120, 20);
+			
+			frame.add(buildLabel);
+			
+			rooms.forEach(room -> {
+				boolean isCurrentRoom = room.equals(currentRoom);
+				JButton roomButton = new JButton(room);
+				roomButton.setBounds(80 + rooms.indexOf(room) * 130, buildingPosition, 120, 40);
+				roomButton.setBorder(Main.blackBorder);
+				roomButton.setForeground(isCurrentRoom ? Color.BLACK : Color.GRAY);
+				roomButton.setBackground(isCurrentRoom ? Color.RED : Color.LIGHT_GRAY);
+				roomButton.setFocusable(false);
+				dayButtonList.add(roomButton);
+					
+				roomButton.addActionListener(e -> {
+					dayButtonList.forEach(checkButton -> {
+						checkButton.setForeground(Color.GRAY);
+						checkButton.setBackground(Color.LIGHT_GRAY);
+					});
+					roomButton.setForeground(Color.BLACK);
+					roomButton.setBackground(Color.RED);
+				});
+				
+				frame.add(roomButton);
+			});
+		});
+		
+		frame.add(Main.newButton("Mentés", 400, 500, 120, 40, e -> {
+			dayButtonList.stream().filter(button -> button.getBackground() == Color.RED).findFirst().ifPresent(button -> {
+				dataTable.setValueAt(button.getText(), 5, 1);
+				frame.dispose();
+			});
+		}));
+		
+		frame.setVisible(true);
+	}
+	
+	public static final class TableClickListener extends MouseAdapter{
+		private final JTable table;
+		
+		public TableClickListener(JTable table) {
+			this.table = table;
+		}
+
+		@Override
+		public void mousePressed(MouseEvent event) {
+			if(event.getClickCount() == 2 && table.getSelectedColumn() == 1 && table.getSelectedRow() == 5) {
+				showRoomFinder(table);
+			}
+		}
+	}
+	
 	public static final class TableModel extends DefaultTableModel{
 		@Override public int getRowCount() { return 6; }
 		@Override public int getColumnCount() { return 2; }
-		@Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2; }
+		@Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2 && rowIndex != 5; }
 	}
 	
 	public static final class CustomCellRenderer extends DefaultTableCellRenderer{

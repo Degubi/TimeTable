@@ -16,7 +16,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
@@ -29,6 +32,8 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	private static final int[] dayIndexers = {40, 40, 40, 40, 40};
 	private static boolean nextHourFound = false;
 	public static final List<ClassDataButton> classData = new ArrayList<>();
+	public static final Map<String, List<String>> roomData = createRoomData();
+	public static final List<String> buildingData = new ArrayList<>(roomData.keySet());
 	public static ClassDataButton currentClassButton;
 	
 	public final String day;
@@ -46,10 +51,10 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		endTime = LocalTime.parse(data[4], DateTimeFormatter.ISO_LOCAL_TIME);
 		room = data[5];
 		unImportant = Boolean.parseBoolean(data[6]);
-		setText("<html>Óra: " + className + 
+		setText("<html>Óra: " + data[1] + 
 				"<br>Idõ: " + startTime + "-" + endTime + 
 				"<br>Típus: " + data[2] + 
-				"<br>Épület: " + (room.contains("21") || room.contains("22") ? "Irinyi" : room.contains("ressz") || room.contains("sor") ? "TIK" : "Bolyai") + 
+				"<br>Épület: " + getBuildingForRoom(data[5]) +
 				"<br>Terem: " + data[5]);
 		
 		setForeground(unImportant ? Color.GRAY : Color.BLACK);
@@ -58,8 +63,8 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		setBorder(unImportant ? null : data[2].contains("ad") ? Main.blackBorder : Main.redBorder);
 	}
 	
-	private void updateButton(LocalDateTime today, LocalTime todayTime) {
-		boolean isToday = day.equals(today.getDayOfWeek().name());
+	private void updateButton(String today, LocalTime todayTime) {
+		boolean isToday = day.equals(today);
 		boolean isBefore = isToday && todayTime.isBefore(startTime);
 		boolean isBetween = isToday && todayTime.isAfter(startTime) && todayTime.isBefore(endTime);
 		boolean isAfter = isToday && (todayTime.isAfter(endTime) || todayTime.equals(endTime));
@@ -136,8 +141,8 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		}
 		nextHourFound = false;
 		
-		LocalDateTime today = LocalDateTime.now();
-		LocalTime todayTime = today.toLocalTime();
+		String today = LocalDateTime.now().getDayOfWeek().name();
+		LocalTime todayTime = LocalTime.now();
 		
 		classData.forEach(button -> button.updateButton(today, todayTime));
 		if(!nextHourFound) {
@@ -195,5 +200,21 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	@Override
 	public String toString() {
 		return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
+	}
+	
+	private static Map<String, List<String>> createRoomData(){
+		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
+		map.put("TIK", List.of("Kongresszusi", "Alagsor1"));
+		map.put("Irinyi", List.of("217", "218", "222", "225"));
+		map.put("Bolyai", List.of("Kerkékjártó", "Farkas"));
+		return map;
+	}
+	
+	private static String getBuildingForRoom(String room) {
+		return roomData.entrySet().stream()
+					   .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
+					   .map(Entry::getKey)
+					   .findFirst()
+					   .orElse("Ismeretlen Terem");
 	}
 }
