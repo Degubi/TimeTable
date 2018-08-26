@@ -69,7 +69,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			currentClassButton = this;
 			Main.tray.setToolTip("Következõ óra: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
-		setBackground(unImportant ? Color.LIGHT_GRAY : isCurrent ? Color.RED : isBefore ? Color.GREEN : isAfter ? Color.YELLOW : Color.GRAY);
+		setBackground(unImportant ? Color.LIGHT_GRAY : isCurrent ? calmRed : isBefore ? calmGreen : isAfter ? calmYellow : calmBlue);
 	}
 	
 	private static void rewriteFile() {
@@ -124,17 +124,28 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		}
 		nextHourFound = false;
 		
-		String today = LocalDateTime.now().getDayOfWeek().name();
-		LocalTime todayTime = LocalTime.now();
+		String today = toHunDay(LocalDateTime.now().getDayOfWeek().name());
+		LocalTime now = LocalTime.now();
 		
-		Main.dataTable.forEachData(button -> button.updateButton(today, todayTime));
+		Main.dataTable.forEachData(button -> button.updateButton(today, now));
 		if(!nextHourFound) {
 			Main.tray.setToolTip("Nincs mára több óra! :)");
 			currentClassButton = null;
 		}
 		
-		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(19, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		Main.frame.getContentPane().setBackground(Main.isDarkMode(now) ? Color.DARK_GRAY : new Color(240, 240, 240));
 		Main.frame.repaint();
+	}
+	
+	private static String toHunDay(String day) {
+		switch(day) {
+			case "MONDAY": return "Hétfõ";
+			case "TUESDAY": return "Kedd";
+			case "WEDNESDAY": return "Szerda";
+			case "THURSDAY": return "Csütörtök";
+			case "FRIDAY": return "Péntek";
+			default: return "MenjHaza";
+		}
 	}
 	
 	public static void addOrReplaceButton(boolean add, ClassDataButton toRemove, String newDataForButton) {
@@ -205,4 +216,9 @@ public final class ClassDataButton extends JButton implements MouseListener{
 					    .findFirst()
 					    .orElse("Ismeretlen Épület");
 	}
+	
+	public static final Color calmRed = new Color(255, 69, 69);
+	private static final Color calmGreen = new Color(0, 147, 3);
+	private static final Color calmBlue = new Color(84, 113, 142);
+	private static final Color calmYellow = new Color(247, 238, 90);
 }

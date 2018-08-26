@@ -2,6 +2,8 @@ package degubi;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,33 +23,32 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 	private final String[] columns;
 	private final int[] horizontalIndexers;
 	private final int cellWidth, cellHeight;
-	private final int startYIndex;
 	
-	public JButtonTable(int perCellWidth, int perCellHeight, int startPos, int x, int y, int height, String... columnNames) {
+	public JButtonTable(int cellWidth, int cellHeight, int x, int y, boolean addListener, String... columnNames) {
 		horizontalIndexers = new int[columnNames.length];
-		startYIndex = startPos;
-		cellWidth = perCellWidth;
-		cellHeight = perCellHeight;
+		this.cellWidth = cellWidth;
+		this.cellHeight = cellHeight;
 		columns = columnNames;
 		
-		Arrays.fill(horizontalIndexers, startPos);
-		setBounds(x, y, perCellWidth * columnNames.length + perCellWidth, height);
+		Arrays.fill(horizontalIndexers, 0);
+		setBounds(x, y, cellWidth * columnNames.length + cellWidth, 600);
 		
 		for(int topIndex = 0; topIndex < columnNames.length; ++topIndex) {
 			JButton topAdd = new JButton(columnNames[topIndex]);
 			topAdd.setBorder(Main.blackBorder);
 			topAdd.setFocusable(false);
+			if(addListener) topAdd.addMouseListener(new CreateClassListener(columnNames[topIndex]));
 			topAdd.setBackground(Color.LIGHT_GRAY);
 			topAdd.setForeground(Color.BLACK);
 			topAdd.setFont(tableHeaderFont);
-			topAdd.setBounds(getX() + topIndex * cellWidth + (topIndex * 20), getY(), perCellWidth, 40);
+			topAdd.setBounds(getX() + topIndex * cellWidth + (topIndex * 20), getY(), cellWidth, 40);
 			add(topAdd);
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	public JButtonTable(int perCellWidth, int perCellHeight, int x, int y, int height, Map<String, List<String>> bigData, String currentRoom) {
-		this(perCellWidth, perCellHeight, 0, x, y, height, bigData.keySet().toArray(new String[0]));
+	public JButtonTable(int perCellWidth, int perCellHeight, int x, int y, Map<String, List<String>> bigData, String currentRoom) {
+		this(perCellWidth, perCellHeight, x, y, false, bigData.keySet().toArray(new String[0]));
 		
 		bigData.forEach((columnName, rows) -> rows.forEach(row -> {
 			T butt = (T) new JButton(row);
@@ -87,12 +88,7 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 	public void resetTable() {
 		dataButtonList.forEach(this::remove);
 		dataButtonList.clear();
-		Arrays.fill(horizontalIndexers, startYIndex);
-	}
-	
-	public String getNextOrPrevColumn(boolean isNext, String day) {
-		int currentIndex = indexOf(day);
-		return isNext ? columns[currentIndex == columns.length - 1 ? 0 : ++currentIndex] : columns[currentIndex == 0 ? columns.length - 1 : --currentIndex];
+		Arrays.fill(horizontalIndexers, 0);
 	}
 	
 	public Optional<T> findFirstButton(Predicate<T> predicate){ return dataButtonList.stream().filter(predicate).findFirst(); }
@@ -103,8 +99,24 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 	public void tableAdd(String columnName, T buttonToAdd) {
 		buttonToAdd.setFocusable(false);
 		int column = indexOf(columnName);
-		buttonToAdd.setBounds(getX() + column * cellWidth + (column * 20), getY() + (horizontalIndexers[column] += (cellHeight + 6)), cellWidth, cellHeight);
+		buttonToAdd.setBounds(getX() + column * cellWidth + (column * 20), getY() + 50 + horizontalIndexers[column], cellWidth, cellHeight);
+		horizontalIndexers[column] += cellHeight + 6;
 		add(buttonToAdd);
 		dataButtonList.add(buttonToAdd);
+	}
+	
+	public static final class CreateClassListener extends MouseAdapter{
+		private final String dayStr;
+		
+		public CreateClassListener(String dayStr) {
+			this.dayStr = dayStr;
+		}
+
+		@Override
+		public void mousePressed(MouseEvent event) {
+			if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
+				ButtonEditorGui.showEditorGui(true, new ClassDataButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false"));
+			}
+		}
 	}
 }

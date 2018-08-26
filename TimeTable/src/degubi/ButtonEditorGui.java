@@ -1,11 +1,13 @@
 package degubi;
 
+import static java.awt.Toolkit.getDefaultToolkit;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Image;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,10 +24,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public final class ButtonEditorGui extends AbstractAction{
-	public static final ImageIcon editIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon deleteIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon ignoreIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon unIgnore = new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 
 	private final JTable dataTable;
 	private final char key;
@@ -37,20 +39,21 @@ public final class ButtonEditorGui extends AbstractAction{
 	
 	public static void showRoomFinder(JTable dataTable) {
 		JDialog frame = new JDialog(Main.frame, "Temerválasztó", true);
-		JButtonTable<JButton> buildingTable = new JButtonTable<>(120, 40, 20, 20, 600, ClassDataButton.roomData, (String) dataTable.getValueAt(5, 1));
+		JButtonTable<JButton> buildingTable = new JButtonTable<>(120, 40, 20, 20, ClassDataButton.roomData, (String) dataTable.getValueAt(5, 1));
 		frame.setLayout(null);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setBounds(0, 0, 800, 600);
 		frame.setLocationRelativeTo(null);
 		frame.add(buildingTable);
 		
-		frame.add(Main.newButton("Mentés", 300, 500, 120, 40, e -> {
+		frame.add(newButton("Mentés", 300, 500, 120, 40, e -> {
 			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED).ifPresent(button -> {
 				dataTable.setValueAt(button.getText(), 5, 1);
 				frame.dispose();
 			});
 		}));
 		
+		frame.getContentPane().setBackground(Main.isDarkMode(LocalTime.now()) ? Color.DARK_GRAY : new Color(240, 240, 240));
 		frame.setVisible(true);
 	}
 	
@@ -95,9 +98,10 @@ public final class ButtonEditorGui extends AbstractAction{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		frame.getContentPane().setBackground(LocalTime.now().isAfter(LocalTime.of(19, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		LocalTime now = LocalTime.now();
+		frame.getContentPane().setBackground(Main.isDarkMode(now) ? Color.DARK_GRAY : new Color(240, 240, 240));
 		frame.add(dataTable);
-		frame.add(Main.newButton("Mentés", 125, 210, 120, 40, e -> {
+		frame.add(newButton("Mentés", 125, 210, 120, 40, e -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
 			String newData = dataTable.getValueAt(1, 1).toString() + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
@@ -108,17 +112,22 @@ public final class ButtonEditorGui extends AbstractAction{
 		frame.setVisible(true);
 	}
 	
+	private static JButton newButton(String text, int x, int y, int width, int height, ActionListener listener) {
+		JButton toReturn = new JButton(text);
+		toReturn.setFocusable(false);
+		toReturn.setBounds(x, y, width, height);
+		toReturn.setBorder(Main.blackBorder);
+		toReturn.setBackground(Color.GRAY);
+		toReturn.setForeground(Color.BLACK);
+		toReturn.addActionListener(listener);
+		return toReturn;
+	}
+	
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		int row = dataTable.getSelectedRow();
 		
-		if(row == 1) {
-			if(key == 'R') {
-				dataTable.setValueAt(Main.dataTable.getNextOrPrevColumn(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
-			}else if(key == 'L') {
-				dataTable.setValueAt(Main.dataTable.getNextOrPrevColumn(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
-			}
-		}else if(row == 2) {
+		if(row == 2) {
 			if(key == 'R' || key == 'L') {
 				dataTable.setValueAt(dataTable.getValueAt(2, 1).toString().charAt(0) == 'E' ? "Gyakorlat" : "Elõadás", 2, 1);
 			}
@@ -166,7 +175,7 @@ public final class ButtonEditorGui extends AbstractAction{
 	public static final class CustomCellRenderer extends DefaultTableCellRenderer{
 		@Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			cell.setForeground(column == 0 ? Color.DARK_GRAY : Color.BLACK);
+			cell.setForeground(column == 0 || row == 1 ? Color.DARK_GRAY : Color.BLACK);
 			return cell;
 		}
 	}
