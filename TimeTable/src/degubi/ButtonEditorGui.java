@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import javax.swing.AbstractAction;
@@ -86,7 +85,7 @@ public final class ButtonEditorGui extends AbstractAction{
 		dataTable.setValueAt("Óra Neve", 0, 0);
 		dataTable.setValueAt(dataButton.className, 0, 1);
 		dataTable.setValueAt("Nap", 1, 0);
-		dataTable.setValueAt(getHungarianDay(dataButton.day), 1, 1);
+		dataTable.setValueAt(dataButton.day, 1, 1);
 		dataTable.setValueAt("Óra Típusa", 2, 0);
 		dataTable.setValueAt(dataButton.classType, 2, 1);
 		dataTable.setValueAt("Kezdés Idõ", 3, 0);
@@ -101,38 +100,12 @@ public final class ButtonEditorGui extends AbstractAction{
 		frame.add(Main.newButton("Mentés", 125, 210, 120, 40, e -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
-			String newData = getEnglishDay((String)dataTable.getValueAt(1, 1)) + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
+			String newData = dataTable.getValueAt(1, 1).toString() + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
 			ClassDataButton.addOrReplaceButton(isNew, dataButton, newData);
 			frame.dispose();
 		}));
 		
 		frame.setVisible(true);
-	}
-	
-	private static String getHungarianDay(String engDay) {
-		switch(engDay) {
-			case "MONDAY": return "Hétfõ";
-			case "TUESDAY": return "Kedd";
-			case "WEDNESDAY": return "Szerda";
-			case "THURSDAY": return "Csütörtök";
-			default: return "Péntek";
-		}
-	}
-	
-	private static String getNextOrPrevHunDay(boolean isNext, String day) {
-		int currentIndex = DayOfWeek.valueOf(getEnglishDay(day)).ordinal();
-		return isNext ? getHungarianDay(DayOfWeek.values()[currentIndex == 4 ? 0 : ++currentIndex].name()) : 
-						getHungarianDay(DayOfWeek.values()[currentIndex == 0 ? 4 : --currentIndex].name());
-	}
-	
-	private static String getEnglishDay(String hunDay) {
-		switch(hunDay) {
-			case "Hétfõ": return "MONDAY";
-			case "Kedd": return "TUESDAY";
-			case "Szerda": return "WEDNESDAY";
-			case "Csütörtök": return "THURSDAY";
-			default: return "FRIDAY";
-		}
 	}
 	
 	@Override
@@ -141,9 +114,9 @@ public final class ButtonEditorGui extends AbstractAction{
 		
 		if(row == 1) {
 			if(key == 'R') {
-				dataTable.setValueAt(getNextOrPrevHunDay(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
+				dataTable.setValueAt(Main.dataTable.getNextOrPrevColumn(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
 			}else if(key == 'L') {
-				dataTable.setValueAt(getNextOrPrevHunDay(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
+				dataTable.setValueAt(Main.dataTable.getNextOrPrevColumn(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
 			}
 		}else if(row == 2) {
 			if(key == 'R' || key == 'L') {

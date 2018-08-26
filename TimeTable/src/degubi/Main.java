@@ -2,7 +2,6 @@ package degubi;
 
 import java.awt.AWTException;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -45,31 +44,27 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final Path dataFilePath = Paths.get("classData.txt");
-	public static final Font bigFont = new Font("TimesRoman", Font.PLAIN, 20);
 	private static final Clip beepBoop = getBeepSound();
+	public static final JButtonTable<ClassDataButton> dataTable = new JButtonTable<>(150, 96, -50, 30, 30, 600, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	
 	public static void main(String[] args) throws AWTException, IOException {
 		frame.setLayout(null);
-		frame.add(newDayButton("Hétfõ", 60, bigFont));
-		frame.add(newDayButton("Kedd", 230, bigFont));
-		frame.add(newDayButton("Szerda", 400, bigFont));
-		frame.add(newDayButton("Csütörtök", 570, bigFont));
-		frame.add(newDayButton("Péntek", 740, bigFont));
+		frame.add(dataTable);
 		frame.setBounds(0, 0, 1024, 768);
 		frame.setLocationRelativeTo(null);
 		
-		if(!Files.exists(dataFilePath)) Files.write(Main.dataFilePath, "MONDAY Dimat Elõadás 18:00 20:00 Kongresszusi false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+		if(!Files.exists(dataFilePath)) Files.write(Main.dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 		
 		ClassDataButton.reloadData(Files.readAllLines(dataFilePath));
 		
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
 		JLabel label = new JLabel(LocalDateTime.now().format(displayTimeFormat));
 		label.setForeground(Color.BLACK);
-		label.setBounds(400, 10, 300, 40);
-		label.setFont(bigFont);
+		label.setBounds(360, 5, 300, 40);
+		label.setFont(JButtonTable.tableHeaderFont);
 		
 		Main main = new Main();
-		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(true, new ClassDataButton("MONDAY ÓRANÉV Elõadás 08:00 10:00 Terem false"))));
+		frame.add(newButton("Új Óra Hozzáadása", 840, 650, 150, 60, e -> ButtonEditorGui.showEditorGui(true, new ClassDataButton("Hétfõ Óra Elõadás 08:00 10:00 Terem false"))));
 		frame.setResizable(false);
 		frame.add(label);
 		frame.addWindowListener(main);
@@ -147,17 +142,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 		toReturn.setForeground(Color.BLACK);
 		toReturn.addActionListener(listener);
 		return toReturn;
-	}
-	
-	public static JButton newDayButton(String dayName, int xCoord, Font bigFont) {
-		JButton dayButton = new JButton(dayName);
-		dayButton.setBounds(xCoord, 60, 150, 60);
-		dayButton.setFont(bigFont);
-		dayButton.setForeground(Color.BLACK);
-		dayButton.setFocusable(false);
-		dayButton.setBackground(Color.LIGHT_GRAY);
-		dayButton.setBorder(blackBorder);
-		return dayButton;
 	}
 	
 	@Override public void mouseReleased(MouseEvent e) {} @Override public void mouseClicked(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}

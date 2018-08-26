@@ -9,12 +9,9 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,10 +26,8 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 public final class ClassDataButton extends JButton implements MouseListener{
-	private static final Comparator<ClassDataButton> sorter = Comparator.<ClassDataButton>comparingInt(button -> DayOfWeek.valueOf(button.day).ordinal()).thenComparing(button -> button.startTime);
-	private static final int[] dayIndexers = {40, 40, 40, 40, 40};
+	private static final Comparator<ClassDataButton> sorter = Comparator.<ClassDataButton>comparingInt(button -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime);
 	private static boolean nextHourFound = false;
-	public static final List<ClassDataButton> classData = new ArrayList<>();
 	public static ClassDataButton currentClassButton;
 	
 	public final String day;
@@ -78,7 +73,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	}
 	
 	private static void rewriteFile() {
-		List<String> dataLines = classData.stream().map(ClassDataButton::toString).collect(Collectors.toList());
+		List<String> dataLines = Main.dataTable.tableDataStream().map(ClassDataButton::toString).collect(Collectors.toList());
 		reloadData(dataLines);
 		
 		try {
@@ -96,12 +91,11 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			editFrame.setLayout(null);
 			editFrame.setUndecorated(true);
 			editFrame.setLocationRelativeTo(null);
-			editFrame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y - 4, 32, 96);
+			editFrame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
 			
 			editFrame.add(newEditButton(32, "Törlés", ButtonEditorGui.deleteIcon, e -> {
 				if(JOptionPane.showConfirmDialog(Main.frame, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
-					classData.remove(this);
-					Main.frame.remove(this);
+					Main.dataTable.tableRemove(this);
 					rewriteFile();
 				}
 			}));
@@ -114,22 +108,12 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	}
 
 	public static void reloadData(List<String> dataLines) {
-		if(!ClassDataButton.classData.isEmpty()) {
-			ClassDataButton.classData.forEach(Main.frame::remove);
-			Arrays.fill(ClassDataButton.dayIndexers, 40);
-			Main.frame.revalidate();
-			Main.frame.repaint();
-			ClassDataButton.classData.clear();
-		}
+		Main.dataTable.resetTable();
 		
 		dataLines.stream()
 				 .map(ClassDataButton::new)
 				 .sorted(sorter)
-				 .forEach(button -> {
-					 button.setBounds(60 + DayOfWeek.valueOf(button.day).ordinal() * 170, dayIndexers[DayOfWeek.valueOf(button.day).ordinal()] += 95, 150, 90);
-					 Main.frame.add(button);
-					 classData.add(button);
-				 });
+				 .forEach(button -> Main.dataTable.tableAdd(button.day, button));
 		
 		ClassDataButton.updateAllButtons(true);
 	}
@@ -143,20 +127,21 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		String today = LocalDateTime.now().getDayOfWeek().name();
 		LocalTime todayTime = LocalTime.now();
 		
-		classData.forEach(button -> button.updateButton(today, todayTime));
+		Main.dataTable.forEachData(button -> button.updateButton(today, todayTime));
 		if(!nextHourFound) {
 			Main.tray.setToolTip("Nincs mára több óra! :)");
+			currentClassButton = null;
 		}
 		
 		Main.frame.getContentPane().setBackground(todayTime.isAfter(LocalTime.of(19, 00)) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		Main.frame.repaint();
 	}
 	
 	public static void addOrReplaceButton(boolean add, ClassDataButton toRemove, String newDataForButton) {
 		if(!add) {
-			classData.remove(toRemove);
-			Main.frame.remove(toRemove);
+			Main.dataTable.tableRemove(toRemove);
 		}
-		classData.add(new ClassDataButton(newDataForButton));
+		Main.dataTable.tableAdd(new ClassDataButton(newDataForButton));
 		rewriteFile();
 	}
 	
