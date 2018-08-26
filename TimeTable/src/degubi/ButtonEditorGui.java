@@ -11,15 +11,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -37,6 +34,25 @@ public final class ButtonEditorGui extends AbstractAction{
 	public ButtonEditorGui(char key, JTable dataTable) {
 		this.key = key;
 		this.dataTable = dataTable;
+	}
+	
+	public static void showRoomFinder(JTable dataTable) {
+		JDialog frame = new JDialog(Main.frame, "Temerválasztó", true);
+		JButtonTable<JButton> buildingTable = new JButtonTable<>(120, 40, 20, 20, 600, ClassDataButton.roomData, (String) dataTable.getValueAt(5, 1));
+		frame.setLayout(null);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setBounds(0, 0, 800, 600);
+		frame.setLocationRelativeTo(null);
+		frame.add(buildingTable);
+		
+		frame.add(Main.newButton("Mentés", 300, 500, 120, 40, e -> {
+			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED).ifPresent(button -> {
+				dataTable.setValueAt(button.getText(), 5, 1);
+				frame.dispose();
+			});
+		}));
+		
+		frame.setVisible(true);
 	}
 	
 	public static void showEditorGui(boolean isNew, ClassDataButton dataButton) {
@@ -152,56 +168,6 @@ public final class ButtonEditorGui extends AbstractAction{
 		}
 	}
 	
-	public static void showRoomFinder(JTable dataTable) {
-		JDialog frame = new JDialog(Main.frame, "Temerválasztó", true);
-		frame.setLayout(null);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setBounds(0, 0, 800, 600);
-		frame.setLocationRelativeTo(null);
-		
-		List<JButton> dayButtonList = new ArrayList<>();
-		String currentRoom = (String) dataTable.getValueAt(5, 1);
-		
-		ClassDataButton.roomData.forEach((building, rooms) -> {
-			int buildingPosition = 20 + ClassDataButton.buildingData.indexOf(building) * 60;
-			JLabel buildLabel = new JLabel(building);
-			buildLabel.setFont(Main.bigFont);
-			buildLabel.setBounds(10, buildingPosition + 10, 120, 20);
-			
-			frame.add(buildLabel);
-			
-			rooms.forEach(room -> {
-				boolean isCurrentRoom = room.equals(currentRoom);
-				JButton roomButton = new JButton(room);
-				roomButton.setBounds(80 + rooms.indexOf(room) * 130, buildingPosition, 120, 40);
-				roomButton.setBorder(Main.blackBorder);
-				roomButton.setForeground(isCurrentRoom ? Color.BLACK : Color.GRAY);
-				roomButton.setBackground(isCurrentRoom ? Color.RED : Color.LIGHT_GRAY);
-				roomButton.setFocusable(false);
-				dayButtonList.add(roomButton);
-					
-				roomButton.addActionListener(e -> {
-					dayButtonList.forEach(checkButton -> {
-						checkButton.setForeground(Color.GRAY);
-						checkButton.setBackground(Color.LIGHT_GRAY);
-					});
-					roomButton.setForeground(Color.BLACK);
-					roomButton.setBackground(Color.RED);
-				});
-				
-				frame.add(roomButton);
-			});
-		});
-		
-		frame.add(Main.newButton("Mentés", 400, 500, 120, 40, e -> {
-			dayButtonList.stream().filter(button -> button.getBackground() == Color.RED).findFirst().ifPresent(button -> {
-				dataTable.setValueAt(button.getText(), 5, 1);
-				frame.dispose();
-			});
-		}));
-		
-		frame.setVisible(true);
-	}
 	
 	public static final class TableClickListener extends MouseAdapter{
 		private final JTable table;

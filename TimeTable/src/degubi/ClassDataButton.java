@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
@@ -32,8 +33,6 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	private static final int[] dayIndexers = {40, 40, 40, 40, 40};
 	private static boolean nextHourFound = false;
 	public static final List<ClassDataButton> classData = new ArrayList<>();
-	public static final Map<String, List<String>> roomData = createRoomData();
-	public static final List<String> buildingData = new ArrayList<>(roomData.keySet());
 	public static ClassDataButton currentClassButton;
 	
 	public final String day;
@@ -202,6 +201,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
 	}
 	
+	
 	private static Map<String, List<String>> createRoomData(){
 		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
 		map.put("TIK", List.of("Kongresszusi", "Alagsor1"));
@@ -210,11 +210,14 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		return map;
 	}
 	
+	public static final Map<String, List<String>> roomData = createRoomData();
+	private static final Set<Entry<String, List<String>>> dataCache = roomData.entrySet();
+
 	private static String getBuildingForRoom(String room) {
-		return roomData.entrySet().stream()
-					   .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
-					   .map(Entry::getKey)
-					   .findFirst()
-					   .orElse("Ismeretlen Terem");
+		return dataCache.stream()
+					    .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
+					    .map(Entry::getKey)
+					    .findFirst()
+					    .orElse("Ismeretlen Épület");
 	}
 }
