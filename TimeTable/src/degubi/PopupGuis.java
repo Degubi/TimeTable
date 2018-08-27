@@ -7,23 +7,27 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-public final class ButtonEditorGui extends AbstractAction{
+public final class PopupGuis extends AbstractAction{
 	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
@@ -32,39 +36,23 @@ public final class ButtonEditorGui extends AbstractAction{
 	private final JTable dataTable;
 	private final char key;
 	
-	public ButtonEditorGui(char key, JTable dataTable) {
+	public PopupGuis(char key, JTable dataTable) {
 		this.key = key;
 		this.dataTable = dataTable;
 	}
 	
 	public static void showRoomFinder(JTable dataTable) {
-		JDialog frame = new JDialog(Main.frame, "Temerválasztó", true);
-		JButtonTable<JButton> buildingTable = new JButtonTable<>(120, 40, 20, 20, ClassDataButton.roomData, (String) dataTable.getValueAt(5, 1));
-		frame.setLayout(null);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setBounds(0, 0, 800, 600);
-		frame.setLocationRelativeTo(null);
-		frame.add(buildingTable);
+		ButtonTable<JButton> buildingTable = new ButtonTable<>(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
 		
-		frame.add(newButton("Mentés", 300, 500, 120, 40, e -> {
+		showNewDialog("Temerválasztó", 800, 600, frame -> {
 			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED).ifPresent(button -> {
 				dataTable.setValueAt(button.getText(), 5, 1);
 				frame.dispose();
 			});
-		}));
-		
-		frame.getContentPane().setBackground(Main.isDarkMode(LocalTime.now()) ? Color.DARK_GRAY : new Color(240, 240, 240));
-		frame.setVisible(true);
+		}, buildingTable);
 	}
 	
-	public static void showEditorGui(boolean isNew, ClassDataButton dataButton) {
-		JDialog frame = new JDialog(Main.frame, "Editor Gui", true);
-		frame.setLayout(null);
-		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		frame.setBounds(0, 0, 400, 300);
-		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
-		
+	public static void showEditorGui(boolean isNew, ClassButton dataButton) {
 		JTable dataTable = new JTable(new TableModel());
 		dataTable.addMouseListener(new TableClickListener(dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
@@ -72,19 +60,17 @@ public final class ButtonEditorGui extends AbstractAction{
 		CustomCellRenderer cellRenderer = new CustomCellRenderer();
 		
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "DOWN");
-		dataTable.getActionMap().put("DOWN", new ButtonEditorGui('D', dataTable));
+		dataTable.getActionMap().put("DOWN", new PopupGuis('D', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "LEFT");
-		dataTable.getActionMap().put("LEFT", new ButtonEditorGui('L', dataTable));
+		dataTable.getActionMap().put("LEFT", new PopupGuis('L', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "RIGHT");
-		dataTable.getActionMap().put("RIGHT", new ButtonEditorGui('R', dataTable));
+		dataTable.getActionMap().put("RIGHT", new PopupGuis('R', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "UP");
-		dataTable.getActionMap().put("UP", new ButtonEditorGui('U', dataTable));
-		
+		dataTable.getActionMap().put("UP", new PopupGuis('U', dataTable));
 		dataTable.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);
 		dataTable.getColumnModel().getColumn(1).setCellRenderer(cellRenderer);
 		dataTable.setFont(new Font("Arial", Font.BOLD, 12));
 		dataTable.setBounds(20, 20, 340, 122);
-		
 		dataTable.setValueAt("Óra Neve", 0, 0);
 		dataTable.setValueAt(dataButton.className, 0, 1);
 		dataTable.setValueAt("Nap", 1, 0);
@@ -98,36 +84,109 @@ public final class ButtonEditorGui extends AbstractAction{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		LocalTime now = LocalTime.now();
-		frame.getContentPane().setBackground(Main.isDarkMode(now) ? Color.DARK_GRAY : new Color(240, 240, 240));
-		frame.add(dataTable);
-		frame.add(newButton("Mentés", 125, 210, 120, 40, e -> {
+		showNewDialog("Editor Gui", 400, 300, frame -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
 			String newData = dataTable.getValueAt(1, 1).toString() + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
-			ClassDataButton.addOrReplaceButton(isNew, dataButton, newData);
+			ClassButton.addOrReplaceButton(isNew, dataButton, newData);
 			frame.dispose();
-		}));
-		
-		frame.setVisible(true);
+		}, dataTable);
 	}
 	
-	private static JButton newButton(String text, int x, int y, int width, int height, ActionListener listener) {
-		JButton toReturn = new JButton(text);
-		toReturn.setFocusable(false);
-		toReturn.setBounds(x, y, width, height);
-		toReturn.setBorder(Main.blackBorder);
-		toReturn.setBackground(Color.GRAY);
-		toReturn.setForeground(Color.BLACK);
-		toReturn.addActionListener(listener);
-		return toReturn;
+	public static void showColorPickerGui() {
+		JButton currentClass = newColorButton(20, ClassButton.currentClassColor);
+		JButton beforeClass = newColorButton(80, ClassButton.upcomingClassColor);
+		JButton otherClass = newColorButton(140, ClassButton.otherClassColor);
+		JButton pastClass = newColorButton(200, ClassButton.pastClassColor);
+		JButton unimportantClass = newColorButton(260, ClassButton.unimportantClassColor);
+		JButton dayTimeColor = newColorButton(320, Main.dayTimeColor);
+		JButton nightTimeColor = newColorButton(380, Main.nightTimeColor);
+		
+		showNewDialog("Színbeállítások", 300, 600, frame -> {
+			Main.settingsFile.setColor("currentClassColor", ClassButton.currentClassColor = currentClass.getBackground());
+			Main.settingsFile.setColor("upcomingClassColor", ClassButton.upcomingClassColor = beforeClass.getBackground());
+			Main.settingsFile.setColor("otherClassColor", ClassButton.otherClassColor = otherClass.getBackground());
+			Main.settingsFile.setColor("pastClassColor", ClassButton.pastClassColor = pastClass.getBackground());
+			Main.settingsFile.setColor("unimportantClassColor", ClassButton.unimportantClassColor = unimportantClass.getBackground());
+			Main.settingsFile.setColor("dayTimeColor", Main.dayTimeColor = dayTimeColor.getBackground());
+			Main.settingsFile.setColor("nightTimeColor", Main.nightTimeColor = nightTimeColor.getBackground());
+			ClassButton.updateAllButtons(false);
+			frame.dispose();
+		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
+					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
+					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor);
+	}
+	
+	public static void showTimeSettingsGui() {
+		JTextField startField = new JTextField(Main.dayTimeStart.toString());
+		startField.setBounds(60, 60, 40, 20);
+		JTextField endField = new JTextField(Main.dayTimeEnd.toString());
+		endField.setBounds(240, 60, 40, 20);
+		
+		showNewDialog("Idõbeállítások", 400, 300, frame -> {
+			Main.dayTimeStart = LocalTime.parse(startField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
+			Main.settingsFile.set("dayTimeStart", startField.getText());
+			Main.dayTimeEnd = LocalTime.parse(endField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
+			Main.settingsFile.set("dayTimeEnd", endField.getText());
+			ClassButton.updateAllButtons(false);
+			frame.dispose();
+		}, newLabel("Nappali Idõszak Kezdete:", 30, 20), newLabel("Nappali Idõszak Vége:", 200, 20), startField, endField);
+	}
+	
+	private static JButton newColorButton(int y, Color startColor) {
+		JButton butt = new JButton();
+		butt.setBackground(startColor);
+		butt.setBorder(Main.blackBorder);
+		butt.setBounds(200, y, 48, 48);
+		butt.addActionListener(e -> {
+			Color newColor = JColorChooser.showDialog(Main.frame, "Színválasztó", butt.getBackground());
+			if(newColor != null) {
+				butt.setBackground(newColor);
+			}
+		});
+		return butt;
+	}
+	
+	private static JLabel newLabel(String labelText, int x, int y) {
+		JLabel label = new JLabel(labelText);
+		label.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
+		label.setBounds(x, y + 12, 200, 20);
+		return label;
+	}
+	
+	private static void showNewDialog(String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
+		JDialog dial = new JDialog(Main.frame, title, true);
+		dial.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dial.setLayout(null);
+		dial.setResizable(false);
+		dial.setBounds(0, 0, width, height);
+		dial.setLocationRelativeTo(null);
+		if(saveListener != null) {
+			JButton saveButton = new JButton("Mentés");
+			saveButton.setFocusable(false);
+			saveButton.setBounds(width / 2 - 70, height - 90, 120, 40);
+			saveButton.setBorder(Main.blackBorder);
+			saveButton.setBackground(Color.GRAY);
+			saveButton.setForeground(Color.BLACK);
+			saveButton.addActionListener(e -> saveListener.accept(dial));
+			dial.add(saveButton);
+		}
+		for(JComponent component : components) dial.add(component);
+		Main.handleNightMode(dial.getContentPane());
+		dial.setVisible(true);
 	}
 	
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		int row = dataTable.getSelectedRow();
 		
-		if(row == 2) {
+		if(row == 1) {
+			if(key == 'R') {
+				dataTable.setValueAt(Main.dataTable.getNextOrPrevColumn(true, dataTable.getValueAt(1, 1).toString()), 1, 1);
+			}else if(key == 'L') {
+				dataTable.setValueAt(Main.dataTable.getNextOrPrevColumn(false, dataTable.getValueAt(1, 1).toString()), 1, 1);
+			}
+		}else if(row == 2) {
 			if(key == 'R' || key == 'L') {
 				dataTable.setValueAt(dataTable.getValueAt(2, 1).toString().charAt(0) == 'E' ? "Gyakorlat" : "Elõadás", 2, 1);
 			}
@@ -175,7 +234,7 @@ public final class ButtonEditorGui extends AbstractAction{
 	public static final class CustomCellRenderer extends DefaultTableCellRenderer{
 		@Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			cell.setForeground(column == 0 || row == 1 ? Color.DARK_GRAY : Color.BLACK);
+			cell.setForeground(column == 0 ? Color.DARK_GRAY : Color.BLACK);
 			return cell;
 		}
 	}

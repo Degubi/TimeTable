@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 
-public final class JButtonTable<T extends JButton> extends JComponent {
+public final class ButtonTable<T extends JButton> extends JComponent {
 	public static final Font tableHeaderFont = new Font("TimesRoman", Font.BOLD, 20);
 	
 	private final List<T> dataButtonList = new ArrayList<>();
@@ -24,7 +24,7 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 	private final int[] horizontalIndexers;
 	private final int cellWidth, cellHeight;
 	
-	public JButtonTable(int cellWidth, int cellHeight, int x, int y, boolean addListener, String... columnNames) {
+	public ButtonTable(int cellWidth, int cellHeight, int x, int y, boolean addListener, String... columnNames) {
 		horizontalIndexers = new int[columnNames.length];
 		this.cellWidth = cellWidth;
 		this.cellHeight = cellHeight;
@@ -47,7 +47,7 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public JButtonTable(int perCellWidth, int perCellHeight, int x, int y, Map<String, List<String>> bigData, String currentRoom) {
+	public ButtonTable(int perCellWidth, int perCellHeight, int x, int y, Map<String, List<String>> bigData, String currentRoom) {
 		this(perCellWidth, perCellHeight, x, y, false, bigData.keySet().toArray(new String[0]));
 		
 		bigData.forEach((columnName, rows) -> rows.forEach(row -> {
@@ -91,6 +91,11 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 		Arrays.fill(horizontalIndexers, 0);
 	}
 	
+	public String getNextOrPrevColumn(boolean isNext, String day) {
+		int currentIndex = indexOf(day);
+		return isNext ? columns[currentIndex == columns.length - 1 ? 0 : ++currentIndex] : columns[currentIndex == 0 ? columns.length - 1 : --currentIndex];
+	}
+	
 	public Optional<T> findFirstButton(Predicate<T> predicate){ return dataButtonList.stream().filter(predicate).findFirst(); }
 	public Stream<T> tableDataStream(){ return dataButtonList.stream(); }
 	public void tableAdd(T button) { dataButtonList.add(button); }
@@ -115,7 +120,7 @@ public final class JButtonTable<T extends JButton> extends JComponent {
 		@Override
 		public void mousePressed(MouseEvent event) {
 			if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-				ButtonEditorGui.showEditorGui(true, new ClassDataButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false"));
+				PopupGuis.showEditorGui(true, new ClassButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false"));
 			}
 		}
 	}

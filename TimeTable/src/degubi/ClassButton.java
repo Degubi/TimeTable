@@ -12,6 +12,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,18 +25,19 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.border.LineBorder;
 
-public final class ClassDataButton extends JButton implements MouseListener{
-	private static final Comparator<ClassDataButton> sorter = Comparator.<ClassDataButton>comparingInt(button -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime);
+public final class ClassButton extends JButton implements MouseListener{
+	private static final Comparator<ClassButton> sorter = Comparator.<ClassButton>comparingInt(button -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime);
 	private static boolean nextHourFound = false;
-	public static ClassDataButton currentClassButton;
+	public static ClassButton currentClassButton;
 	
 	public final String day;
 	public final LocalTime startTime, endTime;
 	public final String className, classType, room;
 	public final boolean unImportant;
 	
-	public ClassDataButton(String line) {
+	public ClassButton(String line) {
 		String[] data = line.split(" ");
 		
 		day = data[0];
@@ -69,11 +71,11 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			currentClassButton = this;
 			Main.tray.setToolTip("Következõ óra: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
-		setBackground(unImportant ? Color.LIGHT_GRAY : isCurrent ? calmRed : isBefore ? calmGreen : isAfter ? calmYellow : calmBlue);
+		setBackground(unImportant ? unimportantClassColor : isCurrent ? currentClassColor : isBefore ? upcomingClassColor : isAfter ? pastClassColor : otherClassColor);
 	}
 	
 	private static void rewriteFile() {
-		List<String> dataLines = Main.dataTable.tableDataStream().map(ClassDataButton::toString).collect(Collectors.toList());
+		List<String> dataLines = Main.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
 		reloadData(dataLines);
 		
 		try {
@@ -93,16 +95,16 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			editFrame.setLocationRelativeTo(null);
 			editFrame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
 			
-			editFrame.add(newEditButton(32, "Törlés", ButtonEditorGui.deleteIcon, e -> {
+			editFrame.add(newEditButton(32, "Törlés", PopupGuis.deleteIcon, e -> {
 				if(JOptionPane.showConfirmDialog(Main.frame, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
 					Main.dataTable.tableRemove(this);
 					rewriteFile();
 				}
 			}));
-			editFrame.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? ButtonEditorGui.unIgnore : ButtonEditorGui.ignoreIcon, e -> {
+			editFrame.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
 				addOrReplaceButton(false, this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant);
 			}));
-			editFrame.add(newEditButton(0, "Szerkesztés", ButtonEditorGui.editIcon, e -> ButtonEditorGui.showEditorGui(false, this)));
+			editFrame.add(newEditButton(0, "Szerkesztés", PopupGuis.editIcon, e -> PopupGuis.showEditorGui(false, this)));
 			editFrame.setVisible(true);
 		}
 	}
@@ -111,11 +113,11 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		Main.dataTable.resetTable();
 		
 		dataLines.stream()
-				 .map(ClassDataButton::new)
+				 .map(ClassButton::new)
 				 .sorted(sorter)
 				 .forEach(button -> Main.dataTable.tableAdd(button.day, button));
 		
-		ClassDataButton.updateAllButtons(true);
+		ClassButton.updateAllButtons(true);
 	}
 	
 	public static void updateAllButtons(boolean setVisible) {
@@ -133,7 +135,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 			currentClassButton = null;
 		}
 		
-		Main.frame.getContentPane().setBackground(Main.isDarkMode(now) ? Color.DARK_GRAY : new Color(240, 240, 240));
+		Main.handleNightMode(Main.frame.getContentPane());
 		Main.frame.repaint();
 	}
 	
@@ -148,11 +150,11 @@ public final class ClassDataButton extends JButton implements MouseListener{
 		}
 	}
 	
-	public static void addOrReplaceButton(boolean add, ClassDataButton toRemove, String newDataForButton) {
+	public static void addOrReplaceButton(boolean add, ClassButton toRemove, String newDataForButton) {
 		if(!add) {
 			Main.dataTable.tableRemove(toRemove);
 		}
-		Main.dataTable.tableAdd(new ClassDataButton(newDataForButton));
+		Main.dataTable.tableAdd(new ClassButton(newDataForButton));
 		rewriteFile();
 	}
 	
@@ -176,7 +178,7 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
 		JButton butt = new JButton(icon);
 		butt.setToolTipText(tooltip);
-		butt.setBorder(Main.blackThinBorder);
+		butt.setBorder(new LineBorder(Color.BLACK, 1));
 		butt.setBackground(new Color(240, 240, 240));
 		butt.setBounds(0, yPos, 32, 32);
 		butt.addActionListener(listener);
@@ -185,8 +187,11 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	
 	@Override
 	public boolean equals(Object obj) {
-		if(obj instanceof ClassDataButton) {
-			ClassDataButton button = (ClassDataButton) obj;
+		if(obj == this) {
+			return true;
+		}
+		if(obj instanceof ClassButton) {
+			ClassButton button = (ClassButton) obj;
 			return className.equals(button.className) && day.equals(button.day) && classType.equals(button.classType) && startTime.equals(button.startTime) && endTime.equals(button.endTime) && room.equals(button.room);
 		}
 		return false;
@@ -200,9 +205,9 @@ public final class ClassDataButton extends JButton implements MouseListener{
 	
 	private static Map<String, List<String>> createRoomData(){
 		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
-		map.put("TIK", List.of("Kongresszusi", "Alagsor1"));
-		map.put("Irinyi", List.of("217", "218", "222", "225"));
-		map.put("Bolyai", List.of("Kerkékjártó", "Farkas"));
+		map.put("TIK", toList("Kongresszusi", "Alagsor1"));
+		map.put("Irinyi", toList("217", "218", "222", "225"));
+		map.put("Bolyai", toList("Kerkékjártó", "Farkas"));
 		return map;
 	}
 	
@@ -217,8 +222,15 @@ public final class ClassDataButton extends JButton implements MouseListener{
 					    .orElse("Ismeretlen Épület");
 	}
 	
-	public static final Color calmRed = new Color(255, 69, 69);
-	private static final Color calmGreen = new Color(0, 147, 3);
-	private static final Color calmBlue = new Color(84, 113, 142);
-	private static final Color calmYellow = new Color(247, 238, 90);
+	private static List<String> toList(String... data){
+		List<String> toReturn = new ArrayList<>(data.length);
+		for(String asd : data) toReturn.add(asd);
+		return toReturn;
+	}
+	
+	public static Color currentClassColor = Main.settingsFile.getColor("currentClassColor", 255, 69, 69);
+	public static Color upcomingClassColor = Main.settingsFile.getColor("upcomingClassColor", 0, 147, 3);
+	public static Color otherClassColor = Main.settingsFile.getColor("otherClassColor", 84, 113, 142);
+	public static Color pastClassColor = Main.settingsFile.getColor("pastClassColor", 247, 238, 90);
+	public static Color unimportantClassColor = Main.settingsFile.getColor("unimportantClassColor", 192, 192, 192);
 }

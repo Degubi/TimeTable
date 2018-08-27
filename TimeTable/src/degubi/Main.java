@@ -2,6 +2,7 @@ package degubi;
 
 import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -9,6 +10,7 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -37,12 +39,13 @@ import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
 public final class Main extends WindowAdapter implements MouseListener{
-	public static final LineBorder blackThinBorder = new LineBorder(Color.BLACK, 1), blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(ClassDataButton.calmRed, 3);
+	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final Path dataFilePath = Paths.get("classData.txt");
-	public static final JButtonTable<ClassDataButton> dataTable = new JButtonTable<>(150, 96, 30, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 30, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
 	
 	public static void main(String[] args) throws AWTException, IOException, LineUnavailableException, UnsupportedAudioFileException {
 		frame.setLayout(null);
@@ -52,13 +55,13 @@ public final class Main extends WindowAdapter implements MouseListener{
 		
 		if(!Files.exists(dataFilePath)) Files.write(Main.dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 		
-		ClassDataButton.reloadData(Files.readAllLines(dataFilePath));
+		ClassButton.reloadData(Files.readAllLines(dataFilePath));
 		
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
 		JLabel label = new JLabel(LocalDateTime.now().format(displayTimeFormat));
 		label.setForeground(isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
 		label.setBounds(360, 5, 300, 40);
-		label.setFont(JButtonTable.tableHeaderFont);
+		label.setFont(ButtonTable.tableHeaderFont);
 		
 		Main main = new Main();
 		frame.setResizable(false);
@@ -82,7 +85,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
 			if(!frame.isVisible()) {
 				LocalTime now = LocalTime.now();
-				ClassDataButton current = ClassDataButton.currentClassButton;
+				ClassButton current = ClassButton.currentClassButton;
 	
 				if(current != null && now.isBefore(current.startTime)) {
 					long timeBetween = ChronoUnit.MINUTES.between(now, current.startTime);
@@ -93,18 +96,21 @@ public final class Main extends WindowAdapter implements MouseListener{
 					}
 				}
 				label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
-				ClassDataButton.updateAllButtons(false);
+				ClassButton.updateAllButtons(false);
 			}
 		}, 10, 10, TimeUnit.MINUTES);
 		
 		SystemTray.getSystemTray().add(tray);
 		PopupMenu popMenu = new PopupMenu();
-		MenuItem exitItem = new MenuItem("Bezárás");
-		exitItem.addActionListener(e -> System.exit(0));
-		MenuItem openItem = new MenuItem("Megnyitás");
-		openItem.addActionListener(e -> ClassDataButton.updateAllButtons(true));
-		popMenu.add(openItem);
-		popMenu.add(exitItem);
+		popMenu.add(newMenuItem("Megnyitás", e -> {
+			frame.setExtendedState(JFrame.NORMAL);
+			ClassButton.updateAllButtons(true);
+		}));
+		popMenu.addSeparator();
+		popMenu.add(newMenuItem("Színbeállítások", e -> PopupGuis.showColorPickerGui()));
+		popMenu.add(newMenuItem("Idõbeállítások", e -> PopupGuis.showTimeSettingsGui()));
+		popMenu.addSeparator();
+		popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
 		
 		tray.addMouseListener(main);
 		tray.setPopupMenu(popMenu);
@@ -115,7 +121,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 		if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
 			frame.setExtendedState(JFrame.NORMAL);
 			frame.setVisible(true);
-			ClassDataButton.updateAllButtons(true);
+			ClassButton.updateAllButtons(true);
 		}
 	}
 	
@@ -126,8 +132,22 @@ public final class Main extends WindowAdapter implements MouseListener{
 	
 	@Override public void mouseReleased(MouseEvent e) {} @Override public void mouseClicked(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 
-	private static final LocalTime afterSeven = LocalTime.of(19, 0), beforeSeven = LocalTime.of(7, 0);
+	public static LocalTime dayTimeStart = LocalTime.parse(settingsFile.get("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
+	public static LocalTime dayTimeEnd = LocalTime.parse(settingsFile.get("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
+	public static Color dayTimeColor = Main.settingsFile.getColor("dayTimeColor", 240, 240, 240);
+	public static Color nightTimeColor = Main.settingsFile.getColor("nightTimeColor", 64, 64, 64);
+
+	private static MenuItem newMenuItem(String text, ActionListener listener) {
+		MenuItem item = new MenuItem(text);
+		item.addActionListener(listener);
+		return item;
+	}
+	
 	public static boolean isDarkMode(LocalTime now) {
-		return now.isAfter(afterSeven) || now.isBefore(beforeSeven);
+		return now.isAfter(dayTimeEnd) || now.isBefore(dayTimeStart);
+	}
+	
+	public static void handleNightMode(Container container) {
+		container.setBackground(isDarkMode(LocalTime.now()) ? nightTimeColor : dayTimeColor);
 	}
 }
