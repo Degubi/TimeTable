@@ -93,7 +93,7 @@ public final class PopupGuis extends AbstractAction{
 		}, dataTable);
 	}
 	
-	public static void showColorPickerGui() {
+	public static void showSettingsGui() {
 		JButton currentClass = newColorButton(20, ClassButton.currentClassColor);
 		JButton beforeClass = newColorButton(80, ClassButton.upcomingClassColor);
 		JButton otherClass = newColorButton(140, ClassButton.otherClassColor);
@@ -102,7 +102,12 @@ public final class PopupGuis extends AbstractAction{
 		JButton dayTimeColor = newColorButton(320, Main.dayTimeColor);
 		JButton nightTimeColor = newColorButton(380, Main.nightTimeColor);
 		
-		showNewDialog("Színbeállítások", 300, 600, frame -> {
+		JTextField startField = new JTextField(Main.dayTimeStart.toString());
+		startField.setBounds(400, 60, 40, 20);
+		JTextField endField = new JTextField(Main.dayTimeEnd.toString());
+		endField.setBounds(400, 120, 40, 20);
+		
+		showNewDialog("Beállítások", 600, 600, frame -> {
 			Main.settingsFile.setColor("currentClassColor", ClassButton.currentClassColor = currentClass.getBackground());
 			Main.settingsFile.setColor("upcomingClassColor", ClassButton.upcomingClassColor = beforeClass.getBackground());
 			Main.settingsFile.setColor("otherClassColor", ClassButton.otherClassColor = otherClass.getBackground());
@@ -110,27 +115,18 @@ public final class PopupGuis extends AbstractAction{
 			Main.settingsFile.setColor("unimportantClassColor", ClassButton.unimportantClassColor = unimportantClass.getBackground());
 			Main.settingsFile.setColor("dayTimeColor", Main.dayTimeColor = dayTimeColor.getBackground());
 			Main.settingsFile.setColor("nightTimeColor", Main.nightTimeColor = nightTimeColor.getBackground());
-			ClassButton.updateAllButtons(false);
-			frame.dispose();
-		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
-					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
-					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor);
-	}
-	
-	public static void showTimeSettingsGui() {
-		JTextField startField = new JTextField(Main.dayTimeStart.toString());
-		startField.setBounds(60, 60, 40, 20);
-		JTextField endField = new JTextField(Main.dayTimeEnd.toString());
-		endField.setBounds(240, 60, 40, 20);
-		
-		showNewDialog("Idõbeállítások", 400, 300, frame -> {
+			
 			Main.dayTimeStart = LocalTime.parse(startField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
 			Main.settingsFile.set("dayTimeStart", startField.getText());
 			Main.dayTimeEnd = LocalTime.parse(endField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
 			Main.settingsFile.set("dayTimeEnd", endField.getText());
+			
 			ClassButton.updateAllButtons(false);
 			frame.dispose();
-		}, newLabel("Nappali Idõszak Kezdete:", 30, 20), newLabel("Nappali Idõszak Vége:", 200, 20), startField, endField);
+		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
+					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
+					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor,
+					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startField, endField);
 	}
 	
 	private static JButton newColorButton(int y, Color startColor) {

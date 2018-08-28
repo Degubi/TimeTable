@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,7 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.border.LineBorder;
 
 public final class ClassButton extends JButton implements MouseListener{
-	private static final Comparator<ClassButton> sorter = Comparator.<ClassButton>comparingInt(button -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime);
+	private static final Comparator<ClassButton> sorter = Comparator.<ClassButton>comparingInt(button -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime).thenComparing(button -> button.className);
 	private static boolean nextHourFound = false;
 	public static ClassButton currentClassButton;
 	
@@ -79,7 +80,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		reloadData(dataLines);
 		
 		try {
-			Files.write(Main.dataFilePath, dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+			Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -135,6 +136,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			currentClassButton = null;
 		}
 		
+		Main.label.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
 		Main.handleNightMode(Main.frame.getContentPane());
 		Main.frame.repaint();
 	}
@@ -206,7 +208,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	private static Map<String, List<String>> createRoomData(){
 		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
 		map.put("TIK", toList("Kongresszusi", "Alagsor1"));
-		map.put("Irinyi", toList("217", "218", "222", "225"));
+		map.put("Irinyi", toList("214", "217", "218", "222", "225"));
 		map.put("Bolyai", toList("Kerkékjártó", "Farkas"));
 		return map;
 	}

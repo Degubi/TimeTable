@@ -1,6 +1,7 @@
 package degubi;
 
 import java.awt.AWTException;
+import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Image;
@@ -43,9 +44,9 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public static final JFrame frame = new JFrame("TimeTable");
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-	public static final Path dataFilePath = Paths.get("classData.txt");
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 30, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
+	public static final JLabel label = new JLabel();
 	
 	public static void main(String[] args) throws AWTException, IOException, LineUnavailableException, UnsupportedAudioFileException {
 		frame.setLayout(null);
@@ -53,13 +54,13 @@ public final class Main extends WindowAdapter implements MouseListener{
 		frame.setBounds(0, 0, 1024, 768);
 		frame.setLocationRelativeTo(null);
 		
-		if(!Files.exists(dataFilePath)) Files.write(Main.dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+		Path dataFilePath = Paths.get("classData.txt");
+		if(!Files.exists(dataFilePath)) Files.write(dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 		
 		ClassButton.reloadData(Files.readAllLines(dataFilePath));
 		
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
-		JLabel label = new JLabel(LocalDateTime.now().format(displayTimeFormat));
-		label.setForeground(isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
+		CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
 		label.setBounds(360, 5, 300, 40);
 		label.setFont(ButtonTable.tableHeaderFont);
 		
@@ -87,7 +88,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 				LocalTime now = LocalTime.now();
 				ClassButton current = ClassButton.currentClassButton;
 	
-				if(current != null && now.isBefore(current.startTime)) {
+				if(!sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
 					long timeBetween = ChronoUnit.MINUTES.between(now, current.startTime);
 					if(timeBetween < 60) {
 						beepBoop.setMicrosecondPosition(0);
@@ -107,8 +108,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 			ClassButton.updateAllButtons(true);
 		}));
 		popMenu.addSeparator();
-		popMenu.add(newMenuItem("Színbeállítások", e -> PopupGuis.showColorPickerGui()));
-		popMenu.add(newMenuItem("Idõbeállítások", e -> PopupGuis.showTimeSettingsGui()));
+		popMenu.add(newMenuItem("Beállítások", e -> PopupGuis.showSettingsGui()));
+		popMenu.add(sleepMode);
 		popMenu.addSeparator();
 		popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
 		
@@ -117,21 +118,10 @@ public final class Main extends WindowAdapter implements MouseListener{
 	}
 	
 	@Override
-	public void mousePressed(MouseEvent event) {
-		if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-			frame.setExtendedState(JFrame.NORMAL);
-			frame.setVisible(true);
-			ClassButton.updateAllButtons(true);
-		}
-	}
-	
-	@Override
 	public void windowIconified(WindowEvent e) {
 		frame.setVisible(false);
 	}
 	
-	@Override public void mouseReleased(MouseEvent e) {} @Override public void mouseClicked(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
-
 	public static LocalTime dayTimeStart = LocalTime.parse(settingsFile.get("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 	public static LocalTime dayTimeEnd = LocalTime.parse(settingsFile.get("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 	public static Color dayTimeColor = Main.settingsFile.getColor("dayTimeColor", 240, 240, 240);
@@ -150,4 +140,15 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public static void handleNightMode(Container container) {
 		container.setBackground(isDarkMode(LocalTime.now()) ? nightTimeColor : dayTimeColor);
 	}
+
+
+	@Override
+	public void mousePressed(MouseEvent event) {
+		if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
+			ClassButton.updateAllButtons(true);
+			frame.setExtendedState(JFrame.NORMAL);
+		}
+	}
+	
+	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 }
