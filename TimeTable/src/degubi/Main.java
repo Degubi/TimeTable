@@ -107,6 +107,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 						Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
 					}
 				}
+				
 				label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
 				ClassButton.updateAllButtons(false);
 			}
