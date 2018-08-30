@@ -13,7 +13,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,7 +75,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	}
 	
 	private static void rewriteFile() {
-		List<String> dataLines = Main.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
+		var dataLines = Main.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
 		reloadData(dataLines);
 		
 		try {
@@ -207,9 +206,10 @@ public final class ClassButton extends JButton implements MouseListener{
 	
 	private static Map<String, List<String>> createRoomData(){
 		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
-		map.put("TIK", toList("Kongresszusi", "Alagsor1"));
-		map.put("Irinyi", toList("214", "217", "218", "222", "225"));
-		map.put("Bolyai", toList("Kerkékjártó", "Farkas"));
+		map.put("TIK", List.of("Kongresszusi", "Alagsor1"));
+		map.put("Irinyi", List.of("214", "217", "218", "222", "225"));
+		map.put("Bolyai", List.of("Kerkékjártó", "Farkas"));
+		map.put("Külvilág", List.of("Teniszpálya"));
 		return map;
 	}
 	
@@ -222,12 +222,6 @@ public final class ClassButton extends JButton implements MouseListener{
 					    .map(Entry::getKey)
 					    .findFirst()
 					    .orElse("Ismeretlen Épület");
-	}
-	
-	private static List<String> toList(String... data){
-		List<String> toReturn = new ArrayList<>(data.length);
-		for(String asd : data) toReturn.add(asd);
-		return toReturn;
 	}
 	
 	public static Color currentClassColor = Main.settingsFile.getColor("currentClassColor", 255, 69, 69);

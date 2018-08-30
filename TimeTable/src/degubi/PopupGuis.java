@@ -93,7 +93,7 @@ public final class PopupGuis extends AbstractAction{
 		}, dataTable);
 	}
 	
-	public static void showSettingsGui() {
+	public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
 		JButton currentClass = newColorButton(20, ClassButton.currentClassColor);
 		JButton beforeClass = newColorButton(80, ClassButton.upcomingClassColor);
 		JButton otherClass = newColorButton(140, ClassButton.otherClassColor);

@@ -4,18 +4,23 @@ import java.awt.AWTException;
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,11 +34,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -48,7 +55,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
 	public static final JLabel label = new JLabel();
 	
-	public static void main(String[] args) throws AWTException, IOException, LineUnavailableException, UnsupportedAudioFileException {
+	public static void main(String[] args) throws AWTException, IOException {
 		frame.setLayout(null);
 		frame.add(dataTable);
 		frame.setBounds(0, 0, 1024, 768);
@@ -65,6 +72,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 		label.setFont(ButtonTable.tableHeaderFont);
 		
 		Main main = new Main();
+		
 		frame.setResizable(false);
 		frame.add(label);
 		frame.addWindowListener(main);
@@ -74,14 +82,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
 			if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
 		}, 0, 1, TimeUnit.SECONDS);
-
-		@SuppressWarnings("resource")
-		Clip beepBoop = AudioSystem.getClip();
-		
-		try(AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"))){
-			beepBoop.open(audioInputStream);
-			((FloatControl) beepBoop.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
-		}
 		
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
 			if(!frame.isVisible()) {
@@ -90,9 +90,20 @@ public final class Main extends WindowAdapter implements MouseListener{
 	
 				if(!sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
 					long timeBetween = ChronoUnit.MINUTES.between(now, current.startTime);
+					
 					if(timeBetween < 60) {
-						beepBoop.setMicrosecondPosition(0);
-						beepBoop.start();
+						try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
+							SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
+							
+							line.open();
+							((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
+							line.start();
+							byte[] buf = new byte[8900];
+							stream.read(buf);
+							line.write(buf, 0, 8900);
+							line.drain();
+						}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
+						
 						Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
 					}
 				}
@@ -108,7 +119,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 			ClassButton.updateAllButtons(true);
 		}));
 		popMenu.addSeparator();
-		popMenu.add(newMenuItem("Beállítások", e -> PopupGuis.showSettingsGui()));
+		popMenu.add(newMenuItem("Beállítások", PopupGuis::showSettingsGui));
+		popMenu.add(newMenuItem("Órarend Fénykép", Main::createScreenshot));
 		popMenu.add(sleepMode);
 		popMenu.addSeparator();
 		popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
@@ -131,6 +143,15 @@ public final class Main extends WindowAdapter implements MouseListener{
 		MenuItem item = new MenuItem(text);
 		item.addActionListener(listener);
 		return item;
+	}
+	
+	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
+		if(frame.isVisible()) {
+			var window = frame.getLocationOnScreen();
+			try {
+				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
+			} catch (HeadlessException | AWTException | IOException e1) {}
+		}
 	}
 	
 	public static boolean isDarkMode(LocalTime now) {
