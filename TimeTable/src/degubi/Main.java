@@ -42,6 +42,7 @@ import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
@@ -55,10 +56,16 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
 	public static final JLabel label = new JLabel();
 	
+	private final JDialog passFrame;
+	
+	public Main(JDialog frame) {
+		passFrame = frame;
+	}
+	
 	public static void main(String[] args) throws AWTException, IOException {
 		frame.setLayout(null);
 		frame.add(dataTable);
-		frame.setBounds(0, 0, 1024, 768);
+		frame.setBounds(0, 0, 960, 768);
 		frame.setLocationRelativeTo(null);
 		
 		Path dataFilePath = Paths.get("classData.txt");
@@ -68,10 +75,10 @@ public final class Main extends WindowAdapter implements MouseListener{
 		
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
 		CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
-		label.setBounds(360, 5, 300, 40);
+		label.setBounds(310, 5, 300, 40);
 		label.setFont(ButtonTable.tableHeaderFont);
 		
-		Main main = new Main();
+		Main main = new Main(null);
 		
 		frame.setResizable(false);
 		frame.add(label);
@@ -131,13 +138,18 @@ public final class Main extends WindowAdapter implements MouseListener{
 	
 	@Override
 	public void windowIconified(WindowEvent e) {
-		frame.setVisible(false);
+		if(passFrame == null) frame.setVisible(false);
+	}
+	
+	@Override
+	public void windowLostFocus(WindowEvent event) {
+		if(passFrame != null) passFrame.dispose();
 	}
 	
 	public static LocalTime dayTimeStart = LocalTime.parse(settingsFile.get("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 	public static LocalTime dayTimeEnd = LocalTime.parse(settingsFile.get("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-	public static Color dayTimeColor = Main.settingsFile.getColor("dayTimeColor", 240, 240, 240);
-	public static Color nightTimeColor = Main.settingsFile.getColor("nightTimeColor", 64, 64, 64);
+	public static Color dayTimeColor = settingsFile.getColor("dayTimeColor", 240, 240, 240);
+	public static Color nightTimeColor = settingsFile.getColor("nightTimeColor", 64, 64, 64);
 
 	private static MenuItem newMenuItem(String text, ActionListener listener) {
 		MenuItem item = new MenuItem(text);

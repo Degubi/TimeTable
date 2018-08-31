@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 
-public final class ButtonTable<T extends JButton> extends JComponent {
+public final class ButtonTable<T extends JButton> extends JComponent{
 	public static final Font tableHeaderFont = new Font("TimesRoman", Font.BOLD, 20);
 	
 	private final List<T> dataButtonList = new ArrayList<>();

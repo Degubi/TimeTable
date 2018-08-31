@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -28,8 +26,6 @@ import javax.swing.JOptionPane;
 import javax.swing.border.LineBorder;
 
 public final class ClassButton extends JButton implements MouseListener{
-	private static final Comparator<ClassButton> sorter = Comparator.<ClassButton>comparingInt(button -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime).thenComparing(button -> button.className);
-	private static boolean nextHourFound = false;
 	public static ClassButton currentClassButton;
 	
 	public final String day;
@@ -64,10 +60,9 @@ public final class ClassButton extends JButton implements MouseListener{
 		boolean isBefore = isToday && todayTime.isBefore(startTime);
 		boolean isBetween = isToday && todayTime.isAfter(startTime) && todayTime.isBefore(endTime);
 		boolean isAfter = isToday && (todayTime.isAfter(endTime) || todayTime.equals(endTime));
-		boolean isCurrent = !nextHourFound && !unImportant && isBefore || isBetween || (isToday && todayTime.equals(startTime));
+		boolean isCurrent = currentClassButton == null && !unImportant && isBefore || isBetween || (isToday && todayTime.equals(startTime));
 		
 		if(isCurrent) {
-			nextHourFound = true;
 			currentClassButton = this;
 			Main.tray.setToolTip("Következõ óra: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
@@ -89,7 +84,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	public void mousePressed(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON3) {
 			JDialog editFrame = new JDialog(Main.frame);
-			editFrame.addWindowFocusListener(new ButtonFocusHandler(editFrame));
+			editFrame.addWindowFocusListener(new Main(editFrame));
 			editFrame.setLayout(null);
 			editFrame.setUndecorated(true);
 			editFrame.setLocationRelativeTo(null);
@@ -114,7 +109,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		
 		dataLines.stream()
 				 .map(ClassButton::new)
-				 .sorted(sorter)
+				 .sorted(Comparator.comparingInt((ClassButton button) -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime).thenComparing(button -> button.className))
 				 .forEach(button -> Main.dataTable.tableAdd(button.day, button));
 		
 		ClassButton.updateAllButtons(true);
@@ -124,15 +119,14 @@ public final class ClassButton extends JButton implements MouseListener{
 		if(setVisible) {
 			Main.frame.setVisible(true);
 		}
-		nextHourFound = false;
+		currentClassButton = null;
 		
 		String today = toHunDay(LocalDateTime.now().getDayOfWeek().name());
 		LocalTime now = LocalTime.now();
 		
 		Main.dataTable.forEachData(button -> button.updateButton(today, now));
-		if(!nextHourFound) {
+		if(currentClassButton == null) {
 			Main.tray.setToolTip("Nincs mára több óra! :)");
-			currentClassButton = null;
 		}
 		
 		Main.label.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
@@ -157,21 +151,6 @@ public final class ClassButton extends JButton implements MouseListener{
 		}
 		Main.dataTable.tableAdd(new ClassButton(newDataForButton));
 		rewriteFile();
-	}
-	
-	
-	
-	public static final class ButtonFocusHandler extends WindowAdapter{
-		private final JDialog frame;
-		
-		public ButtonFocusHandler(JDialog frame) {
-			this.frame = frame;
-		}
-
-		@Override
-		public void windowLostFocus(WindowEvent event) {
-			frame.dispose();
-		}
 	}
 	
 	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}

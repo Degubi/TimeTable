@@ -8,8 +8,8 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
@@ -27,7 +27,7 @@ import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-public final class PopupGuis extends AbstractAction{
+public final class PopupGuis extends AbstractAction implements MouseListener{
 	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
@@ -54,7 +54,7 @@ public final class PopupGuis extends AbstractAction{
 	
 	public static void showEditorGui(boolean isNew, ClassButton dataButton) {
 		JTable dataTable = new JTable(new TableModel());
-		dataTable.addMouseListener(new TableClickListener(dataTable));
+		dataTable.addMouseListener(new PopupGuis('0', dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
 		dataTable.setRowHeight(20);
 		CustomCellRenderer cellRenderer = new CustomCellRenderer();
@@ -156,7 +156,7 @@ public final class PopupGuis extends AbstractAction{
 		dial.setLayout(null);
 		dial.setResizable(false);
 		dial.setBounds(0, 0, width, height);
-		dial.setLocationRelativeTo(null);
+		dial.setLocationRelativeTo(Main.frame);
 		if(saveListener != null) {
 			JButton saveButton = new JButton("Mentés");
 			saveButton.setFocusable(false);
@@ -205,21 +205,15 @@ public final class PopupGuis extends AbstractAction{
 		}
 	}
 	
-	
-	public static final class TableClickListener extends MouseAdapter{
-		private final JTable table;
-		
-		public TableClickListener(JTable table) {
-			this.table = table;
-		}
 
-		@Override
-		public void mousePressed(MouseEvent event) {
-			if(event.getClickCount() == 2 && table.getSelectedColumn() == 1 && table.getSelectedRow() == 5) {
-				showRoomFinder(table);
-			}
+	@Override
+	public void mousePressed(MouseEvent event) {
+		if(event.getClickCount() == 2 && dataTable.getSelectedColumn() == 1 && dataTable.getSelectedRow() == 5) {
+			showRoomFinder(dataTable);
 		}
 	}
+
+	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 	
 	public static final class TableModel extends DefaultTableModel{
 		@Override public int getRowCount() { return 6; }
