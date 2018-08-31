@@ -71,7 +71,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	
 	private static void rewriteFile() {
 		var dataLines = Main.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
-		reloadData(dataLines);
+		reloadData(dataLines, true);
 		
 		try {
 			Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
@@ -104,7 +104,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		}
 	}
 
-	public static void reloadData(List<String> dataLines) {
+	public static void reloadData(List<String> dataLines, boolean showFrame) {
 		Main.dataTable.resetTable();
 		
 		dataLines.stream()
@@ -112,7 +112,7 @@ public final class ClassButton extends JButton implements MouseListener{
 				 .sorted(Comparator.comparingInt((ClassButton button) -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime).thenComparing(button -> button.className))
 				 .forEach(button -> Main.dataTable.tableAdd(button.day, button));
 		
-		ClassButton.updateAllButtons(true);
+		ClassButton.updateAllButtons(showFrame);
 	}
 	
 	public static void updateAllButtons(boolean setVisible) {

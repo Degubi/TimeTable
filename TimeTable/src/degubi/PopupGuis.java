@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -107,6 +108,11 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		JTextField endField = new JTextField(Main.dayTimeEnd.toString());
 		endField.setBounds(400, 120, 40, 20);
 		
+		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", Main.enablePopups);
+		popupCheckBox.setOpaque(false);
+		popupCheckBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
+		popupCheckBox.setBounds(350, 160, 200, 20);
+		
 		showNewDialog("Beállítások", 600, 600, frame -> {
 			Main.settingsFile.setColor("currentClassColor", ClassButton.currentClassColor = currentClass.getBackground());
 			Main.settingsFile.setColor("upcomingClassColor", ClassButton.upcomingClassColor = beforeClass.getBackground());
@@ -120,13 +126,14 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 			Main.settingsFile.set("dayTimeStart", startField.getText());
 			Main.dayTimeEnd = LocalTime.parse(endField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
 			Main.settingsFile.set("dayTimeEnd", endField.getText());
+			Main.settingsFile.setBoolean("enablePopups", Main.enablePopups = popupCheckBox.isSelected());
 			
 			ClassButton.updateAllButtons(false);
 			frame.dispose();
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
 					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor,
-					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startField, endField);
+					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startField, endField, popupCheckBox);
 	}
 	
 	private static JButton newColorButton(int y, Color startColor) {

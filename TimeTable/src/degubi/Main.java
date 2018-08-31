@@ -63,77 +63,77 @@ public final class Main extends WindowAdapter implements MouseListener{
 	}
 	
 	public static void main(String[] args) throws AWTException, IOException {
-		frame.setLayout(null);
-		frame.add(dataTable);
-		frame.setBounds(0, 0, 960, 768);
-		frame.setLocationRelativeTo(null);
+		if(args.length > 0) {
+			frame.setLayout(null);
+			frame.add(dataTable);
+			frame.setBounds(0, 0, 960, 768);
+			frame.setLocationRelativeTo(null);
+			
+			Path dataFilePath = Paths.get("classData.txt");
+			if(!Files.exists(dataFilePath)) Files.write(dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+			
+			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].equals("-full"));
+			
+			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
+			CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
+			Main main = new Main(null);
+			label.setBounds(310, 5, 300, 40);
+			label.setFont(ButtonTable.tableHeaderFont);
+			frame.setResizable(false);
+			frame.add(label);
+			frame.addWindowListener(main);
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setIconImage(icon);
+			
+			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+				if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
+			}, 0, 1, TimeUnit.SECONDS);
+			
+			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+				if(!frame.isVisible()) {
+					LocalTime now = LocalTime.now();
+					ClassButton current = ClassButton.currentClassButton;
 		
-		Path dataFilePath = Paths.get("classData.txt");
-		if(!Files.exists(dataFilePath)) Files.write(dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
-		
-		ClassButton.reloadData(Files.readAllLines(dataFilePath));
-		
-		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy MM dd, EEEE HH:mm:ss");
-		CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
-		label.setBounds(310, 5, 300, 40);
-		label.setFont(ButtonTable.tableHeaderFont);
-		
-		Main main = new Main(null);
-		
-		frame.setResizable(false);
-		frame.add(label);
-		frame.addWindowListener(main);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setIconImage(icon);
-		
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-			if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
-		}, 0, 1, TimeUnit.SECONDS);
-		
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-			if(!frame.isVisible()) {
-				LocalTime now = LocalTime.now();
-				ClassButton current = ClassButton.currentClassButton;
-	
-				if(!sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
-					long timeBetween = ChronoUnit.MINUTES.between(now, current.startTime);
-					
-					if(timeBetween < 60) {
-						try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
-							SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
-							
-							line.open();
-							((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
-							line.start();
-							byte[] buf = new byte[8900];
-							stream.read(buf);
-							line.write(buf, 0, 8900);
-							line.drain();
-						}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
+					if(enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
+						long timeBetween = ChronoUnit.MINUTES.between(now, current.startTime);
 						
-						Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
+						if(timeBetween < 60) {
+							try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
+								SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
+								
+								line.open();
+								((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
+								line.start();
+								byte[] buf = new byte[8900];
+								stream.read(buf);
+								line.write(buf, 0, 8900);
+								line.drain();
+							}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
+							
+							Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
+						}
 					}
+					label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
+					ClassButton.updateAllButtons(false);
 				}
-				label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
-				ClassButton.updateAllButtons(false);
-			}
-		}, 10, 10, TimeUnit.MINUTES);
+			}, 10, 10, TimeUnit.MINUTES);
+			
+			SystemTray.getSystemTray().add(tray);
+			PopupMenu popMenu = new PopupMenu();
+			popMenu.add(newMenuItem("Megnyitás", Main::trayOpenGui));
+			popMenu.addSeparator();
+			popMenu.add(newMenuItem("Beállítások", PopupGuis::showSettingsGui));
+			popMenu.add(newMenuItem("Órarend Fénykép", Main::createScreenshot));
+			popMenu.add(sleepMode);
+			popMenu.addSeparator();
+			popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
+			
+			tray.addMouseListener(main);
+			tray.setPopupMenu(popMenu);
 		
-		SystemTray.getSystemTray().add(tray);
-		PopupMenu popMenu = new PopupMenu();
-		popMenu.add(newMenuItem("Megnyitás", e -> {
-			frame.setExtendedState(JFrame.NORMAL);
-			ClassButton.updateAllButtons(true);
-		}));
-		popMenu.addSeparator();
-		popMenu.add(newMenuItem("Beállítások", PopupGuis::showSettingsGui));
-		popMenu.add(newMenuItem("Órarend Fénykép", Main::createScreenshot));
-		popMenu.add(sleepMode);
-		popMenu.addSeparator();
-		popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
-		
-		tray.addMouseListener(main);
-		tray.setPopupMenu(popMenu);
+		}else{
+			throw new RuntimeException("Can't find startup flag.! (full or window)");
+		}
 	}
 	
 	@Override
@@ -150,6 +150,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public static LocalTime dayTimeEnd = LocalTime.parse(settingsFile.get("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 	public static Color dayTimeColor = settingsFile.getColor("dayTimeColor", 240, 240, 240);
 	public static Color nightTimeColor = settingsFile.getColor("nightTimeColor", 64, 64, 64);
+	public static boolean enablePopups = settingsFile.getBoolean("enablePopups", true);
 
 	private static MenuItem newMenuItem(String text, ActionListener listener) {
 		MenuItem item = new MenuItem(text);
@@ -164,6 +165,11 @@ public final class Main extends WindowAdapter implements MouseListener{
 				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
 			} catch (HeadlessException | AWTException | IOException e1) {}
 		}
+	}
+	
+	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
+		frame.setExtendedState(JFrame.NORMAL);
+		ClassButton.updateAllButtons(true);
 	}
 	
 	public static boolean isDarkMode(LocalTime now) {

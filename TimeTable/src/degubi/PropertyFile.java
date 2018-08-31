@@ -43,8 +43,16 @@ public final class PropertyFile {
 		return new Color(Integer.parseInt(val[0]), Integer.parseInt(val[1]), Integer.parseInt(val[2]));
 	}
 	
+	public boolean getBoolean(String key, boolean defaultValue) {
+		return Boolean.parseBoolean(get(key, String.valueOf(defaultValue)));
+	}
+	
 	public void setColor(String key, Color newColor) {
 		set(key, newColor.getRed() + " " + newColor.getGreen() + " " + newColor.getBlue());
+	}
+	
+	public void setBoolean(String key, boolean newValue) {
+		set(key, String.valueOf(newValue));
 	}
 	
 	public void set(String key, String value) {
