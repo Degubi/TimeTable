@@ -10,6 +10,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
@@ -113,6 +117,14 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		popupCheckBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
 		popupCheckBox.setBounds(350, 160, 200, 20);
 		
+		Path scriptPath = Paths.get("iconScript.vbs");
+		String cutPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
+		
+		JCheckBox startupBox = new JCheckBox("Indítás PC Indításakor", Files.exists(Paths.get(cutPath)));
+		startupBox.setOpaque(false);
+		startupBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
+		startupBox.setBounds(350, 200, 200, 20);
+		
 		showNewDialog("Beállítások", 600, 600, frame -> {
 			Main.settingsFile.setColor("currentClassColor", ClassButton.currentClassColor = currentClass.getBackground());
 			Main.settingsFile.setColor("upcomingClassColor", ClassButton.upcomingClassColor = beforeClass.getBackground());
@@ -128,12 +140,52 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 			Main.settingsFile.set("dayTimeEnd", endField.getText());
 			Main.settingsFile.setBoolean("enablePopups", Main.enablePopups = popupCheckBox.isSelected());
 			
+			try {
+				if(startupBox.isSelected()) {
+					Path jarPath = Paths.get("./TimeTable.jar").toRealPath();
+					if(Files.exists(jarPath)) {
+						Process proc = createLink(scriptPath, jarPath.toString(), cutPath);
+						
+						while(proc.isAlive()) {
+							Thread.onSpinWait();
+						}
+					}
+					
+				}else{
+					Path shortcutPath = Paths.get(cutPath);
+					if(Files.exists(shortcutPath)) {
+						Files.delete(shortcutPath);
+					}
+				}
+				
+				if(Files.exists(scriptPath)) {
+					Files.delete(scriptPath);
+				}
+			
+			}catch(IOException ex) {}
+			
 			ClassButton.updateAllButtons(false);
 			frame.dispose();
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
 					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor,
-					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startField, endField, popupCheckBox);
+					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startField, endField, popupCheckBox, startupBox);
+	}
+	
+	private static Process createLink(Path tempScriptFile, String filePath, String toSavePath) {
+		var command = ("Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
+						  "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
+						  	  "oLink.TargetPath = \"" + filePath + "\"\n" + 
+						  	  "oLink.Arguments = \"-window\"\n" + 
+						  	  "oLink.WorkingDirectory = \"" + filePath.substring(0, filePath.lastIndexOf("\\")) + "\"\n" +
+							  "oLink.Save\n").getBytes();
+		try {
+			Files.write(tempScriptFile, command);
+			return Runtime.getRuntime().exec("wscript.exe iconScript.vbs");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		return null;
 	}
 	
 	private static JButton newColorButton(int y, Color startColor) {
