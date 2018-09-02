@@ -48,11 +48,11 @@ import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
 public final class Main extends WindowAdapter implements MouseListener{
-	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2), redBorder = new LineBorder(Color.RED, 3);
+	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 3), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 30, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
 	public static final JLabel label = new JLabel();
 	
@@ -66,7 +66,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 		if(args.length > 0) {
 			frame.setLayout(null);
 			frame.add(dataTable);
-			frame.setBounds(0, 0, 960, 768);
+			frame.setBounds(0, 0, 950, 713);
 			frame.setLocationRelativeTo(null);
 			
 			Path dataFilePath = Paths.get("classData.txt");
