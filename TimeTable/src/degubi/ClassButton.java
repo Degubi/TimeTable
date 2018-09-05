@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +37,8 @@ public final class ClassButton extends JButton implements MouseListener{
 	public ClassButton(String line) {
 		String[] data = line.split(" ");
 		
-		day = data[0];
+		//UTF-8 BOM char fix
+		day = data[0].charAt(0) == '\uFEFF' ? data[0].substring(1, data[0].length()) : data[0];
 		className = data[1];
 		classType = data[2];
 		startTime = LocalTime.parse(data[3], DateTimeFormatter.ISO_LOCAL_TIME);
@@ -64,7 +66,8 @@ public final class ClassButton extends JButton implements MouseListener{
 		
 		if(isCurrent) {
 			currentClassButton = this;
-			Main.tray.setToolTip("Következõ óra: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
+			Duration between = Duration.between(todayTime, startTime);
+			Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + "perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
 		setBackground(unImportant ? unimportantClassColor : isCurrent ? currentClassColor : isBefore ? upcomingClassColor : isAfter ? pastClassColor : otherClassColor);
 	}
@@ -187,7 +190,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
 		map.put("TIK", List.of("Kongresszusi", "Alagsor1"));
 		map.put("Irinyi", List.of("214", "217", "218", "222", "225"));
-		map.put("Bolyai", List.of("Kerkékjártó", "Farkas"));
+		map.put("Bolyai", List.of("Kerékjártó", "Farkas"));
 		map.put("Külvilág", List.of("Teniszpálya"));
 		return map;
 	}

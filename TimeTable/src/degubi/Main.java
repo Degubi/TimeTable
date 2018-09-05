@@ -27,10 +27,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -72,7 +72,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 			Path dataFilePath = Paths.get("classData.txt");
 			if(!Files.exists(dataFilePath)) Files.write(dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 			
-			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].equals("-full"));
+			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].contains("full"));
 			
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 			CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
@@ -86,39 +86,42 @@ public final class Main extends WindowAdapter implements MouseListener{
 			frame.setIconImage(icon);
 			
 			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-				if(frame.isVisible()) label.setText(LocalDateTime.now().format(displayTimeFormat));
+				if(frame.isVisible()) {
+					label.setText(LocalDateTime.now().format(displayTimeFormat));
+				}
+				
+				if(++timer == 600) {
+					ClassButton.updateAllButtons(false);
+
+					if(!frame.isVisible()) {
+						LocalTime now = LocalTime.now();
+						ClassButton current = ClassButton.currentClassButton;
+			
+						if(enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
+							var timeBetween = Duration.between(now, current.startTime);
+							
+							if(timeBetween.toHoursPart() == 0) {
+								Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
+
+								try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
+									SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
+									
+									line.open();
+									((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
+									line.start();
+									byte[] buf = new byte[8900];
+									stream.read(buf);
+									line.write(buf, 0, 8900);
+									line.drain();
+								}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
+							}
+						}
+						label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
+					}
+					timer = 0;
+				}
 			}, 0, 1, TimeUnit.SECONDS);
 			
-			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-				if(!frame.isVisible()) {
-					LocalTime now = LocalTime.now();
-					ClassButton current = ClassButton.currentClassButton;
-		
-					if(enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
-						long timeBetween = ChronoUnit.MINUTES.between(now, current.startTime);
-						
-						if(timeBetween < 60) {
-							try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
-								SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
-								
-								line.open();
-								((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
-								line.start();
-								byte[] buf = new byte[8900];
-								stream.read(buf);
-								line.write(buf, 0, 8900);
-								line.drain();
-							}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
-							
-							Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra " + timeBetween + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.INFO);
-						}
-					}
-					label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
-					ClassButton.updateAllButtons(false);
-				}
-			}, 10, 10, TimeUnit.MINUTES);
-			
-			SystemTray.getSystemTray().add(tray);
 			PopupMenu popMenu = new PopupMenu();
 			popMenu.add(newMenuItem("Megnyitás", Main::trayOpenGui));
 			popMenu.addSeparator();
@@ -128,13 +131,15 @@ public final class Main extends WindowAdapter implements MouseListener{
 			popMenu.addSeparator();
 			popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
 			
+			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(main);
 			tray.setPopupMenu(popMenu);
-		
 		}else{
 			throw new RuntimeException("Can't find startup flag.! (full or window)");
 		}
 	}
+	
+	private static int timer = 0;
 	
 	@Override
 	public void windowIconified(WindowEvent e) {

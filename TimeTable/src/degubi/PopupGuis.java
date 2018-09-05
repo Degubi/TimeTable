@@ -49,7 +49,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 	public static void showRoomFinder(JTable dataTable) {
 		ButtonTable<JButton> buildingTable = new ButtonTable<>(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
 		
-		showNewDialog("Temerválasztó", 800, 600, frame -> {
+		showNewDialog("Teremválasztó", 800, 600, frame -> {
 			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED).ifPresent(button -> {
 				dataTable.setValueAt(button.getText(), 5, 1);
 				frame.dispose();
