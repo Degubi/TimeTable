@@ -22,11 +22,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -45,12 +43,13 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.border.LineBorder;
 
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 3), redBorder = new LineBorder(Color.RED, 3);
 	public static final JFrame frame = new JFrame("TimeTable");
-	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/tray.png"));
+	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
@@ -70,9 +69,15 @@ public final class Main extends WindowAdapter implements MouseListener{
 			frame.setLocationRelativeTo(null);
 			
 			Path dataFilePath = Paths.get("classData.txt");
-			if(!Files.exists(dataFilePath)) Files.write(dataFilePath, "Hétfõ Óra Elõadás 08:00 10:00 Terem false".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+			if(!Files.exists(dataFilePath)) {
+				Files.createFile(dataFilePath);
+				
+				if(JOptionPane.showConfirmDialog(null, "Van Excel Fájlod Cica?", "Excel Keresõ", JOptionPane.YES_NO_OPTION) == 0) {
+					ExcelParser.showExcelFileBrowser();
+				}
+			}
 			
-			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].contains("full"));
+			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].equals("-full"));
 			
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 			CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);

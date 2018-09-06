@@ -39,13 +39,13 @@ public final class ClassButton extends JButton implements MouseListener{
 		
 		//UTF-8 BOM char fix
 		day = data[0].charAt(0) == '\uFEFF' ? data[0].substring(1, data[0].length()) : data[0];
-		className = data[1];
+		className = data[1].replace('_', ' ');
 		classType = data[2];
 		startTime = LocalTime.parse(data[3], DateTimeFormatter.ISO_LOCAL_TIME);
 		endTime = LocalTime.parse(data[4], DateTimeFormatter.ISO_LOCAL_TIME);
 		room = data[5];
 		unImportant = Boolean.parseBoolean(data[6]);
-		setText("<html>Óra: " + data[1] + 
+		setText("<html>Óra: " + className + 
 				"<br>Idõ: " + startTime + "-" + endTime + 
 				"<br>Típus: " + data[2] + 
 				"<br>Épület: " + getBuildingForRoom(data[5]) +
@@ -187,10 +187,10 @@ public final class ClassButton extends JButton implements MouseListener{
 	
 	
 	private static Map<String, List<String>> createRoomData(){
-		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(3);
-		map.put("TIK", List.of("Kongresszusi", "Alagsor1"));
-		map.put("Irinyi", List.of("214", "217", "218", "222", "225"));
-		map.put("Bolyai", List.of("Kerékjártó", "Farkas"));
+		LinkedHashMap<String, List<String>> map = new LinkedHashMap<>(4);
+		map.put("TIK", List.of("Kongresszusi", "Alagsor"));
+		map.put("Irinyi", List.of("214", "217", "218", "222", "224", "225"));
+		map.put("Bolyai", List.of("Kerékjártó", "Farkas", "Árpád"));
 		map.put("Külvilág", List.of("Teniszpálya"));
 		return map;
 	}

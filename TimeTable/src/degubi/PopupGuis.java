@@ -33,10 +33,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public final class PopupGuis extends AbstractAction implements MouseListener{
-	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(Main.class.getClassLoader().getResource("assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 
 	private final JTable dataTable;
 	private final char key;
