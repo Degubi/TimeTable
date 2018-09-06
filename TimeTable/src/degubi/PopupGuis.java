@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
@@ -26,6 +27,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -99,73 +101,69 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 	}
 	
 	public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
-		JButton currentClass = newColorButton(20, ClassButton.currentClassColor);
-		JButton beforeClass = newColorButton(80, ClassButton.upcomingClassColor);
-		JButton otherClass = newColorButton(140, ClassButton.otherClassColor);
-		JButton pastClass = newColorButton(200, ClassButton.pastClassColor);
-		JButton unimportantClass = newColorButton(260, ClassButton.unimportantClassColor);
-		JButton dayTimeColor = newColorButton(320, Main.dayTimeColor);
-		JButton nightTimeColor = newColorButton(380, Main.nightTimeColor);
-		
-		JTextField startField = new JTextField(Main.dayTimeStart.toString());
-		startField.setBounds(400, 60, 40, 20);
-		JTextField endField = new JTextField(Main.dayTimeEnd.toString());
-		endField.setBounds(400, 120, 40, 20);
-		
-		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", Main.enablePopups);
-		popupCheckBox.setOpaque(false);
-		popupCheckBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
-		popupCheckBox.setBounds(350, 160, 200, 20);
-		
 		Path scriptPath = Paths.get("iconScript.vbs");
 		String cutPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
 		
+		JButton currentClass = newColorButton(20, PropertyFile.currentClassColor);
+		JButton beforeClass = newColorButton(80, PropertyFile.upcomingClassColor);
+		JButton otherClass = newColorButton(140, PropertyFile.otherClassColor);
+		JButton pastClass = newColorButton(200, PropertyFile.pastClassColor);
+		JButton unimportantClass = newColorButton(260, PropertyFile.unimportantClassColor);
+		JButton dayTimeColor = newColorButton(320, PropertyFile.dayTimeColor);
+		JButton nightTimeColor = newColorButton(380, PropertyFile.nightTimeColor);
+		
+		JTextField startField = new JTextField(PropertyFile.dayTimeStart.toString());
+		startField.setBounds(400, 60, 40, 20);
+		JTextField endField = new JTextField(PropertyFile.dayTimeEnd.toString());
+		endField.setBounds(400, 120, 40, 20);
+
+		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", PropertyFile.enablePopups);
+		popupCheckBox.setOpaque(false);
+		popupCheckBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
+		popupCheckBox.setBounds(350, 160, 200, 20);
 		JCheckBox startupBox = new JCheckBox("Indítás PC Indításakor", Files.exists(Paths.get(cutPath)));
 		startupBox.setOpaque(false);
 		startupBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
 		startupBox.setBounds(350, 200, 200, 20);
 		
 		showNewDialog("Beállítások", 600, 600, frame -> {
-			Main.settingsFile.setColor("currentClassColor", ClassButton.currentClassColor = currentClass.getBackground());
-			Main.settingsFile.setColor("upcomingClassColor", ClassButton.upcomingClassColor = beforeClass.getBackground());
-			Main.settingsFile.setColor("otherClassColor", ClassButton.otherClassColor = otherClass.getBackground());
-			Main.settingsFile.setColor("pastClassColor", ClassButton.pastClassColor = pastClass.getBackground());
-			Main.settingsFile.setColor("unimportantClassColor", ClassButton.unimportantClassColor = unimportantClass.getBackground());
-			Main.settingsFile.setColor("dayTimeColor", Main.dayTimeColor = dayTimeColor.getBackground());
-			Main.settingsFile.setColor("nightTimeColor", Main.nightTimeColor = nightTimeColor.getBackground());
-			
-			Main.dayTimeStart = LocalTime.parse(startField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
-			Main.settingsFile.set("dayTimeStart", startField.getText());
-			Main.dayTimeEnd = LocalTime.parse(endField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
-			Main.settingsFile.set("dayTimeEnd", endField.getText());
-			Main.settingsFile.setBoolean("enablePopups", Main.enablePopups = popupCheckBox.isSelected());
+			try {
+				PropertyFile.dayTimeStart = LocalTime.parse(startField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
+				PropertyFile.setString("dayTimeStart", startField.getText());
+				PropertyFile.dayTimeEnd = LocalTime.parse(endField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
+				PropertyFile.setString("dayTimeEnd", endField.getText());
+				PropertyFile.setBoolean("enablePopups", PropertyFile.enablePopups = popupCheckBox.isSelected());
+				PropertyFile.setColor("currentClassColor", PropertyFile.currentClassColor = currentClass.getBackground());
+				PropertyFile.setColor("upcomingClassColor", PropertyFile.upcomingClassColor = beforeClass.getBackground());
+				PropertyFile.setColor("otherClassColor", PropertyFile.otherClassColor = otherClass.getBackground());
+				PropertyFile.setColor("pastClassColor", PropertyFile.pastClassColor = pastClass.getBackground());
+				PropertyFile.setColor("unimportantClassColor", PropertyFile.unimportantClassColor = unimportantClass.getBackground());
+				PropertyFile.setColor("dayTimeColor", PropertyFile.dayTimeColor = dayTimeColor.getBackground());
+				PropertyFile.setColor("nightTimeColor", PropertyFile.nightTimeColor = nightTimeColor.getBackground());
+				
+				ClassButton.updateAllButtons(false);
+				frame.dispose();
+			}catch (NumberFormatException | DateTimeParseException e) {
+				JOptionPane.showMessageDialog(frame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
+			}
 			
 			try {
 				if(startupBox.isSelected()) {
 					Path jarPath = Paths.get("./TimeTable.jar").toRealPath();
 					if(Files.exists(jarPath)) {
 						Process proc = createLink(scriptPath, jarPath.toString(), cutPath);
-						
-						while(proc.isAlive()) {
-							Thread.onSpinWait();
-						}
+							
+						while(proc.isAlive()) Thread.onSpinWait();
 					}
 					
 				}else{
 					Path shortcutPath = Paths.get(cutPath);
-					if(Files.exists(shortcutPath)) {
-						Files.delete(shortcutPath);
-					}
+					if(Files.exists(shortcutPath)) Files.delete(shortcutPath);
 				}
-				
-				if(Files.exists(scriptPath)) {
-					Files.delete(scriptPath);
-				}
+					
+				if(Files.exists(scriptPath)) Files.delete(scriptPath);
+			} catch (IOException e) {}
 			
-			}catch(IOException ex) {}
-			
-			ClassButton.updateAllButtons(false);
-			frame.dispose();
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
 					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor,

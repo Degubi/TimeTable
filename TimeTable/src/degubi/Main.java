@@ -52,7 +52,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
-	public static final PropertyFile settingsFile = new PropertyFile("settings.prop");
 	public static final JLabel label = new JLabel();
 	
 	private final JDialog passFrame;
@@ -102,7 +101,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 						LocalTime now = LocalTime.now();
 						ClassButton current = ClassButton.currentClassButton;
 			
-						if(enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
+						if(PropertyFile.enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
 							var timeBetween = Duration.between(now, current.startTime);
 							
 							if(timeBetween.toHoursPart() == 0) {
@@ -156,12 +155,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 		if(passFrame != null) passFrame.dispose();
 	}
 	
-	public static LocalTime dayTimeStart = LocalTime.parse(settingsFile.get("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-	public static LocalTime dayTimeEnd = LocalTime.parse(settingsFile.get("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-	public static Color dayTimeColor = settingsFile.getColor("dayTimeColor", 240, 240, 240);
-	public static Color nightTimeColor = settingsFile.getColor("nightTimeColor", 64, 64, 64);
-	public static boolean enablePopups = settingsFile.getBoolean("enablePopups", true);
-
 	private static MenuItem newMenuItem(String text, ActionListener listener) {
 		MenuItem item = new MenuItem(text);
 		item.addActionListener(listener);
@@ -183,11 +176,11 @@ public final class Main extends WindowAdapter implements MouseListener{
 	}
 	
 	public static boolean isDarkMode(LocalTime now) {
-		return now.isAfter(dayTimeEnd) || now.isBefore(dayTimeStart);
+		return now.isAfter(PropertyFile.dayTimeEnd) || now.isBefore(PropertyFile.dayTimeStart);
 	}
 	
 	public static void handleNightMode(Container container) {
-		container.setBackground(isDarkMode(LocalTime.now()) ? nightTimeColor : dayTimeColor);
+		container.setBackground(isDarkMode(LocalTime.now()) ? PropertyFile.nightTimeColor : PropertyFile.dayTimeColor);
 	}
 
 

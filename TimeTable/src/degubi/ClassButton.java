@@ -69,7 +69,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			Duration between = Duration.between(todayTime, startTime);
 			Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + "perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
-		setBackground(unImportant ? unimportantClassColor : isCurrent ? currentClassColor : isBefore ? upcomingClassColor : isAfter ? pastClassColor : otherClassColor);
+		setBackground(unImportant ? PropertyFile.unimportantClassColor : isCurrent ? PropertyFile.currentClassColor : isBefore ? PropertyFile.upcomingClassColor : isAfter ? PropertyFile.pastClassColor : PropertyFile.otherClassColor);
 	}
 	
 	private static void rewriteFile() {
@@ -205,10 +205,4 @@ public final class ClassButton extends JButton implements MouseListener{
 					    .findFirst()
 					    .orElse("Ismeretlen Épület");
 	}
-	
-	public static Color currentClassColor = Main.settingsFile.getColor("currentClassColor", 255, 69, 69);
-	public static Color upcomingClassColor = Main.settingsFile.getColor("upcomingClassColor", 0, 147, 3);
-	public static Color otherClassColor = Main.settingsFile.getColor("otherClassColor", 84, 113, 142);
-	public static Color pastClassColor = Main.settingsFile.getColor("pastClassColor", 247, 238, 90);
-	public static Color unimportantClassColor = Main.settingsFile.getColor("unimportantClassColor", 192, 192, 192);
 }
