@@ -5,8 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -17,7 +18,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 public final class ExcelParser extends FileFilter{
-	private ExcelParser() {}
 	
 	public static void showExcelFileBrowser() {
 		JFileChooser chooser = new JFileChooser("./");
@@ -25,49 +25,40 @@ public final class ExcelParser extends FileFilter{
 		
 		if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 			try(Workbook book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
-				List<String> dataTestLines = new ArrayList<>();
+				List<String> dataLines = StreamSupport.stream(book.getSheetAt(0).spliterator(), false)
+													  .filter(row -> row.getRowNum() > 0)
+													  .map(ExcelParser::mapToDataLine)
+													  .collect(Collectors.toList());
+					
+				Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 				
-				for(Row row : book.getSheetAt(0)) {
-					if(row.getRowNum() > 0) {
-						String className = row.getCell(1).getStringCellValue()
-														 .replace(" BSc", "")
-														 .replace(" gyakorlat", "")
-														 .replace(" gyak", "")
-														 .replace(' ', '_')
-														 .replace(".", "");
-						
-						String classType = row.getCell(3).getStringCellValue();
-						String classInfo = row.getCell(5).getStringCellValue();
-						
-						if(!classInfo.isEmpty()) {
-							int divisorIndex = classInfo.indexOf('-');
-							String startTime = classInfo.substring(divisorIndex - 5, divisorIndex);
-							String endTime = classInfo.substring(divisorIndex + 1, divisorIndex + 6);
-							String room = classInfo.replace('-', ' ').split(" ", 9)[7];
-							
-							dataTestLines.add(getDayFromChar(classInfo.charAt(0)) + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + false);
-						}else{
-							dataTestLines.add("Péntek" + ' ' + className + ' ' + classType + " 08:00 10:00 Ismeretlen " + false);
-						}
-					}
-				}
-				
-				Files.write(Paths.get("classData.txt"), dataTestLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-			} catch (EncryptedDocumentException | IOException e) {
-				e.printStackTrace();
-			}
+			} catch (EncryptedDocumentException | IOException e) {}
 		}
 	}
 	
-	private static String getDayFromChar(char day) {
-		switch(day) {
-			case 'H': return "Hétfõ";
-			case 'K': return "Kedd";
-			case 'S': return "Szerda";
-			case 'C': return "Csütörtök";
-			default: return "Péntek";
+	private static String mapToDataLine(Row row) {
+		String classType = row.getCell(3).getStringCellValue(), classInfo = row.getCell(5).getStringCellValue();
+		String className = row.getCell(1).getStringCellValue()
+				 			  			 .replace(" BSc", "")
+				 			  			 .replace(" gyakorlat", "")
+				 			  			 .replace(" gyak", "")
+				 			  			 .replace(' ', '_')
+				 			  			 .replace(".", "");
+		
+		if(!classInfo.isEmpty()) {
+			int divisorIndex = classInfo.indexOf('-');
+			char dayChar = classInfo.charAt(0);
+			
+			String startTime = classInfo.substring(divisorIndex - 5, divisorIndex);
+			String endTime = classInfo.substring(divisorIndex + 1, divisorIndex + 6);
+			String room = classInfo.replace('-', ' ').split(" ", 9)[7];
+			String day = dayChar == 'H' ? "Hétfõ " : dayChar == 'K' ? "Kedd " : dayChar == 'S' ? "Szerda " : dayChar == 'C' ? "Csütörtök " : "Péntek ";
+			
+			return day + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + false;
 		}
+		return "Péntek " + className + ' ' + classType + " 08:00 10:00 Ismeretlen " + false;
 	}
+	
 	
 	@Override
 	public boolean accept(File file) {
