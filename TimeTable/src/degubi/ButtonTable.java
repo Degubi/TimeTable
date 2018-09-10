@@ -17,7 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 
 public final class ButtonTable<T extends JButton> extends JComponent{
-	public static final Font tableHeaderFont = new Font("TimesRoman", Font.BOLD, 20);
+	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
 	
 	private final List<T> dataButtonList = new ArrayList<>();
 	private final String[] columns;
@@ -35,10 +35,9 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		
 		for(int topIndex = 0; topIndex < columnNames.length; ++topIndex) {
 			JButton topAdd = new JButton(columnNames[topIndex]);
-			topAdd.setBorder(Main.blackBorder);
 			topAdd.setFocusable(false);
 			if(addListener) topAdd.addMouseListener(new CreateClassListener(columnNames[topIndex]));
-			topAdd.setBackground(Color.LIGHT_GRAY);
+			topAdd.setBackground(Color.GRAY);
 			topAdd.setForeground(Color.BLACK);
 			topAdd.setFont(tableHeaderFont);
 			topAdd.setBounds(getX() + topIndex * cellWidth + (topIndex * 20), getY(), cellWidth, 40);
@@ -54,15 +53,14 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 			T butt = (T) new JButton(row);
 			boolean isCurrentRoom = row.equals(currentRoom);
 			
-			butt.setBorder(Main.blackBorder);
-			butt.setForeground(isCurrentRoom ? Color.BLACK : Color.DARK_GRAY);
-			butt.setBackground(isCurrentRoom ? Color.RED : Color.GRAY);
+			butt.setForeground(isCurrentRoom ? Color.BLACK : Color.GRAY);
+			butt.setBackground(isCurrentRoom ? Color.RED : Color.LIGHT_GRAY);
 			tableAdd(columnName, butt);
 			
 			butt.addActionListener(e -> {
 				dataButtonList.forEach(checkButton -> {
-					checkButton.setForeground(Color.DARK_GRAY);
-					checkButton.setBackground(Color.GRAY);
+					checkButton.setForeground(Color.GRAY);
+					checkButton.setBackground(Color.LIGHT_GRAY);
 				});
 				
 				butt.setForeground(Color.BLACK);

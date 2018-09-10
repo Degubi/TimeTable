@@ -32,7 +32,9 @@ public final class ExcelParser extends FileFilter{
 					
 				Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 				
-			} catch (EncryptedDocumentException | IOException e) {}
+			} catch (EncryptedDocumentException | IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

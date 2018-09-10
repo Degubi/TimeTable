@@ -44,15 +44,17 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.LineBorder;
 
 public final class Main extends WindowAdapter implements MouseListener{
-	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 3), redBorder = new LineBorder(Color.RED, 3);
+	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2, true);
 	public static final JFrame frame = new JFrame("TimeTable");
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
-	public static final JLabel label = new JLabel();
 	
 	private final JDialog passFrame;
 	
@@ -60,8 +62,11 @@ public final class Main extends WindowAdapter implements MouseListener{
 		passFrame = frame;
 	}
 	
-	public static void main(String[] args) throws AWTException, IOException {
+	public static void main(String[] args) throws AWTException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
 		if(args.length > 0) {
+			UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+			SwingUtilities.updateComponentTreeUI(dataTable);
+			
 			frame.setLayout(null);
 			frame.add(dataTable);
 			frame.setBounds(0, 0, 950, 713);
@@ -81,7 +86,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 			CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
 			Main main = new Main(null);
-			label.setBounds(310, 5, 300, 40);
+			JLabel label = new JLabel();
+			label.setBounds(320, 5, 300, 40);
 			label.setFont(ButtonTable.tableHeaderFont);
 			frame.setResizable(false);
 			frame.add(label);
@@ -138,6 +144,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(main);
 			tray.setPopupMenu(popMenu);
+			
+			
 		}else{
 			throw new RuntimeException("Can't find startup flag.! (full or window)");
 		}

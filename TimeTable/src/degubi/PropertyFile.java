@@ -17,7 +17,8 @@ public final class PropertyFile {
 	
 	private static Map<String, String> initPropertyFile() {
 		try(var lines = Files.lines(Paths.get("settings.prop"))){
-			return lines.map(line -> line.split(":", 2)).collect(Collectors.toMap(line -> line[0], line -> line[1], (k, v) -> k, LinkedHashMap::new));
+			return lines.map(line -> line.split(":", 2))
+						.collect(Collectors.toMap(line -> line[0], line -> line[1], (k, v) -> k, LinkedHashMap::new));
 		} catch (IOException e) {
 			try {
 				Files.createFile(Paths.get("settings.prop"));
@@ -31,13 +32,14 @@ public final class PropertyFile {
 		if(storage.containsKey(key)) {
 			return storage.get(key);
 		}
+		
 		storage.put(key, defaultValue);
 		save();
 		return defaultValue;
 	}
 	
 	private static Color getColor(String key, int r, int g, int b) {
-		String[] val = getString(key, r + " " + g + " " + b).split(" ");
+		String[] val = getString(key, r + " " + g + " " + b).split(" ", 3);
 		return new Color(Integer.parseInt(val[0]), Integer.parseInt(val[1]), Integer.parseInt(val[2]));
 	}
 	
@@ -60,15 +62,17 @@ public final class PropertyFile {
 	
 	private static void save() {
 		try {
-			Files.write(Paths.get("settings.prop"), storage.entrySet().stream()
-					   				 .map(entry -> entry.getKey() + ':' + entry.getValue())
-					   				 .collect(Collectors.toList()), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			Files.write(Paths.get("settings.prop"), 
+						storage.entrySet().stream()
+					   		   .map(entry -> entry.getKey() + ':' + entry.getValue())
+					   		   .collect(Collectors.toList()), 
+					   	StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (IOException e1) {}
 	}
 	
 	public static LocalTime dayTimeStart = LocalTime.parse(getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 	public static LocalTime dayTimeEnd = LocalTime.parse(getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-	public static Color dayTimeColor = getColor("dayTimeColor", 240, 240, 240);
+	public static Color dayTimeColor = getColor("dayTimeColor", 235, 235, 235);
 	public static Color nightTimeColor = getColor("nightTimeColor", 64, 64, 64);
 	public static boolean enablePopups = getBoolean("enablePopups", true);
 	public static Color currentClassColor = getColor("currentClassColor", 255, 69, 69);

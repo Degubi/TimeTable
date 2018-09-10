@@ -24,12 +24,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -64,6 +64,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		dataTable.addMouseListener(new PopupGuis('0', dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
 		dataTable.setRowHeight(20);
+		dataTable.setBorder(Main.blackBorder);
 		CustomCellRenderer cellRenderer = new CustomCellRenderer();
 		
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "DOWN");
@@ -112,11 +113,14 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		JButton dayTimeColor = newColorButton(320, PropertyFile.dayTimeColor);
 		JButton nightTimeColor = newColorButton(380, PropertyFile.nightTimeColor);
 		
-		JTextField startField = new JTextField(PropertyFile.dayTimeStart.toString());
-		startField.setBounds(400, 60, 40, 20);
-		JTextField endField = new JTextField(PropertyFile.dayTimeEnd.toString());
-		endField.setBounds(400, 120, 40, 20);
-
+		String[] dataValues = {"00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"};
+		JComboBox<String> startTimeBox = new JComboBox<>(dataValues);
+		startTimeBox.setBounds(400, 60, 75, 30);
+		startTimeBox.setSelectedItem(PropertyFile.dayTimeStart.toString());
+		JComboBox<String> endTimeBox = new JComboBox<>(dataValues);
+		endTimeBox.setBounds(400, 120, 75, 30);
+		endTimeBox.setSelectedItem(PropertyFile.dayTimeEnd.toString());
+		
 		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", PropertyFile.enablePopups);
 		popupCheckBox.setOpaque(false);
 		popupCheckBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
@@ -128,10 +132,10 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		
 		showNewDialog("Beállítások", 600, 600, frame -> {
 			try {
-				PropertyFile.dayTimeStart = LocalTime.parse(startField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
-				PropertyFile.setString("dayTimeStart", startField.getText());
-				PropertyFile.dayTimeEnd = LocalTime.parse(endField.getText(), DateTimeFormatter.ISO_LOCAL_TIME);
-				PropertyFile.setString("dayTimeEnd", endField.getText());
+				PropertyFile.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
+				PropertyFile.setString("dayTimeStart", (String) startTimeBox.getSelectedItem());
+				PropertyFile.dayTimeEnd = LocalTime.parse((CharSequence) endTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
+				PropertyFile.setString("dayTimeEnd", (String) endTimeBox.getSelectedItem());
 				PropertyFile.setBoolean("enablePopups", PropertyFile.enablePopups = popupCheckBox.isSelected());
 				PropertyFile.setColor("currentClassColor", PropertyFile.currentClassColor = currentClass.getBackground());
 				PropertyFile.setColor("upcomingClassColor", PropertyFile.upcomingClassColor = beforeClass.getBackground());
@@ -167,7 +171,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
 					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor,
-					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startField, endField, popupCheckBox, startupBox);
+					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startTimeBox, endTimeBox, popupCheckBox, startupBox);
 	}
 	
 	private static Process createLink(Path tempScriptFile, String filePath, String toSavePath) {
@@ -189,8 +193,8 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 	private static JButton newColorButton(int y, Color startColor) {
 		JButton butt = new JButton();
 		butt.setBackground(startColor);
-		butt.setBorder(Main.blackBorder);
 		butt.setBounds(200, y, 48, 48);
+		butt.setFocusable(false);
 		butt.addActionListener(e -> {
 			Color newColor = JColorChooser.showDialog(Main.frame, "Színválasztó", butt.getBackground());
 			if(newColor != null) {
@@ -218,7 +222,6 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 			JButton saveButton = new JButton("Mentés");
 			saveButton.setFocusable(false);
 			saveButton.setBounds(width / 2 - 70, height - 90, 120, 40);
-			saveButton.setBorder(Main.blackBorder);
 			saveButton.setBackground(Color.GRAY);
 			saveButton.setForeground(Color.BLACK);
 			saveButton.addActionListener(e -> saveListener.accept(dial));

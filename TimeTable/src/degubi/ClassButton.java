@@ -1,6 +1,7 @@
 package degubi;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -24,11 +25,11 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.border.LineBorder;
 
 public final class ClassButton extends JButton implements MouseListener{
 	public static ClassButton currentClassButton;
-	
+	public static final Font importantFont = new Font("SansSerif", Font.BOLD, 12);
+
 	public final String day;
 	public final LocalTime startTime, endTime;
 	public final String className, classType, room;
@@ -51,10 +52,12 @@ public final class ClassButton extends JButton implements MouseListener{
 				"<br>Épület: " + getBuildingForRoom(data[5]) +
 				"<br>Terem: " + data[5]);
 		
+		if(data[2].charAt(0) == 'G') {
+			setFont(importantFont);
+		}
 		setForeground(unImportant ? Color.GRAY : Color.BLACK);
 		setFocusable(false);
 		addMouseListener(this);
-		setBorder(unImportant ? null : data[2].contains("ad") ? Main.blackBorder : Main.redBorder);
 	}
 	
 	private void updateButton(String today, LocalTime todayTime) {
@@ -119,32 +122,29 @@ public final class ClassButton extends JButton implements MouseListener{
 	}
 	
 	public static void updateAllButtons(boolean setVisible) {
-		if(setVisible) {
-			Main.frame.setVisible(true);
-		}
 		currentClassButton = null;
-		
-		String today = toHunDay(LocalDateTime.now().getDayOfWeek().name());
+		String today;
 		LocalTime now = LocalTime.now();
+
+		switch(LocalDateTime.now().getDayOfWeek().name()) {
+			case "MONDAY": today = "Hétfõ"; break;
+			case "TUESDAY": today = "Kedd"; break;
+			case "WEDNESDAY": today = "Szerda"; break;
+			case "THURSDAY": today = "Csütörtök"; break;
+			case "FRIDAY": today = "Péntek"; break;
+			default: today = "MenjHaza";
+		}
 		
 		Main.dataTable.forEachData(button -> button.updateButton(today, now));
 		if(currentClassButton == null) {
 			Main.tray.setToolTip("Nincs mára több óra! :)");
 		}
 		
-		Main.label.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
 		Main.handleNightMode(Main.frame.getContentPane());
 		Main.frame.repaint();
-	}
-	
-	private static String toHunDay(String day) {
-		switch(day) {
-			case "MONDAY": return "Hétfõ";
-			case "TUESDAY": return "Kedd";
-			case "WEDNESDAY": return "Szerda";
-			case "THURSDAY": return "Csütörtök";
-			case "FRIDAY": return "Péntek";
-			default: return "MenjHaza";
+		
+		if(setVisible) {
+			Main.frame.setVisible(true);
 		}
 	}
 	
@@ -161,8 +161,8 @@ public final class ClassButton extends JButton implements MouseListener{
 	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
 		JButton butt = new JButton(icon);
 		butt.setToolTipText(tooltip);
-		butt.setBorder(new LineBorder(Color.BLACK, 1));
-		butt.setBackground(new Color(240, 240, 240));
+		butt.setFocusable(false);
+		butt.setBackground(Color.LIGHT_GRAY);
 		butt.setBounds(0, yPos, 32, 32);
 		butt.addActionListener(listener);
 		return butt;
