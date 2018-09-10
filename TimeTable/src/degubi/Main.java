@@ -55,7 +55,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
-	
+	public static final JLabel label = new JLabel();
+
 	private final JDialog passFrame;
 	
 	public Main(JDialog frame) {
@@ -86,7 +87,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 			CheckboxMenuItem sleepMode = new CheckboxMenuItem("Alvó Mód", false);
 			Main main = new Main(null);
-			JLabel label = new JLabel();
 			label.setBounds(320, 5, 300, 40);
 			label.setFont(ButtonTable.tableHeaderFont);
 			frame.setResizable(false);

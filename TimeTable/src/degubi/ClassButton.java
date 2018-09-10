@@ -40,13 +40,13 @@ public final class ClassButton extends JButton implements MouseListener{
 		
 		//UTF-8 BOM char fix
 		day = data[0].charAt(0) == '\uFEFF' ? data[0].substring(1, data[0].length()) : data[0];
-		className = data[1].replace('_', ' ');
+		className = data[1];
 		classType = data[2];
 		startTime = LocalTime.parse(data[3], DateTimeFormatter.ISO_LOCAL_TIME);
 		endTime = LocalTime.parse(data[4], DateTimeFormatter.ISO_LOCAL_TIME);
 		room = data[5];
 		unImportant = Boolean.parseBoolean(data[6]);
-		setText("<html>Óra: " + className + 
+		setText("<html>Óra: " + className.replace('_', ' ') + 
 				"<br>Idõ: " + startTime + "-" + endTime + 
 				"<br>Típus: " + data[2] + 
 				"<br>Épület: " + getBuildingForRoom(data[5]) +
@@ -140,6 +140,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			Main.tray.setToolTip("Nincs mára több óra! :)");
 		}
 		
+		Main.label.setForeground(Main.isDarkMode(now) ? Color.WHITE : Color.BLACK);
 		Main.handleNightMode(Main.frame.getContentPane());
 		Main.frame.repaint();
 		
