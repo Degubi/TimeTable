@@ -43,7 +43,10 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JLayer;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -51,7 +54,7 @@ import javax.swing.border.LineBorder;
 
 public final class Main extends WindowAdapter implements MouseListener{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2, true);
-	public static final JFrame frame = new JFrame("TimeTable");
+	public static final JPanel mainPanel = new JPanel(null);
 	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
@@ -68,11 +71,17 @@ public final class Main extends WindowAdapter implements MouseListener{
 			UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 			SwingUtilities.updateComponentTreeUI(dataTable);
 			
-			frame.setLayout(null);
-			frame.add(dataTable);
+			JFrame frame = new JFrame("Órarend");
+			mainPanel.add(dataTable);
 			frame.setBounds(0, 0, 950, 713);
 			frame.setLocationRelativeTo(null);
+			BrightnessOverlay overlay = new BrightnessOverlay();
+			JSlider brightnessSlider = new JSlider(0, 8, 8);
+			brightnessSlider.setBounds(700, 600, 200, 40);
+			brightnessSlider.addChangeListener(overlay);
 			
+			mainPanel.add(brightnessSlider);
+			frame.add(new JLayer<>(mainPanel, overlay));
 			Path dataFilePath = Paths.get("classData.txt");
 			if(!Files.exists(dataFilePath)) {
 				Files.createFile(dataFilePath);
@@ -90,7 +99,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 			label.setBounds(320, 5, 300, 40);
 			label.setFont(ButtonTable.tableHeaderFont);
 			frame.setResizable(false);
-			frame.add(label);
+			mainPanel.add(label);
 			frame.addWindowListener(main);
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setIconImage(icon);
@@ -110,7 +119,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 						if(PropertyFile.enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
 							var timeBetween = Duration.between(now, current.startTime);
 							
-							if(timeBetween.toHoursPart() == 0) {
+							if(timeBetween.toMinutes() < PropertyFile.noteTime) {
 								Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
 
 								try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
@@ -144,8 +153,6 @@ public final class Main extends WindowAdapter implements MouseListener{
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(main);
 			tray.setPopupMenu(popMenu);
-			
-			
 		}else{
 			throw new RuntimeException("Can't find startup flag.! (full or window)");
 		}
@@ -155,7 +162,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 	
 	@Override
 	public void windowIconified(WindowEvent e) {
-		if(passFrame == null) frame.setVisible(false);
+		if(passFrame == null) mainPanel.getTopLevelAncestor().setVisible(false);
 	}
 	
 	@Override
@@ -170,8 +177,8 @@ public final class Main extends WindowAdapter implements MouseListener{
 	}
 	
 	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
-		if(frame.isVisible()) {
-			var window = frame.getLocationOnScreen();
+		if(mainPanel.getTopLevelAncestor().isVisible()) {
+			var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
 			try {
 				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
 			} catch (HeadlessException | AWTException | IOException e1) {}
@@ -179,7 +186,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 	}
 	
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
-		frame.setExtendedState(JFrame.NORMAL);
+		((JFrame)mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
 		ClassButton.updateAllButtons(true);
 	}
 	
@@ -196,7 +203,7 @@ public final class Main extends WindowAdapter implements MouseListener{
 	public void mousePressed(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
 			ClassButton.updateAllButtons(true);
-			frame.setExtendedState(JFrame.NORMAL);
+			((JFrame)mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
 		}
 	}
 	

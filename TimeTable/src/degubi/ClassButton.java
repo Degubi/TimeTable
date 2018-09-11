@@ -24,7 +24,10 @@ import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLayer;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 public final class ClassButton extends JButton implements MouseListener{
 	public static ClassButton currentClassButton;
@@ -36,7 +39,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	public final boolean unImportant;
 	
 	public ClassButton(String line) {
-		String[] data = line.split(" ");
+		String[] data = line.split(" ", 7);
 		
 		//UTF-8 BOM char fix
 		day = data[0].charAt(0) == '\uFEFF' ? data[0].substring(1, data[0].length()) : data[0];
@@ -89,24 +92,26 @@ public final class ClassButton extends JButton implements MouseListener{
 	@Override
 	public void mousePressed(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON3) {
-			JDialog editFrame = new JDialog(Main.frame);
-			editFrame.addWindowFocusListener(new Main(editFrame));
-			editFrame.setLayout(null);
-			editFrame.setUndecorated(true);
-			editFrame.setLocationRelativeTo(null);
-			editFrame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
+			JDialog frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor());
+			JPanel panel = new JPanel(null);
 			
-			editFrame.add(newEditButton(32, "Törlés", PopupGuis.deleteIcon, e -> {
-				if(JOptionPane.showConfirmDialog(Main.frame, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
+			frame.add(new JLayer<>(panel, new BrightnessOverlay()));
+			frame.addWindowFocusListener(new Main(frame));
+			frame.setUndecorated(true);
+			frame.setLocationRelativeTo(null);
+			frame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
+			
+			panel.add(newEditButton(32, "Törlés", PopupGuis.deleteIcon, e -> {
+				if(JOptionPane.showConfirmDialog(Main.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
 					Main.dataTable.tableRemove(this);
 					rewriteFile();
 				}
 			}));
-			editFrame.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
+			panel.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
 				addOrReplaceButton(false, this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant);
 			}));
-			editFrame.add(newEditButton(0, "Szerkesztés", PopupGuis.editIcon, e -> PopupGuis.showEditorGui(false, this)));
-			editFrame.setVisible(true);
+			panel.add(newEditButton(0, "Szerkesztés", PopupGuis.editIcon, e -> PopupGuis.showEditorGui(false, this)));
+			frame.setVisible(true);
 		}
 	}
 
@@ -141,11 +146,11 @@ public final class ClassButton extends JButton implements MouseListener{
 		}
 		
 		Main.label.setForeground(Main.isDarkMode(now) ? Color.WHITE : Color.BLACK);
-		Main.handleNightMode(Main.frame.getContentPane());
-		Main.frame.repaint();
+		Main.handleNightMode(Main.mainPanel);
+		Main.mainPanel.repaint();
 		
 		if(setVisible) {
-			Main.frame.setVisible(true);
+			Main.mainPanel.getTopLevelAncestor().setVisible(true);
 		}
 	}
 	

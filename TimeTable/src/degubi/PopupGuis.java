@@ -27,8 +27,11 @@ import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JLayer;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -120,6 +123,9 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		JComboBox<String> endTimeBox = new JComboBox<>(dataValues);
 		endTimeBox.setBounds(400, 120, 75, 30);
 		endTimeBox.setSelectedItem(PropertyFile.dayTimeEnd.toString());
+		JComboBox<String> timeBeforeNoteBox = new JComboBox<>(new String[] {"30", "40", "50", "60", "70", "80", "90"});
+		timeBeforeNoteBox.setBounds(400, 270, 75, 30);
+		timeBeforeNoteBox.setSelectedItem(Integer.toString(PropertyFile.noteTime));
 		
 		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", PropertyFile.enablePopups);
 		popupCheckBox.setOpaque(false);
@@ -144,6 +150,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 				PropertyFile.setColor("unimportantClassColor", PropertyFile.unimportantClassColor = unimportantClass.getBackground());
 				PropertyFile.setColor("dayTimeColor", PropertyFile.dayTimeColor = dayTimeColor.getBackground());
 				PropertyFile.setColor("nightTimeColor", PropertyFile.nightTimeColor = nightTimeColor.getBackground());
+				PropertyFile.setInt("noteTime", Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem()));
 				
 				ClassButton.updateAllButtons(false);
 				frame.dispose();
@@ -170,7 +177,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 			
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
-					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor,
+					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor, timeBeforeNoteBox, newLabel("Óra Elõtti Értesítések Percben:", 350, 230),
 					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startTimeBox, endTimeBox, popupCheckBox, startupBox);
 	}
 	
@@ -196,7 +203,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		butt.setBounds(200, y, 48, 48);
 		butt.setFocusable(false);
 		butt.addActionListener(e -> {
-			Color newColor = JColorChooser.showDialog(Main.frame, "Színválasztó", butt.getBackground());
+			Color newColor = JColorChooser.showDialog(Main.mainPanel, "Színválasztó", butt.getBackground());
 			if(newColor != null) {
 				butt.setBackground(newColor);
 			}
@@ -212,24 +219,27 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 	}
 	
 	private static void showNewDialog(String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
-		JDialog dial = new JDialog(Main.frame, title, true);
-		dial.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dial.setLayout(null);
-		dial.setResizable(false);
-		dial.setBounds(0, 0, width, height);
-		dial.setLocationRelativeTo(Main.frame);
+		JDialog frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), title, true);
+		JPanel panel = new JPanel(null);
+		
+		frame.add(new JLayer<>(panel, new BrightnessOverlay()));
+		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		panel.setLayout(null);
+		frame.setResizable(false);
+		frame.setBounds(0, 0, width, height);
+		frame.setLocationRelativeTo(Main.mainPanel);
 		if(saveListener != null) {
 			JButton saveButton = new JButton("Mentés");
 			saveButton.setFocusable(false);
 			saveButton.setBounds(width / 2 - 70, height - 90, 120, 40);
 			saveButton.setBackground(Color.GRAY);
 			saveButton.setForeground(Color.BLACK);
-			saveButton.addActionListener(e -> saveListener.accept(dial));
-			dial.add(saveButton);
+			saveButton.addActionListener(e -> saveListener.accept(frame));
+			panel.add(saveButton);
 		}
-		for(JComponent component : components) dial.add(component);
-		Main.handleNightMode(dial.getContentPane());
-		dial.setVisible(true);
+		for(JComponent component : components) panel.add(component);
+		Main.handleNightMode(panel);
+		frame.setVisible(true);
 	}
 	
 	@Override

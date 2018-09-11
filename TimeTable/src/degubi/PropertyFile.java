@@ -43,12 +43,20 @@ public final class PropertyFile {
 		return new Color(Integer.parseInt(val[0]), Integer.parseInt(val[1]), Integer.parseInt(val[2]));
 	}
 	
+	private static int getInt(String key, int defaultValue) {
+		return Integer.parseInt(getString(key, Integer.toString(defaultValue)));
+	}
+	
 	private static boolean getBoolean(String key, boolean defaultValue) {
 		return Boolean.parseBoolean(getString(key, String.valueOf(defaultValue)));
 	}
 	
 	public static void setColor(String key, Color newColor) {
 		setString(key, newColor.getRed() + " " + newColor.getGreen() + " " + newColor.getBlue());
+	}
+	
+	public static void setInt(String key, int value) {
+		setString(key, Integer.toString(value));
 	}
 	
 	public static void setBoolean(String key, boolean newValue) {
@@ -80,4 +88,5 @@ public final class PropertyFile {
 	public static Color otherClassColor = getColor("otherClassColor", 84, 113, 142);
 	public static Color pastClassColor = getColor("pastClassColor", 247, 238, 90);
 	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
+	public static int noteTime = getInt("noteTime", 60);
 }
