@@ -8,8 +8,6 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +35,9 @@ import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-public final class PopupGuis extends AbstractAction implements MouseListener{
+import degubi.listeners.DataTableListener;
+
+public final class PopupGuis extends AbstractAction{
 	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
@@ -64,7 +64,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 	
 	public static void showEditorGui(boolean isNew, ClassButton dataButton) {
 		JTable dataTable = new JTable(new TableModel());
-		dataTable.addMouseListener(new PopupGuis('0', dataTable));
+		dataTable.addMouseListener(new DataTableListener(dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
 		dataTable.setRowHeight(20);
 		dataTable.setBorder(Main.blackBorder);
@@ -126,6 +126,9 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		JComboBox<String> timeBeforeNoteBox = new JComboBox<>(new String[] {"30", "40", "50", "60", "70", "80", "90"});
 		timeBeforeNoteBox.setBounds(400, 270, 75, 30);
 		timeBeforeNoteBox.setSelectedItem(Integer.toString(PropertyFile.noteTime));
+		JComboBox<String> updateIntervalBox = new JComboBox<>(new String[] {"5", "10", "15", "20"});
+		updateIntervalBox.setBounds(400, 340, 75, 30);
+		updateIntervalBox.setSelectedItem(Integer.toString(PropertyFile.updateInterval / 60));
 		
 		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", PropertyFile.enablePopups);
 		popupCheckBox.setOpaque(false);
@@ -150,7 +153,8 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 				PropertyFile.setColor("unimportantClassColor", PropertyFile.unimportantClassColor = unimportantClass.getBackground());
 				PropertyFile.setColor("dayTimeColor", PropertyFile.dayTimeColor = dayTimeColor.getBackground());
 				PropertyFile.setColor("nightTimeColor", PropertyFile.nightTimeColor = nightTimeColor.getBackground());
-				PropertyFile.setInt("noteTime", Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem()));
+				PropertyFile.setInt("noteTime", PropertyFile.noteTime = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem()));
+				PropertyFile.setInt("updateInterval", PropertyFile.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60);
 				
 				ClassButton.updateAllButtons(false);
 				frame.dispose();
@@ -178,7 +182,7 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
 					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor, timeBeforeNoteBox, newLabel("Óra Elõtti Értesítések Percben:", 350, 230),
-					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startTimeBox, endTimeBox, popupCheckBox, startupBox);
+					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startTimeBox, endTimeBox, popupCheckBox, startupBox, updateIntervalBox, newLabel("Értesítések Frissítési Idõzítései:", 350, 300));
 	}
 	
 	private static Process createLink(Path tempScriptFile, String filePath, String toSavePath) {
@@ -274,16 +278,6 @@ public final class PopupGuis extends AbstractAction implements MouseListener{
 			}
 		}
 	}
-	
-
-	@Override
-	public void mousePressed(MouseEvent event) {
-		if(event.getClickCount() == 2 && dataTable.getSelectedColumn() == 1 && dataTable.getSelectedRow() == 5) {
-			showRoomFinder(dataTable);
-		}
-	}
-
-	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 	
 	public static final class TableModel extends DefaultTableModel{
 		@Override public int getRowCount() { return 6; }

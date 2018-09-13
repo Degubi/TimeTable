@@ -29,6 +29,8 @@ import javax.swing.JLayer;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import degubi.listeners.EditClassButtonListener;
+
 public final class ClassButton extends JButton implements MouseListener{
 	public static ClassButton currentClassButton;
 	public static final Font importantFont = new Font("SansSerif", Font.BOLD, 12);
@@ -72,8 +74,11 @@ public final class ClassButton extends JButton implements MouseListener{
 		
 		if(isCurrent) {
 			currentClassButton = this;
-			Duration between = Duration.between(todayTime, startTime);
-			Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + "perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
+			
+			if(isBefore) {
+				Duration between = Duration.between(todayTime, startTime);
+				Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
+			}
 		}
 		setBackground(unImportant ? PropertyFile.unimportantClassColor : isCurrent ? PropertyFile.currentClassColor : isBefore ? PropertyFile.upcomingClassColor : isAfter ? PropertyFile.pastClassColor : PropertyFile.otherClassColor);
 	}
@@ -96,7 +101,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			JPanel panel = new JPanel(null);
 			
 			frame.add(new JLayer<>(panel, new BrightnessOverlay()));
-			frame.addWindowFocusListener(new Main(frame));
+			frame.addWindowFocusListener(new EditClassButtonListener(frame));
 			frame.setUndecorated(true);
 			frame.setLocationRelativeTo(null);
 			frame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
@@ -209,6 +214,6 @@ public final class ClassButton extends JButton implements MouseListener{
 					    .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
 					    .map(Entry::getKey)
 					    .findFirst()
-					    .orElse("Ismeretlen Épület");
+					    .orElse("Ismeretlen");
 	}
 }

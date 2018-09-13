@@ -89,4 +89,5 @@ public final class PropertyFile {
 	public static Color pastClassColor = getColor("pastClassColor", 247, 238, 90);
 	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
 	public static int noteTime = getInt("noteTime", 60);
+	public static int updateInterval = getInt("updateInterval", 600);
 }
