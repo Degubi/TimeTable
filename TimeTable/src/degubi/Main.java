@@ -3,6 +3,7 @@ package degubi;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Rectangle;
@@ -35,7 +36,7 @@ import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JCheckBoxMenuItem;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
@@ -86,7 +87,6 @@ public final class Main extends WindowAdapter{
 			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].equals("-full"));
 			
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
-			JCheckBoxMenuItem sleepMode = new JCheckBoxMenuItem("Alvó Mód", false);
 			label.setBounds(320, 5, 300, 40);
 			label.setFont(ButtonTable.tableHeaderFont);
 			frame.setResizable(false);
@@ -107,7 +107,7 @@ public final class Main extends WindowAdapter{
 						LocalTime now = LocalTime.now();
 						ClassButton current = ClassButton.currentClassButton;
 			
-						if(PropertyFile.enablePopups && !sleepMode.getState() && current != null && now.isBefore(current.startTime)) {
+						if(PropertyFile.enablePopups && current != null && now.isBefore(current.startTime)) {
 							var timeBetween = Duration.between(now, current.startTime);
 							
 							if(timeBetween.toMinutes() < PropertyFile.noteTime) {
@@ -142,15 +142,15 @@ public final class Main extends WindowAdapter{
 			brightnessSlider.setLabelTable(labelTable);
 			
 			JPopupMenu popMenu = new JPopupMenu();
-			popMenu.add(newMenuItem("Megnyitás", Main::trayOpenGui));
+			popMenu.setPreferredSize(new Dimension(160, 200));
+			popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
 			popMenu.addSeparator();
-			popMenu.add(newMenuItem("Beállítások", PopupGuis::showSettingsGui));
-			popMenu.add(newMenuItem("Órarend Fénykép", Main::createScreenshot));
-			popMenu.add(sleepMode);
+			popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
+			popMenu.add(newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot));
 			popMenu.addSeparator();
 			popMenu.add(brightnessSlider);
 			popMenu.addSeparator();
-			popMenu.add(newMenuItem("Bezárás", e -> System.exit(0)));
+			popMenu.add(newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
 			
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
@@ -159,8 +159,8 @@ public final class Main extends WindowAdapter{
 		}
 	}
 	
-	private static JMenuItem newMenuItem(String text, ActionListener listener) {
-		JMenuItem item = new JMenuItem(text);
+	private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
+		JMenuItem item = new JMenuItem(text, iconPath != null ? new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/" + iconPath)).getScaledInstance(24, 24, Image.SCALE_SMOOTH)) : null);
 		item.addActionListener(listener);
 		return item;
 	}
