@@ -23,7 +23,7 @@ public class BrightnessOverlay extends LayerUI<JComponent> implements ChangeList
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		JSlider comp = (JSlider) e.getSource();
-		meow = new Color(0, 0, 0, (8 - comp.getValue()) * 25);
+		meow = new Color(0, 0, 0, (16 - comp.getValue()) * 13);
 		Main.mainPanel.repaint();
 	}
 }

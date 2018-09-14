@@ -19,7 +19,7 @@ public class SystemTrayListener extends MouseAdapter {
 	@Override
 	public void mouseReleased(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON3) {
-			popMenu.setLocation(event.getX(), event.getY());
+			popMenu.setLocation(event.getX() - 150, event.getY());
 			popMenu.setInvoker(popMenu);
 			popMenu.setVisible(true);
 		}

@@ -132,17 +132,18 @@ public final class Main extends WindowAdapter{
 				}
 			}, 0, 1, TimeUnit.SECONDS);
 			
-			JSlider brightnessSlider = new JSlider(0, 8, 8);
+			JSlider brightnessSlider = new JSlider(0, 16, 16);
 			brightnessSlider.addChangeListener(overlay);
 			brightnessSlider.setPaintLabels(true);
+			brightnessSlider.setMaximumSize(new Dimension(155, 40));
 			
 			Hashtable<Integer, JLabel> labelTable = new Hashtable<>(2);
 			labelTable.put(0, new JLabel("Sötét"));
-			labelTable.put(8, new JLabel("Világos"));
+			labelTable.put(16, new JLabel("Világos"));
 			brightnessSlider.setLabelTable(labelTable);
 			
 			JPopupMenu popMenu = new JPopupMenu();
-			popMenu.setPreferredSize(new Dimension(160, 200));
+			popMenu.setPreferredSize(new Dimension(160, 180));
 			popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
 			popMenu.addSeparator();
 			popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
