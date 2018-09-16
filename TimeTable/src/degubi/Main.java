@@ -154,7 +154,7 @@ public final class Main extends WindowAdapter{
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
 			
-			Files.delete(dataFilePath);
+			//Files.delete(dataFilePath);
 		}else{
 			throw new RuntimeException("Can't find startup flag.! (full or window)");
 		}
