@@ -3,7 +3,7 @@ package degubi;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,14 +12,13 @@ import java.util.stream.StreamSupport;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
-import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 public final class ExcelParser extends FileFilter{
 	
-	public static void showExcelFileBrowser() {
+	public static void showExcelFileBrowser(Path dataFilePath) throws IOException {
 		JFileChooser chooser = new JFileChooser("./");
 		chooser.setFileFilter(new ExcelParser());
 		
@@ -29,12 +28,11 @@ public final class ExcelParser extends FileFilter{
 													  .filter(row -> row.getRowNum() > 0)
 													  .map(ExcelParser::mapToDataLine)
 													  .collect(Collectors.toList());
-					
-				Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 				
-			} catch (EncryptedDocumentException | IOException e) {
-				e.printStackTrace();
+				Files.write(dataFilePath, dataLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 			}
+		}else {
+			Files.createFile(dataFilePath);
 		}
 	}
 	

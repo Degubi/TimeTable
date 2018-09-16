@@ -77,10 +77,8 @@ public final class Main extends WindowAdapter{
 			frame.add(new JLayer<>(mainPanel, overlay));
 			Path dataFilePath = Paths.get("classData.txt");
 			if(!Files.exists(dataFilePath)) {
-				Files.createFile(dataFilePath);
-				
 				if(JOptionPane.showConfirmDialog(null, "Van Excel Fájlod Cica?", "Excel Keresõ", JOptionPane.YES_NO_OPTION) == 0) {
-					ExcelParser.showExcelFileBrowser();
+					ExcelParser.showExcelFileBrowser(dataFilePath);
 				}
 			}
 			
@@ -155,6 +153,8 @@ public final class Main extends WindowAdapter{
 			
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
+			
+			Files.delete(dataFilePath);
 		}else{
 			throw new RuntimeException("Can't find startup flag.! (full or window)");
 		}
