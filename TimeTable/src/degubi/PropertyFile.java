@@ -7,7 +7,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -51,6 +53,17 @@ public final class PropertyFile {
 		return Boolean.parseBoolean(getString(key, String.valueOf(defaultValue)));
 	}
 	
+	private static List<String> getList(String key, List<String> defaultValue) {
+		String[] fullData = getString(key, defaultValue.stream().collect(Collectors.joining(" "))).split(" ");
+		List<String> toReturn = new ArrayList<>(fullData.length);
+		for(String add : fullData) toReturn.add(add);
+		return toReturn;
+	}
+	
+	public static void setList(String key, List<String> newList) {
+		setString(key, newList.stream().collect(Collectors.joining(" ")));
+	}
+	
 	public static void setColor(String key, Color newColor) {
 		setString(key, newColor.getRed() + " " + newColor.getGreen() + " " + newColor.getBlue());
 	}
@@ -90,4 +103,5 @@ public final class PropertyFile {
 	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
 	public static int noteTime = getInt("noteTime", 60);
 	public static int updateInterval = getInt("updateInterval", 600);
+	public static List<String> friends = getList("friends", List.of("empty"));
 }

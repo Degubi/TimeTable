@@ -38,9 +38,9 @@ public final class ClassButton extends JButton implements MouseListener{
 	public final String day;
 	public final LocalTime startTime, endTime;
 	public final String className, classType, room;
-	public final boolean unImportant;
+	public final boolean unImportant, interactive;
 	
-	public ClassButton(String line) {
+	public ClassButton(String line, ButtonTable<ClassButton> table) {
 		String[] data = line.split(" ", 7);
 		
 		//UTF-8 BOM char fix
@@ -50,7 +50,8 @@ public final class ClassButton extends JButton implements MouseListener{
 		startTime = LocalTime.parse(data[3], DateTimeFormatter.ISO_LOCAL_TIME);
 		endTime = LocalTime.parse(data[4], DateTimeFormatter.ISO_LOCAL_TIME);
 		room = data[5];
-		unImportant = Boolean.parseBoolean(data[6]);
+		unImportant = Boolean.parseBoolean(data[6].trim());
+		interactive = table == Main.dataTable;
 		setText("<html>Óra: " + className.replace('_', ' ') + 
 				"<br>Idõ: " + startTime + "-" + endTime + 
 				"<br>Típus: " + data[2] + 
@@ -68,24 +69,21 @@ public final class ClassButton extends JButton implements MouseListener{
 	private void updateButton(String today, LocalTime todayTime) {
 		boolean isToday = day.equals(today);
 		boolean isBefore = isToday && todayTime.isBefore(startTime);
-		boolean isBetween = isToday && todayTime.isAfter(startTime) && todayTime.isBefore(endTime);
-		boolean isAfter = isToday && (todayTime.isAfter(endTime) || todayTime.equals(endTime));
-		boolean isCurrent = currentClassButton == null && !unImportant && isBefore || isBetween || (isToday && todayTime.equals(startTime));
+		boolean isAfter = isToday && (todayTime.isAfter(startTime) || todayTime.equals(startTime));
+		boolean isNext = currentClassButton == null && !unImportant && isBefore || (isToday && todayTime.equals(startTime));
 		
-		if(isCurrent) {
+		if(interactive && isNext) {
 			currentClassButton = this;
 			
-			if(isBefore) {
-				Duration between = Duration.between(todayTime, startTime);
-				Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
-			}
+			Duration between = Duration.between(todayTime, startTime);
+			Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
-		setBackground(unImportant ? PropertyFile.unimportantClassColor : isCurrent ? PropertyFile.currentClassColor : isBefore ? PropertyFile.upcomingClassColor : isAfter ? PropertyFile.pastClassColor : PropertyFile.otherClassColor);
+		setBackground(unImportant ? PropertyFile.unimportantClassColor : isNext ? PropertyFile.currentClassColor : isBefore ? PropertyFile.upcomingClassColor : isAfter ? PropertyFile.pastClassColor : PropertyFile.otherClassColor);
 	}
 	
 	private static void rewriteFile() {
 		var dataLines = Main.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
-		reloadData(dataLines, true);
+		reloadData(dataLines, Main.dataTable, true);
 		
 		try {
 			Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
@@ -96,7 +94,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	
 	@Override
 	public void mousePressed(MouseEvent event) {
-		if(event.getButton() == MouseEvent.BUTTON3) {
+		if(interactive && event.getButton() == MouseEvent.BUTTON3) {
 			JDialog frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor());
 			JPanel panel = new JPanel(null);
 			
@@ -120,19 +118,21 @@ public final class ClassButton extends JButton implements MouseListener{
 		}
 	}
 
-	public static void reloadData(List<String> dataLines, boolean showFrame) {
-		Main.dataTable.resetTable();
+	public static void reloadData(List<String> dataLines, ButtonTable<ClassButton> dataTable, boolean showFrame) {
+		dataTable.resetTable();
 		
 		dataLines.stream()
-				 .map(ClassButton::new)
-				 .sorted(Comparator.comparingInt((ClassButton button) -> Main.dataTable.indexOf(button.day)).thenComparing(button -> button.startTime).thenComparing(button -> button.className))
-				 .forEach(button -> Main.dataTable.tableAdd(button.day, button));
+				 .map(line -> new ClassButton(line, dataTable))
+				 .sorted(Comparator.comparingInt((ClassButton button) -> dataTable.indexOf(button.day)).thenComparing(button -> button.startTime).thenComparing(button -> button.className))
+				 .forEach(button -> dataTable.tableAdd(button.day, button));
 		
-		ClassButton.updateAllButtons(showFrame);
+		ClassButton.updateAllButtons(showFrame, dataTable);
 	}
 	
-	public static void updateAllButtons(boolean setVisible) {
-		currentClassButton = null;
+	public static void updateAllButtons(boolean setVisible, ButtonTable<ClassButton> dataTable) {
+		if(dataTable == Main.dataTable) {
+			currentClassButton = null;
+		}
 		String today;
 		LocalTime now = LocalTime.now();
 
@@ -145,7 +145,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			default: today = "MenjHaza";
 		}
 		
-		Main.dataTable.forEachData(button -> button.updateButton(today, now));
+		dataTable.forEachData(button -> button.updateButton(today, now));
 		if(currentClassButton == null) {
 			Main.tray.setToolTip("Nincs mára több óra! :)");
 		}
@@ -163,7 +163,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		if(!add) {
 			Main.dataTable.tableRemove(toRemove);
 		}
-		Main.dataTable.tableAdd(new ClassButton(newDataForButton));
+		Main.dataTable.tableAddInternal(new ClassButton(newDataForButton, Main.dataTable));
 		rewriteFile();
 	}
 	

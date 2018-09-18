@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import org.apache.poi.ss.usermodel.Row;
@@ -19,17 +20,21 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 public final class ExcelParser extends FileFilter{
 	
 	public static void showExcelFileBrowser(Path dataFilePath) throws IOException {
-		JFileChooser chooser = new JFileChooser("./");
-		chooser.setFileFilter(new ExcelParser());
-		
-		if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-			try(Workbook book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
-				List<String> dataLines = StreamSupport.stream(book.getSheetAt(0).spliterator(), false)
-													  .filter(row -> row.getRowNum() > 0)
-													  .map(ExcelParser::mapToDataLine)
-													  .collect(Collectors.toList());
-				
-				Files.write(dataFilePath, dataLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+		if(JOptionPane.showConfirmDialog(null, "Van Excel Fájlod Cica?", "Excel Keresõ", JOptionPane.YES_NO_OPTION) == 0) {
+			JFileChooser chooser = new JFileChooser("./");
+			chooser.setFileFilter(new ExcelParser());
+			
+			if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+				try(Workbook book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
+					List<String> dataLines = StreamSupport.stream(book.getSheetAt(0).spliterator(), false)
+														  .filter(row -> row.getRowNum() > 0)
+														  .map(ExcelParser::mapToDataLine)
+														  .collect(Collectors.toList());
+					
+					Files.write(dataFilePath, dataLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+				}
+			}else{
+				Files.createFile(dataFilePath);
 			}
 		}else {
 			Files.createFile(dataFilePath);

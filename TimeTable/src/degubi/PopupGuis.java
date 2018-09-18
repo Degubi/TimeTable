@@ -54,7 +54,7 @@ public final class PopupGuis extends AbstractAction{
 	public static void showRoomFinder(JTable dataTable) {
 		ButtonTable<JButton> buildingTable = new ButtonTable<>(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
 		
-		showNewDialog("Teremválasztó", 800, 600, frame -> {
+		showNewDialog(true, "Teremválasztó", 800, 600, frame -> {
 			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED).ifPresent(button -> {
 				dataTable.setValueAt(button.getText(), 5, 1);
 				frame.dispose();
@@ -95,7 +95,7 @@ public final class PopupGuis extends AbstractAction{
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
-		showNewDialog("Editor Gui", 400, 300, frame -> {
+		showNewDialog(true, "Editor Gui", 400, 300, frame -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
 			String newData = dataTable.getValueAt(1, 1).toString() + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
@@ -139,7 +139,7 @@ public final class PopupGuis extends AbstractAction{
 		startupBox.setForeground(Main.isDarkMode(LocalTime.now()) ? Color.WHITE : Color.BLACK);
 		startupBox.setBounds(350, 200, 200, 20);
 		
-		showNewDialog("Beállítások", 600, 600, frame -> {
+		showNewDialog(true, "Beállítások", 600, 600, frame -> {
 			try {
 				PropertyFile.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
 				PropertyFile.setString("dayTimeStart", (String) startTimeBox.getSelectedItem());
@@ -156,7 +156,7 @@ public final class PopupGuis extends AbstractAction{
 				PropertyFile.setInt("noteTime", PropertyFile.noteTime = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem()));
 				PropertyFile.setInt("updateInterval", PropertyFile.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60);
 				
-				ClassButton.updateAllButtons(false);
+				ClassButton.updateAllButtons(false, Main.dataTable);
 				frame.dispose();
 			}catch (NumberFormatException | DateTimeParseException e) {
 				JOptionPane.showMessageDialog(frame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
@@ -222,10 +222,11 @@ public final class PopupGuis extends AbstractAction{
 		return label;
 	}
 	
-	private static void showNewDialog(String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
-		JDialog frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), title, true);
+	public static void showNewDialog(boolean modal, String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
+		JDialog frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), title, modal);
 		JPanel panel = new JPanel(null);
 		
+		frame.setIconImage(Main.icon);
 		frame.add(new JLayer<>(panel, new BrightnessOverlay()));
 		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		panel.setLayout(null);
@@ -278,6 +279,7 @@ public final class PopupGuis extends AbstractAction{
 			}
 		}
 	}
+	
 	
 	public static final class TableModel extends DefaultTableModel{
 		@Override public int getRowCount() { return 6; }

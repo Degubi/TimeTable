@@ -25,13 +25,13 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 	private final int cellWidth, cellHeight;
 	
 	public ButtonTable(int cellWidth, int cellHeight, int x, int y, boolean addListener, String... columnNames) {
-		horizontalIndexers = new int[columnNames.length];
+		horizontalIndexers = columnNames.length == 0 ? new int[1] : new int[columnNames.length];
 		this.cellWidth = cellWidth;
 		this.cellHeight = cellHeight;
 		columns = columnNames;
 		
 		Arrays.fill(horizontalIndexers, 0);
-		setBounds(x, y, cellWidth * columnNames.length + cellWidth, 600);
+		setBounds(x, y, cellWidth * horizontalIndexers.length + cellWidth, 600);
 		
 		for(int topIndex = 0; topIndex < columnNames.length; ++topIndex) {
 			JButton topAdd = new JButton(columnNames[topIndex]);
@@ -96,7 +96,7 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 	
 	public Optional<T> findFirstButton(Predicate<T> predicate){ return dataButtonList.stream().filter(predicate).findFirst(); }
 	public Stream<T> tableDataStream(){ return dataButtonList.stream(); }
-	public void tableAdd(T button) { dataButtonList.add(button); }
+	public void tableAddInternal(T button) { dataButtonList.add(button); }
 	public void forEachData(Consumer<T> button) { dataButtonList.forEach(button); }
 	
 	public void tableAdd(String columnName, T buttonToAdd) {
@@ -118,7 +118,7 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		@Override
 		public void mousePressed(MouseEvent event) {
 			if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-				PopupGuis.showEditorGui(true, new ClassButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false"));
+				PopupGuis.showEditorGui(true, new ClassButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false", Main.dataTable));
 			}
 		}
 	}

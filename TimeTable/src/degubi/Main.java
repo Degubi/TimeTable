@@ -40,6 +40,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -50,17 +51,18 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.LineBorder;
 
+import degubi.listeners.FriendButtonListener;
 import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
 
 public final class Main extends WindowAdapter{
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2, true);
 	public static final JPanel mainPanel = new JPanel(null);
-	private static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
+	public static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel label = new JLabel();
-	private static int timer = 0;
+	private static int timer = PropertyFile.updateInterval - 100;
 
 	@SuppressWarnings("boxing")
 	public static void main(String[] args) throws AWTException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
@@ -77,12 +79,10 @@ public final class Main extends WindowAdapter{
 			frame.add(new JLayer<>(mainPanel, overlay));
 			Path dataFilePath = Paths.get("classData.txt");
 			if(!Files.exists(dataFilePath)) {
-				if(JOptionPane.showConfirmDialog(null, "Van Excel Fájlod Cica?", "Excel Keresõ", JOptionPane.YES_NO_OPTION) == 0) {
-					ExcelParser.showExcelFileBrowser(dataFilePath);
-				}
+				ExcelParser.showExcelFileBrowser(dataFilePath);
 			}
 			
-			ClassButton.reloadData(Files.readAllLines(dataFilePath), args[0].equals("-full"));
+			ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, args[0].equals("-full"));
 			
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 			label.setBounds(320, 5, 300, 40);
@@ -99,7 +99,7 @@ public final class Main extends WindowAdapter{
 				}
 				
 				if(++timer == PropertyFile.updateInterval) {
-					ClassButton.updateAllButtons(false);
+					ClassButton.updateAllButtons(false, Main.dataTable);
 
 					if(!frame.isVisible()) {
 						LocalTime now = LocalTime.now();
@@ -144,6 +144,12 @@ public final class Main extends WindowAdapter{
 			popMenu.setPreferredSize(new Dimension(160, 180));
 			popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
 			popMenu.addSeparator();
+			
+			JMenu friendMenu = new JMenu("Ismerõsök");
+			friendMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/friends.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
+			reinitFriendsMenu(friendMenu);
+			
+			popMenu.add(friendMenu);
 			popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
 			popMenu.add(newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot));
 			popMenu.addSeparator();
@@ -153,11 +159,44 @@ public final class Main extends WindowAdapter{
 			
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
-			
-			//Files.delete(dataFilePath);
 		}else{
 			throw new RuntimeException("Can't find startup flag.! (full or window)");
 		}
+	}
+	
+	private static void reinitFriendsMenu(JMenu friendMenu) {
+		friendMenu.removeAll();
+		JMenuItem addFriendItem = new JMenuItem("Ismerõs Hozzáadása");
+		addFriendItem.addActionListener(e -> addNewFriend(friendMenu));
+		
+		if(PropertyFile.friends.size() > 1) {
+			int friendCount = PropertyFile.friends.size();
+			
+			for(int k = 0; k < friendCount; k += 2) {
+				JMenuItem friendItem = new JMenuItem(PropertyFile.friends.get(k));
+				friendItem.setActionCommand(PropertyFile.friends.get(k + 1));
+				friendItem.addActionListener(new FriendButtonListener());
+				friendMenu.add(friendItem);
+			}
+		}
+		friendMenu.addSeparator();
+		friendMenu.add(addFriendItem);
+	}
+	
+	private static void addNewFriend(JMenu friendMenu) {
+		if(PropertyFile.friends.size() == 1) {
+			PropertyFile.friends.clear();
+		}
+		
+		String friendName = JOptionPane.showInputDialog("Írd be haverod nevét!");
+		String friendURL = JOptionPane.showInputDialog("Írd be haverod URL-jét!");
+		
+		PropertyFile.friends.add(friendName);
+		PropertyFile.friends.add(friendURL);
+		
+		reinitFriendsMenu(friendMenu);
+		
+		PropertyFile.setList("friends", PropertyFile.friends);
 	}
 	
 	private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
@@ -176,8 +215,8 @@ public final class Main extends WindowAdapter{
 	}
 	
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
-		((JFrame)mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
-		ClassButton.updateAllButtons(true);
+		ClassButton.updateAllButtons(true, Main.dataTable);
+		((JFrame)Main.mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
 	}
 	
 	public static boolean isDarkMode(LocalTime now) {
