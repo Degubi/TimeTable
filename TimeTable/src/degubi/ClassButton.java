@@ -150,7 +150,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			Main.tray.setToolTip("Nincs mára több óra! :)");
 		}
 		
-		Main.label.setForeground(Main.isDarkMode(now) ? Color.WHITE : Color.BLACK);
+		Main.dateLabel.setForeground(Main.isDarkMode(now) ? Color.WHITE : Color.BLACK);
 		Main.handleNightMode(Main.mainPanel);
 		Main.mainPanel.repaint();
 		

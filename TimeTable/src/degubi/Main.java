@@ -15,7 +15,6 @@ import java.awt.TrayIcon.MessageType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,7 +60,7 @@ public final class Main extends WindowAdapter{
 	public static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
-	public static final JLabel label = new JLabel();
+	public static final JLabel dateLabel = new JLabel();
 	private static int timer = PropertyFile.updateInterval - 100;
 
 	@SuppressWarnings("boxing")
@@ -85,17 +84,17 @@ public final class Main extends WindowAdapter{
 			ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, args[0].equals("-full"));
 			
 			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
-			label.setBounds(320, 5, 300, 40);
-			label.setFont(ButtonTable.tableHeaderFont);
+			dateLabel.setBounds(320, 5, 300, 40);
+			dateLabel.setFont(ButtonTable.tableHeaderFont);
 			frame.setResizable(false);
-			mainPanel.add(label);
+			mainPanel.add(dateLabel);
 			frame.addWindowListener(new MainFrameIconifier());
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setIconImage(icon);
 			
 			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
 				if(frame.isVisible()) {
-					label.setText(LocalDateTime.now().format(displayTimeFormat));
+					dateLabel.setText(LocalDateTime.now().format(displayTimeFormat));
 				}
 				
 				if(++timer == PropertyFile.updateInterval) {
@@ -124,7 +123,7 @@ public final class Main extends WindowAdapter{
 								}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
 							}
 						}
-						label.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
+						dateLabel.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
 					}
 					timer = 0;
 				}
@@ -160,7 +159,7 @@ public final class Main extends WindowAdapter{
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
 		}else{
-			throw new RuntimeException("Can't find startup flag.! (full or window)");
+			JOptionPane.showMessageDialog(null, "Nincs indítási flag! ('-full' vagy '-windows')");
 		}
 	}
 	
@@ -209,7 +208,7 @@ public final class Main extends WindowAdapter{
 		if(mainPanel.getTopLevelAncestor().isVisible()) {
 			var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
 			try {
-				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
+				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new java.io.File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
 			} catch (HeadlessException | AWTException | IOException e1) {}
 		}
 	}
