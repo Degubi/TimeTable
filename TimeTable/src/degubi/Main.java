@@ -15,6 +15,7 @@ import java.awt.TrayIcon.MessageType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +56,7 @@ import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
 
 public final class Main extends WindowAdapter{
+	public static final String VERSION = "1.0.0";
 	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2, true);
 	public static final JPanel mainPanel = new JPanel(null);
 	public static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
@@ -208,7 +210,7 @@ public final class Main extends WindowAdapter{
 		if(mainPanel.getTopLevelAncestor().isVisible()) {
 			var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
 			try {
-				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new java.io.File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
+				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
 			} catch (HeadlessException | AWTException | IOException e1) {}
 		}
 	}

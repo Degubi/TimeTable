@@ -181,7 +181,7 @@ public final class PopupGuis extends AbstractAction{
 			
 		}, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140),
 					 newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380),
-					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor, timeBeforeNoteBox, newLabel("Óra Elõtti Értesítések Percben:", 350, 230),
+					 currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor, timeBeforeNoteBox, newLabel("Óra Elõtti Értesítések Percben:", 350, 230), newLabel("Verzió: " + Main.VERSION, 510, 520),
 					 newLabel("Nappali Idõszak Kezdete:", 350, 20), newLabel("Nappali Idõszak Vége:", 350, 80), startTimeBox, endTimeBox, popupCheckBox, startupBox, updateIntervalBox, newLabel("Értesítések Frissítési Idõzítései:", 350, 300));
 	}
 	
