@@ -42,7 +42,7 @@ public final class PopupGuis extends AbstractAction{
 	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(Main.class.getResource("/assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-
+	
 	private final JTable dataTable;
 	private final char key;
 	

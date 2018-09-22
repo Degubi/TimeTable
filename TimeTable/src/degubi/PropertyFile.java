@@ -7,9 +7,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -53,15 +51,21 @@ public final class PropertyFile {
 		return Boolean.parseBoolean(getString(key, String.valueOf(defaultValue)));
 	}
 	
-	private static List<String> getList(String key, List<String> defaultValue) {
-		String[] fullData = getString(key, defaultValue.stream().collect(Collectors.joining(" "))).split(" ");
-		List<String> toReturn = new ArrayList<>(fullData.length);
-		for(String add : fullData) toReturn.add(add);
-		return toReturn;
+	public static Map<String, String> getMap(String key){
+		String[] fullData = getString(key, "").split(";");
+		Map<String, String> map = new LinkedHashMap<>();
+		
+		if(!fullData[0].isEmpty()) {
+			for(String data : fullData) {
+				String[] perDataSplit = data.split(" ", 2);
+				map.put(perDataSplit[0], perDataSplit[1]);
+			}
+		}
+		return map;
 	}
 	
-	public static void setList(String key, List<String> newList) {
-		setString(key, newList.stream().collect(Collectors.joining(" ")));
+	public static void setMap(String key, Map<String, String> map) {
+		setString(key, map.entrySet().stream().map(entry -> entry.getKey() + ' ' + entry.getValue()).collect(Collectors.joining(";")));
 	}
 	
 	public static void setColor(String key, Color newColor) {
@@ -103,5 +107,6 @@ public final class PropertyFile {
 	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
 	public static int noteTime = getInt("noteTime", 60);
 	public static int updateInterval = getInt("updateInterval", 600);
-	public static List<String> friends = getList("friends", List.of("empty"));
+	public static final Map<String, String> friendsMap = getMap("friends");
+	public static final Map<String, String> calendarMap = getMap("calendar");
 }

@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -51,6 +52,10 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.LineBorder;
 
+import com.github.lgooddatepicker.components.CalendarPanel;
+import com.github.lgooddatepicker.components.DatePickerSettings;
+
+import degubi.listeners.CalendarListeners;
 import degubi.listeners.FriendButtonListener;
 import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
@@ -85,7 +90,6 @@ public final class Main extends WindowAdapter{
 			
 			ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, args[0].equals("-full"));
 			
-			DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 			dateLabel.setBounds(320, 5, 300, 40);
 			dateLabel.setFont(ButtonTable.tableHeaderFont);
 			frame.setResizable(false);
@@ -94,42 +98,7 @@ public final class Main extends WindowAdapter{
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setIconImage(icon);
 			
-			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-				if(frame.isVisible()) {
-					dateLabel.setText(LocalDateTime.now().format(displayTimeFormat));
-				}
-				
-				if(++timer == PropertyFile.updateInterval) {
-					ClassButton.updateAllButtons(false, Main.dataTable);
-
-					if(!frame.isVisible()) {
-						LocalTime now = LocalTime.now();
-						ClassButton current = ClassButton.currentClassButton;
-			
-						if(PropertyFile.enablePopups && current != null && now.isBefore(current.startTime)) {
-							var timeBetween = Duration.between(now, current.startTime);
-							
-							if(timeBetween.toMinutes() < PropertyFile.noteTime) {
-								Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
-
-								try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
-									SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
-									
-									line.open();
-									((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
-									line.start();
-									byte[] buf = new byte[8900];
-									stream.read(buf);
-									line.write(buf, 0, 8900);
-									line.drain();
-								}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
-							}
-						}
-						dateLabel.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
-					}
-					timer = 0;
-				}
-			}, 0, 1, TimeUnit.SECONDS);
+			launchUpdaterThread(frame);
 			
 			JSlider brightnessSlider = new JSlider(0, 16, 16);
 			brightnessSlider.addChangeListener(overlay);
@@ -142,16 +111,29 @@ public final class Main extends WindowAdapter{
 			brightnessSlider.setLabelTable(labelTable);
 			
 			JPopupMenu popMenu = new JPopupMenu();
-			popMenu.setPreferredSize(new Dimension(160, 180));
+			popMenu.setPreferredSize(new Dimension(160, 240));
 			popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
 			popMenu.addSeparator();
+			
+			JMenu calendarMenu = new JMenu("Naptár");
+			calendarMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/calendar.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
+			
+			DatePickerSettings settings = new DatePickerSettings();
+			CalendarListeners listeners = new CalendarListeners();
+			settings.setHighlightPolicy(listeners);
+			CalendarPanel calendar = new CalendarPanel(settings);
+			calendar.addCalendarListener(listeners);
+			calendar.setSelectedDate(LocalDate.now());
+			
+			calendarMenu.add(calendar);
 			
 			JMenu friendMenu = new JMenu("Ismerõsök");
 			friendMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/friends.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
 			reinitFriendsMenu(friendMenu);
-			
+
 			popMenu.add(friendMenu);
 			popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
+			popMenu.add(calendarMenu);
 			popMenu.add(newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot));
 			popMenu.addSeparator();
 			popMenu.add(brightnessSlider);
@@ -160,6 +142,8 @@ public final class Main extends WindowAdapter{
 			
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
+			
+			Files.delete(dataFilePath);
 		}else{
 			JOptionPane.showMessageDialog(null, "Nincs indítási flag! ('-full' vagy '-windows')");
 		}
@@ -170,34 +154,28 @@ public final class Main extends WindowAdapter{
 		JMenuItem addFriendItem = new JMenuItem("Ismerõs Hozzáadása");
 		addFriendItem.addActionListener(e -> addNewFriend(friendMenu));
 		
-		if(PropertyFile.friends.size() > 1) {
-			int friendCount = PropertyFile.friends.size();
-			
-			for(int k = 0; k < friendCount; k += 2) {
-				JMenuItem friendItem = new JMenuItem(PropertyFile.friends.get(k));
-				friendItem.setActionCommand(PropertyFile.friends.get(k + 1));
-				friendItem.addActionListener(new FriendButtonListener());
-				friendMenu.add(friendItem);
-			}
+		PropertyFile.friendsMap.forEach((name, url) -> {
+			JMenuItem friendItem = new JMenuItem(name);
+			friendItem.setActionCommand(url);
+			friendItem.addActionListener(new FriendButtonListener());
+			friendMenu.add(friendItem);
+		});
+		
+		if(!PropertyFile.friendsMap.isEmpty()) {
+			friendMenu.addSeparator();
 		}
-		friendMenu.addSeparator();
 		friendMenu.add(addFriendItem);
 	}
 	
 	private static void addNewFriend(JMenu friendMenu) {
-		if(PropertyFile.friends.size() == 1) {
-			PropertyFile.friends.clear();
-		}
-		
 		String friendName = JOptionPane.showInputDialog("Írd be haverod nevét!");
 		String friendURL = JOptionPane.showInputDialog("Írd be haverod URL-jét!");
 		
-		PropertyFile.friends.add(friendName);
-		PropertyFile.friends.add(friendURL);
+		PropertyFile.friendsMap.put(friendName, friendURL);
 		
 		reinitFriendsMenu(friendMenu);
 		
-		PropertyFile.setList("friends", PropertyFile.friends);
+		PropertyFile.setMap("friends", PropertyFile.friendsMap);
 	}
 	
 	private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
@@ -213,6 +191,47 @@ public final class Main extends WindowAdapter{
 				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
 			} catch (HeadlessException | AWTException | IOException e1) {}
 		}
+	}
+	
+	private static void launchUpdaterThread(JFrame frame) {
+		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
+
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+			if(frame.isVisible()) {
+				dateLabel.setText(LocalDateTime.now().format(displayTimeFormat));
+			}
+			
+			if(++timer == PropertyFile.updateInterval) {
+				ClassButton.updateAllButtons(false, Main.dataTable);
+
+				if(!frame.isVisible()) {
+					LocalTime now = LocalTime.now();
+					ClassButton current = ClassButton.currentClassButton;
+		
+					if(PropertyFile.enablePopups && current != null && now.isBefore(current.startTime)) {
+						var timeBetween = Duration.between(now, current.startTime);
+						
+						if(timeBetween.toMinutes() < PropertyFile.noteTime) {
+							Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
+
+							try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
+								SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
+								
+								line.open();
+								((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
+								line.start();
+								byte[] buf = new byte[8900];
+								stream.read(buf);
+								line.write(buf, 0, 8900);
+								line.drain();
+							}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
+						}
+					}
+					dateLabel.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
+				}
+				timer = 0;
+			}
+		}, 0, 1, TimeUnit.SECONDS);
 	}
 	
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
