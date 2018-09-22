@@ -142,8 +142,6 @@ public final class Main extends WindowAdapter{
 			
 			SystemTray.getSystemTray().add(tray);
 			tray.addMouseListener(new SystemTrayListener(popMenu));
-			
-			Files.delete(dataFilePath);
 		}else{
 			JOptionPane.showMessageDialog(null, "Nincs indítási flag! ('-full' vagy '-windows')");
 		}
