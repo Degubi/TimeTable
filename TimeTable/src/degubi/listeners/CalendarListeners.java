@@ -28,8 +28,10 @@ public final class CalendarListeners implements DateHighlightPolicy, CalendarLis
 		if(System.currentTimeMillis() - calendarClickCounter < 300L) {
 			String message = JOptionPane.showInputDialog("Írd be az eseményt!");
 			
-			PropertyFile.calendarMap.put(event.getNewDate().toString(), message);
-			PropertyFile.setMap("calendar", PropertyFile.calendarMap);
+			if(message != null) {
+				PropertyFile.calendarMap.put(event.getNewDate().toString(), message);
+				PropertyFile.setMap("calendar", PropertyFile.calendarMap);
+			}
 		}
 		calendarClickCounter = System.currentTimeMillis();
 	}

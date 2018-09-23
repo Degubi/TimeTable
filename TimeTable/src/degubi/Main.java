@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -53,7 +52,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.LineBorder;
 
 import com.github.lgooddatepicker.components.CalendarPanel;
-import com.github.lgooddatepicker.components.DatePickerSettings;
 
 import degubi.listeners.CalendarListeners;
 import degubi.listeners.FriendButtonListener;
@@ -70,7 +68,6 @@ public final class Main extends WindowAdapter{
 	public static final JLabel dateLabel = new JLabel();
 	private static int timer = PropertyFile.updateInterval - 100;
 
-	@SuppressWarnings("boxing")
 	public static void main(String[] args) throws AWTException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
 		if(args.length > 0) {
 			UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -100,51 +97,49 @@ public final class Main extends WindowAdapter{
 			
 			launchUpdaterThread(frame);
 			
-			JSlider brightnessSlider = new JSlider(0, 16, 16);
-			brightnessSlider.addChangeListener(overlay);
-			brightnessSlider.setPaintLabels(true);
-			brightnessSlider.setMaximumSize(new Dimension(155, 40));
-			
-			Hashtable<Integer, JLabel> labelTable = new Hashtable<>(2);
-			labelTable.put(0, new JLabel("Sötét"));
-			labelTable.put(16, new JLabel("Világos"));
-			brightnessSlider.setLabelTable(labelTable);
-			
-			JPopupMenu popMenu = new JPopupMenu();
-			popMenu.setPreferredSize(new Dimension(160, 240));
-			popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
-			popMenu.addSeparator();
-			
-			JMenu calendarMenu = new JMenu("Naptár");
-			calendarMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/calendar.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
-			
-			DatePickerSettings settings = new DatePickerSettings();
-			CalendarListeners listeners = new CalendarListeners();
-			settings.setHighlightPolicy(listeners);
-			CalendarPanel calendar = new CalendarPanel(settings);
-			calendar.addCalendarListener(listeners);
-			calendar.setSelectedDate(LocalDate.now());
-			
-			calendarMenu.add(calendar);
-			
-			JMenu friendMenu = new JMenu("Ismerõsök");
-			friendMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/friends.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
-			reinitFriendsMenu(friendMenu);
-
-			popMenu.add(friendMenu);
-			popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
-			popMenu.add(calendarMenu);
-			popMenu.add(newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot));
-			popMenu.addSeparator();
-			popMenu.add(brightnessSlider);
-			popMenu.addSeparator();
-			popMenu.add(newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
-			
+			tray.addMouseListener(new SystemTrayListener(initTrayMenu(overlay)));
 			SystemTray.getSystemTray().add(tray);
-			tray.addMouseListener(new SystemTrayListener(popMenu));
 		}else{
 			JOptionPane.showMessageDialog(null, "Nincs indítási flag! ('-full' vagy '-windows')");
 		}
+	}
+
+	@SuppressWarnings("boxing")
+	private static JPopupMenu initTrayMenu(BrightnessOverlay overlay) {
+		JSlider brightnessSlider = new JSlider(0, 16, 16);
+		brightnessSlider.addChangeListener(overlay);
+		brightnessSlider.setPaintLabels(true);
+		brightnessSlider.setMaximumSize(new Dimension(155, 40));
+		
+		JMenu calendarMenu = new JMenu("Naptár");
+		calendarMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/calendar.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
+		
+		CalendarListeners listeners = new CalendarListeners();
+		CalendarPanel calendar = new CalendarPanel(listeners, listeners);
+		calendarMenu.add(calendar);
+		
+		JMenu friendMenu = new JMenu("Ismerõsök");
+		friendMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/friends.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
+		reinitFriendsMenu(friendMenu);
+		
+		Hashtable<Integer, JLabel> labelTable = new Hashtable<>(2);
+		labelTable.put(0, new JLabel("Sötét"));
+		labelTable.put(16, new JLabel("Világos"));
+		brightnessSlider.setLabelTable(labelTable);
+		
+		JPopupMenu popMenu = new JPopupMenu();
+		popMenu.setPreferredSize(new Dimension(160, 240));
+		popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
+		popMenu.addSeparator();
+		popMenu.add(friendMenu);
+		popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
+		popMenu.add(calendarMenu);
+		popMenu.add(newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot));
+		popMenu.addSeparator();
+		popMenu.add(brightnessSlider);
+		popMenu.addSeparator();
+		popMenu.add(newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
+		return popMenu;
 	}
 	
 	private static void reinitFriendsMenu(JMenu friendMenu) {
