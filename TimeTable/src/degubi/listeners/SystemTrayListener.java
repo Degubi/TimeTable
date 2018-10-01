@@ -6,8 +6,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 
-import degubi.ClassButton;
-import degubi.Main;
+import degubi.TimeTableMain;
+import degubi.gui.ClassButton;
 
 public class SystemTrayListener extends MouseAdapter {
 	private final JPopupMenu popMenu;
@@ -28,8 +28,8 @@ public class SystemTrayListener extends MouseAdapter {
 	@Override
 	public void mousePressed(MouseEvent event) {
 		if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-			ClassButton.updateAllButtons(true, Main.dataTable);
-			((JFrame)Main.mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
+			ClassButton.updateAllButtons(true, TimeTableMain.dataTable);
+			((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package degubi;
+package degubi.gui;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -29,7 +29,9 @@ import javax.swing.JLayer;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import degubi.TimeTableMain;
 import degubi.listeners.EditClassButtonListener;
+import degubi.tools.PropertyFile;
 
 public final class ClassButton extends JButton implements MouseListener{
 	public static ClassButton currentClassButton;
@@ -51,7 +53,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		endTime = LocalTime.parse(data[4], DateTimeFormatter.ISO_LOCAL_TIME);
 		room = data[5];
 		unImportant = Boolean.parseBoolean(data[6].trim());
-		interactive = table == Main.dataTable;
+		interactive = table == TimeTableMain.dataTable;
 		setText("<html>Óra: " + className.replace('_', ' ') + 
 				"<br>Idõ: " + startTime + "-" + endTime + 
 				"<br>Típus: " + data[2] + 
@@ -76,14 +78,14 @@ public final class ClassButton extends JButton implements MouseListener{
 			currentClassButton = this;
 			
 			Duration between = Duration.between(todayTime, startTime);
-			Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
+			TimeTableMain.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
 		setBackground(unImportant ? PropertyFile.unimportantClassColor : isNext ? PropertyFile.currentClassColor : isBefore ? PropertyFile.upcomingClassColor : isAfter ? PropertyFile.pastClassColor : PropertyFile.otherClassColor);
 	}
 	
 	private static void rewriteFile() {
-		var dataLines = Main.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
-		reloadData(dataLines, Main.dataTable, true);
+		var dataLines = TimeTableMain.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
+		reloadData(dataLines, TimeTableMain.dataTable, true);
 		
 		try {
 			Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
@@ -95,7 +97,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	@Override
 	public void mousePressed(MouseEvent event) {
 		if(interactive && event.getButton() == MouseEvent.BUTTON3) {
-			JDialog frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor());
+			JDialog frame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor());
 			JPanel panel = new JPanel(null);
 			
 			frame.add(new JLayer<>(panel, new BrightnessOverlay()));
@@ -105,8 +107,8 @@ public final class ClassButton extends JButton implements MouseListener{
 			frame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
 			
 			panel.add(newEditButton(32, "Törlés", PopupGuis.deleteIcon, e -> {
-				if(JOptionPane.showConfirmDialog(Main.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
-					Main.dataTable.tableRemove(this);
+				if(JOptionPane.showConfirmDialog(TimeTableMain.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
+					TimeTableMain.dataTable.tableRemove(this);
 					rewriteFile();
 				}
 			}));
@@ -130,7 +132,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	}
 	
 	public static void updateAllButtons(boolean setVisible, ButtonTable<ClassButton> dataTable) {
-		if(dataTable == Main.dataTable) {
+		if(dataTable == TimeTableMain.dataTable) {
 			currentClassButton = null;
 		}
 		String today;
@@ -147,23 +149,23 @@ public final class ClassButton extends JButton implements MouseListener{
 		
 		dataTable.forEachData(button -> button.updateButton(today, now));
 		if(currentClassButton == null) {
-			Main.tray.setToolTip("Nincs mára több óra! :)");
+			TimeTableMain.tray.setToolTip("Nincs mára több óra! :)");
 		}
 		
-		Main.dateLabel.setForeground(Main.isDarkMode(now) ? Color.WHITE : Color.BLACK);
-		Main.handleNightMode(Main.mainPanel);
-		Main.mainPanel.repaint();
+		TimeTableMain.handleNightMode(TimeTableMain.dateLabel, now);
+		TimeTableMain.handleNightMode(TimeTableMain.mainPanel, now);
+		TimeTableMain.mainPanel.repaint();
 		
 		if(setVisible) {
-			Main.mainPanel.getTopLevelAncestor().setVisible(true);
+			TimeTableMain.mainPanel.getTopLevelAncestor().setVisible(true);
 		}
 	}
 	
 	public static void addOrReplaceButton(boolean add, ClassButton toRemove, String newDataForButton) {
 		if(!add) {
-			Main.dataTable.tableRemove(toRemove);
+			TimeTableMain.dataTable.tableRemove(toRemove);
 		}
-		Main.dataTable.tableAddInternal(new ClassButton(newDataForButton, Main.dataTable));
+		TimeTableMain.dataTable.tableAddInternal(new ClassButton(newDataForButton, TimeTableMain.dataTable));
 		rewriteFile();
 	}
 	

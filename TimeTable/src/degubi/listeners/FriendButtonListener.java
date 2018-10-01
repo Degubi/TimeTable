@@ -9,9 +9,9 @@ import java.util.List;
 
 import javax.swing.JMenuItem;
 
-import degubi.ButtonTable;
-import degubi.ClassButton;
-import degubi.PopupGuis;
+import degubi.gui.ButtonTable;
+import degubi.gui.ClassButton;
+import degubi.gui.PopupGuis;
 
 public final class FriendButtonListener implements ActionListener {
 

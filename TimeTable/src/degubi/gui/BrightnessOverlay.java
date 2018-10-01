@@ -1,4 +1,4 @@
-package degubi;
+package degubi.gui;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -8,6 +8,8 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.LayerUI;
+
+import degubi.TimeTableMain;
 
 public class BrightnessOverlay extends LayerUI<JComponent> implements ChangeListener{
 	public static Color meow = new Color(0, 0, 0, 0);
@@ -24,6 +26,6 @@ public class BrightnessOverlay extends LayerUI<JComponent> implements ChangeList
 	public void stateChanged(ChangeEvent e) {
 		JSlider comp = (JSlider) e.getSource();
 		meow = new Color(0, 0, 0, (16 - comp.getValue()) * 13);
-		Main.mainPanel.repaint();
+		TimeTableMain.mainPanel.repaint();
 	}
 }

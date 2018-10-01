@@ -1,5 +1,7 @@
 package degubi;
 
+import static java.awt.Toolkit.getDefaultToolkit;
+
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Container;
@@ -9,7 +11,6 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.SystemTray;
-import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
 import java.awt.event.ActionEvent;
@@ -17,6 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +39,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayer;
@@ -49,59 +53,65 @@ import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.border.LineBorder;
 
-import com.github.lgooddatepicker.components.CalendarPanel;
-
-import degubi.listeners.CalendarListeners;
+import degubi.gui.BrightnessOverlay;
+import degubi.gui.ButtonTable;
+import degubi.gui.ClassButton;
+import degubi.gui.PopupGuis;
 import degubi.listeners.FriendButtonListener;
 import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
+import degubi.tools.ExcelParser;
+import degubi.tools.PropertyFile;
 
-public final class Main extends WindowAdapter{
-	public static final String VERSION = "1.0.0";
-	public static final LineBorder blackBorder = new LineBorder(Color.BLACK, 2, true);
+public final class TimeTableMain extends WindowAdapter{
+	public static final int BUILD_NUMBER = 100;
 	public static final JPanel mainPanel = new JPanel(null);
-	public static final Image icon = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/tray.png"));
+	public static final Image icon = getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
 	private static int timer = PropertyFile.updateInterval - 100;
-
+	private static final JCheckBoxMenuItem sleepMode = new JCheckBoxMenuItem("Alvó Mód", new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/sleep.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)), false);
+	public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", TimeTableMain::createScreenshot);
+	
 	public static void main(String[] args) throws AWTException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-		if(args.length > 0) {
-			UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-			SwingUtilities.updateComponentTreeUI(dataTable);
-			
-			JFrame frame = new JFrame("Órarend");
-			mainPanel.add(dataTable);
-			frame.setBounds(0, 0, 950, 713);
-			frame.setLocationRelativeTo(null);
-			BrightnessOverlay overlay = new BrightnessOverlay();
-			
-			frame.add(new JLayer<>(mainPanel, overlay));
-			Path dataFilePath = Paths.get("classData.txt");
-			if(!Files.exists(dataFilePath)) {
-				ExcelParser.showExcelFileBrowser(dataFilePath);
-			}
-			
-			ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, args[0].equals("-full"));
-			
-			dateLabel.setBounds(320, 5, 300, 40);
-			dateLabel.setFont(ButtonTable.tableHeaderFont);
-			frame.setResizable(false);
-			mainPanel.add(dateLabel);
-			frame.addWindowListener(new MainFrameIconifier());
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setIconImage(icon);
-			
-			launchUpdaterThread(frame);
-			
-			tray.addMouseListener(new SystemTrayListener(initTrayMenu(overlay)));
-			SystemTray.getSystemTray().add(tray);
-		}else{
-			JOptionPane.showMessageDialog(null, "Nincs indítási flag! ('-full' vagy '-windows')");
+		if(readBuildNumber() > BUILD_NUMBER) {
+			Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar" + (args.length == 1 ? " " + args[0] : ""));
+			System.exit(0);
 		}
+			
+		UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		SwingUtilities.updateComponentTreeUI(dataTable);
+			
+		JFrame frame = new JFrame("Órarend");
+		mainPanel.add(dataTable);
+		frame.setBounds(0, 0, 950, 713);
+		frame.setLocationRelativeTo(null);
+		BrightnessOverlay overlay = new BrightnessOverlay();
+			
+		frame.add(new JLayer<>(mainPanel, overlay));
+		Path dataFilePath = Paths.get("classData.txt");
+		if(!Files.exists(dataFilePath)) {
+			ExcelParser.showExcelFileBrowser(dataFilePath);
+		}
+		
+		boolean startHidden = args.length == 1 && args[0].equals("-window");
+		ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, !startHidden);
+			
+		dateLabel.setBounds(320, 5, 300, 40);
+		dateLabel.setFont(ButtonTable.tableHeaderFont);
+		frame.setResizable(false);
+		mainPanel.add(dateLabel);
+		frame.addWindowListener(new MainFrameIconifier());
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setIconImage(icon);
+			
+		launchTimerThread(frame);
+			
+		tray.addMouseListener(new SystemTrayListener(initTrayMenu(overlay)));
+		SystemTray.getSystemTray().add(tray);
+		System.gc();
 	}
 
 	@SuppressWarnings("boxing")
@@ -111,15 +121,8 @@ public final class Main extends WindowAdapter{
 		brightnessSlider.setPaintLabels(true);
 		brightnessSlider.setMaximumSize(new Dimension(155, 40));
 		
-		JMenu calendarMenu = new JMenu("Naptár");
-		calendarMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/calendar.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
-		
-		CalendarListeners listeners = new CalendarListeners();
-		CalendarPanel calendar = new CalendarPanel(listeners, listeners);
-		calendarMenu.add(calendar);
-		
 		JMenu friendMenu = new JMenu("Ismerõsök");
-		friendMenu.setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/friends.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
+		friendMenu.setIcon(new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/friends.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
 		reinitFriendsMenu(friendMenu);
 		
 		Hashtable<Integer, JLabel> labelTable = new Hashtable<>(2);
@@ -129,16 +132,18 @@ public final class Main extends WindowAdapter{
 		
 		JPopupMenu popMenu = new JPopupMenu();
 		popMenu.setPreferredSize(new Dimension(160, 240));
-		popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
+		popMenu.add(newMenuItem("Megnyitás", "open.png", TimeTableMain::trayOpenGui));
 		popMenu.addSeparator();
 		popMenu.add(friendMenu);
+		popMenu.add(sleepMode);
+		popMenu.add(screenshotItem);
 		popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
-		popMenu.add(calendarMenu);
-		popMenu.add(newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot));
 		popMenu.addSeparator();
 		popMenu.add(brightnessSlider);
 		popMenu.addSeparator();
 		popMenu.add(newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
+		
+		SwingUtilities.updateComponentTreeUI(popMenu);
 		return popMenu;
 	}
 	
@@ -172,21 +177,20 @@ public final class Main extends WindowAdapter{
 	}
 	
 	private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
-		JMenuItem item = new JMenuItem(text, iconPath != null ? new ImageIcon(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/" + iconPath)).getScaledInstance(24, 24, Image.SCALE_SMOOTH)) : null);
+		JMenuItem item = new JMenuItem(text, iconPath != null ? new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/" + iconPath)).getScaledInstance(24, 24, Image.SCALE_SMOOTH)) : null);
+		item.setForeground(Color.BLACK);
 		item.addActionListener(listener);
 		return item;
 	}
 	
 	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
-		if(mainPanel.getTopLevelAncestor().isVisible()) {
-			var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
-			try {
-				ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
-			} catch (HeadlessException | AWTException | IOException e1) {}
-		}
+		var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
+		try {
+			ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
+		} catch (HeadlessException | AWTException | IOException e1) {}
 	}
 	
-	private static void launchUpdaterThread(JFrame frame) {
+	private static void launchTimerThread(JFrame frame) {
 		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
@@ -195,9 +199,9 @@ public final class Main extends WindowAdapter{
 			}
 			
 			if(++timer == PropertyFile.updateInterval) {
-				ClassButton.updateAllButtons(false, Main.dataTable);
+				ClassButton.updateAllButtons(false, TimeTableMain.dataTable);
 
-				if(!frame.isVisible()) {
+				if(!sleepMode.isSelected() && !frame.isVisible()) {
 					LocalTime now = LocalTime.now();
 					ClassButton current = ClassButton.currentClassButton;
 		
@@ -205,9 +209,9 @@ public final class Main extends WindowAdapter{
 						var timeBetween = Duration.between(now, current.startTime);
 						
 						if(timeBetween.toMinutes() < PropertyFile.noteTime) {
-							Main.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
+							TimeTableMain.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
 
-							try(AudioInputStream stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
+							try(AudioInputStream stream = AudioSystem.getAudioInputStream(TimeTableMain.class.getClassLoader().getResource("assets/beep.wav"));
 								SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
 								
 								line.open();
@@ -220,7 +224,7 @@ public final class Main extends WindowAdapter{
 							}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
 						}
 					}
-					dateLabel.setForeground(isDarkMode(now) ? Color.WHITE : Color.BLACK);
+					handleNightMode(dateLabel, now);
 				}
 				timer = 0;
 			}
@@ -228,15 +232,28 @@ public final class Main extends WindowAdapter{
 	}
 	
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
-		ClassButton.updateAllButtons(true, Main.dataTable);
-		((JFrame)Main.mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
+		ClassButton.updateAllButtons(true, TimeTableMain.dataTable);
+		((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
 	}
 	
-	public static boolean isDarkMode(LocalTime now) {
-		return now.isAfter(PropertyFile.dayTimeEnd) || now.isBefore(PropertyFile.dayTimeStart);
+	private static int readBuildNumber() {
+		try(var urlInput = new URL("https://pastebin.com/raw/BMxNE6ws").openStream()){
+			byte[] data = new byte[3];
+			urlInput.read(data);
+
+			return (data[0] - 48) * 100 + (data[1] - 48) * 10 + (data[2] - 48);
+		} catch (IOException e) {
+			return -1;
+		}
 	}
 	
-	public static void handleNightMode(Container container) {
-		container.setBackground(isDarkMode(LocalTime.now()) ? PropertyFile.nightTimeColor : PropertyFile.dayTimeColor);
+	public static void handleNightMode(Container container, LocalTime time) {
+		boolean isDarkMode = time.isAfter(PropertyFile.dayTimeEnd) || time.isBefore(PropertyFile.dayTimeStart);
+	
+		if(container instanceof JLabel || container instanceof JCheckBox) {
+			container.setForeground(isDarkMode ? Color.WHITE : Color.BLACK);
+		}else{
+			container.setBackground(isDarkMode ? PropertyFile.nightTimeColor : PropertyFile.dayTimeColor);
+		}
 	}
 }

@@ -1,4 +1,4 @@
-package degubi;
+package degubi.gui;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -15,6 +15,8 @@ import java.util.stream.Stream;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
+
+import degubi.TimeTableMain;
 
 public final class ButtonTable<T extends JButton> extends JComponent{
 	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
@@ -118,7 +120,7 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		@Override
 		public void mousePressed(MouseEvent event) {
 			if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-				PopupGuis.showEditorGui(true, new ClassButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false", Main.dataTable));
+				PopupGuis.showEditorGui(true, new ClassButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false", TimeTableMain.dataTable));
 			}
 		}
 	}

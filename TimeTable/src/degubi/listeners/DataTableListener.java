@@ -5,7 +5,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JTable;
 
-import degubi.PopupGuis;
+import degubi.gui.PopupGuis;
 
 public class DataTableListener extends MouseAdapter{
 	private final JTable dataTable;

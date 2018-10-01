@@ -1,4 +1,4 @@
-package degubi;
+package degubi.tools;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -108,5 +108,4 @@ public final class PropertyFile {
 	public static int noteTime = getInt("noteTime", 60);
 	public static int updateInterval = getInt("updateInterval", 600);
 	public static final Map<String, String> friendsMap = getMap("friends");
-	public static final Map<String, String> calendarMap = getMap("calendar");
 }
