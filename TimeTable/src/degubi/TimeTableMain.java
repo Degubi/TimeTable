@@ -18,10 +18,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -29,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Hashtable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarFile;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -65,7 +70,8 @@ import degubi.tools.ExcelParser;
 import degubi.tools.PropertyFile;
 
 public final class TimeTableMain extends WindowAdapter{
-	public static final int BUILD_NUMBER = 100;
+	public static final int BUILD_NUMBER = 101;
+	public static int INSTALLER_BUILD;
 	public static final JPanel mainPanel = new JPanel(null);
 	public static final Image icon = getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
@@ -76,11 +82,8 @@ public final class TimeTableMain extends WindowAdapter{
 	public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", TimeTableMain::createScreenshot);
 	
 	public static void main(String[] args) throws AWTException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-		if(readBuildNumber() > BUILD_NUMBER) {
-			Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar" + (args.length == 1 ? " " + args[0] : ""));
-			System.exit(0);
-		}
-			
+		if(args.length == 0 || !args[0].equals("-noupdate")) checkForUpdates(args);
+		
 		UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 		SwingUtilities.updateComponentTreeUI(dataTable);
 			
@@ -112,6 +115,52 @@ public final class TimeTableMain extends WindowAdapter{
 		tray.addMouseListener(new SystemTrayListener(initTrayMenu(overlay)));
 		SystemTray.getSystemTray().add(tray);
 		System.gc();
+	}
+
+	private static void checkForUpdates(String[] args) throws IOException, MalformedURLException {
+		int[] buildNumbers = new int[2];  //0: Main Jar Version, 1: Installer Jar Version
+		boolean updateUpdater = false;
+
+		try(var urlInput = new URL("https://pastebin.com/raw/BMxNE6ws").openStream()){
+			byte[] data = new byte[7];
+			urlInput.read(data);
+			
+			buildNumbers[0] = (data[0] - 48) * 100 + (data[1] - 48) * 10 + (data[2] - 48);
+			buildNumbers[1] = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
+		} catch (IOException e) {}
+		
+		try(var jarFile = new JarFile("TimeTableInstaller.jar")){
+			var entry = jarFile.getEntry("version.txt");
+			
+			if(entry != null) {
+				try(var entryInput = jarFile.getInputStream(entry)){
+					byte[] buildData = new byte[3];
+					entryInput.read(buildData);
+					
+					int localBuild = (buildData[0] - 48) * 100 + (buildData[1] - 48) * 10 + (buildData[2] - 48);
+					INSTALLER_BUILD = localBuild;
+					
+					if(buildNumbers[1] > localBuild) {
+						updateUpdater = true;
+					}
+				}
+			}else{
+				updateUpdater = true;
+			}
+		}
+		
+		if(updateUpdater) {
+			try(var urlChannel = Channels.newChannel(new URL("https://drive.google.com/uc?authuser=0&id=1qYnJ_gsCxu-wfxD-w7QtEzIb7NZhCz0k&export=download").openStream()); 
+				var fileChannel = FileChannel.open(Paths.get("TimeTableInstaller.jar"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
+					
+				fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE);
+			}
+		}
+		
+		if(buildNumbers[0] > BUILD_NUMBER) {
+			Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar" + (args.length == 1 ? " " + args[0] : ""));
+			System.exit(0);
+		}
 	}
 
 	@SuppressWarnings("boxing")
@@ -234,17 +283,6 @@ public final class TimeTableMain extends WindowAdapter{
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
 		ClassButton.updateAllButtons(true, TimeTableMain.dataTable);
 		((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
-	}
-	
-	private static int readBuildNumber() {
-		try(var urlInput = new URL("https://pastebin.com/raw/BMxNE6ws").openStream()){
-			byte[] data = new byte[3];
-			urlInput.read(data);
-
-			return (data[0] - 48) * 100 + (data[1] - 48) * 10 + (data[2] - 48);
-		} catch (IOException e) {
-			return -1;
-		}
 	}
 	
 	public static void handleNightMode(Container container, LocalTime time) {

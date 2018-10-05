@@ -4,11 +4,11 @@ import static java.awt.Toolkit.getDefaultToolkit;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,15 +30,17 @@ import javax.swing.JLabel;
 import javax.swing.JLayer;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import degubi.TimeTableMain;
 import degubi.listeners.DataTableListener;
+import degubi.tools.NIO;
 import degubi.tools.PropertyFile;
 
 public final class PopupGuis extends AbstractAction{
@@ -46,6 +48,7 @@ public final class PopupGuis extends AbstractAction{
 	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	private static final Font sectionFont = new Font("SansSerif", Font.PLAIN, 20);
 	
 	private final JTable dataTable;
 	private final char key;
@@ -59,7 +62,8 @@ public final class PopupGuis extends AbstractAction{
 		ButtonTable<JButton> buildingTable = new ButtonTable<>(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
 		
 		showNewDialog(true, "Teremválasztó", 800, 600, frame -> {
-			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED).ifPresent(button -> {
+			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED)
+						 .ifPresent(button -> {
 				dataTable.setValueAt(button.getText(), 5, 1);
 				frame.dispose();
 			});
@@ -113,7 +117,7 @@ public final class PopupGuis extends AbstractAction{
 		String cutPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
 		LocalTime now = LocalTime.now();
 		
-		JButton currentClass = newColorButton(20, PropertyFile.currentClassColor);
+		JButton currentClass = newColorButton(40, PropertyFile.currentClassColor);
 		JButton beforeClass = newColorButton(80, PropertyFile.upcomingClassColor);
 		JButton otherClass = newColorButton(140, PropertyFile.otherClassColor);
 		JButton pastClass = newColorButton(200, PropertyFile.pastClassColor);
@@ -135,19 +139,19 @@ public final class PopupGuis extends AbstractAction{
 		updateIntervalBox.setBounds(100, 340, 75, 30);
 		updateIntervalBox.setSelectedItem(Integer.toString(PropertyFile.updateInterval / 60));
 		
-		JCheckBox popupCheckBox = new JCheckBox("Üzenetek Bekapcsolva", PropertyFile.enablePopups);
+		JCheckBox popupCheckBox = new JCheckBox((String)null, PropertyFile.enablePopups);
 		popupCheckBox.setOpaque(false);
 		TimeTableMain.handleNightMode(popupCheckBox, now);
-		popupCheckBox.setBounds(150, 160, 200, 20);
-		JCheckBox startupBox = new JCheckBox("Indítás PC Indításakor", Files.exists(Paths.get(cutPath)));
+		popupCheckBox.setBounds(150, 660, 200, 20);
+		JCheckBox startupBox = new JCheckBox((String)null, Files.exists(Paths.get(cutPath)));
 		startupBox.setOpaque(false);
 		TimeTableMain.handleNightMode(startupBox, now);
-		startupBox.setBounds(150, 200, 200, 20);
+		startupBox.setBounds(150, 700, 200, 20);
 		
-		JDialog settingsFrame = new JDialog((JFrame)null, "Beállítások");
+		JDialog settingsFrame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), "Beállítások", true);
 		settingsFrame.setResizable(false);
 		
-		settingsFrame.setBounds(0, 0, 500, 600);
+		settingsFrame.setBounds(0, 0, 800, 600);
 		settingsFrame.setLocationRelativeTo(null);
 		settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
@@ -174,67 +178,73 @@ public final class PopupGuis extends AbstractAction{
 				JOptionPane.showMessageDialog(frame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
 			}
 			
-			try {
-				if(startupBox.isSelected()) {
-					Path jarPath = Paths.get("./TimeTable.jar").toRealPath();
-					if(Files.exists(jarPath)) {
-						Process proc = createLink(scriptPath, jarPath.toString(), cutPath);
-							
-						while(proc.isAlive()) Thread.onSpinWait();
-					}
+			if(startupBox.isSelected()) {
+				Path jarPath = NIO.getFullPath("./TimeTable.jar");
+				if(Files.exists(jarPath)) {
+					Process proc = NIO.createLink(scriptPath, jarPath.toString(), cutPath);
 					
-				}else{
-					Path shortcutPath = Paths.get(cutPath);
-					if(Files.exists(shortcutPath)) Files.delete(shortcutPath);
+					while(proc.isAlive()) Thread.onSpinWait();
 				}
-					
-				if(Files.exists(scriptPath)) Files.delete(scriptPath);
-			} catch (IOException e) {}
+				
+			}else{
+				NIO.deleteIfExists(Paths.get(cutPath));
+			}
+			
+			NIO.deleteIfExists(scriptPath);
 		};
 		
-		JTabbedPane tabPane = new JTabbedPane();
-		tabPane.addTab("Színek", constructNewPanel(saveListener, currentClass, beforeClass, otherClass, pastClass, unimportantClass, dayTimeColor, nightTimeColor, newLabel("Jelenlegi Óra Színe:", 30, 20), newLabel("Következõ Órák Színe:", 30, 80), newLabel("Más Napok Óráinak Színe:", 30, 140), newLabel("Elmúlt Órák Színe:", 30, 200), newLabel("Nem Fontos Órák Színe:", 30, 260), newLabel("Nappali Mód Háttérszíne:", 30, 320), newLabel("Éjszakai Mód Háttérszíne:", 30, 380)));
-		tabPane.addTab("Idõ", constructNewPanel(saveListener, startTimeBox, endTimeBox, timeBeforeNoteBox, updateIntervalBox, newLabel("Nappali Idõszak Kezdete:", 150, 20), newLabel("Nappali Idõszak Vége:", 150, 80), newLabel("Értesítések Frissítési Idõzítései:", 150, 300), newLabel("Óra Elõtti Értesítések Percben:", 150, 230)));
-		tabPane.addTab("Értesítések", constructNewPanel(saveListener, popupCheckBox, startupBox));
-		tabPane.add("Buildszám: " + TimeTableMain.BUILD_NUMBER, null);
-		tabPane.setEnabledAt(3, false);
-
-		settingsFrame.setContentPane(tabPane);
+		/*JTabbedPane tabPane = new JTabbedPane();
+		tabPane.addTab("Rendszer", constructNewPanel(saveListener, newLabel("Buildszám: " + TimeTableMain.BUILD_NUMBER + " - " + TimeTableMain.INSTALLER_BUILD, 360, 490, time), ));
+*/
+		
+		JPanel scrollPanel = new JPanel(null);
+		TimeTableMain.handleNightMode(scrollPanel, now);
+		scrollPanel.setPreferredSize(new Dimension(500, 1000));
+		JScrollPane scrollPane = new JScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(10);
+		
+		JButton colorSettings = new JButton("Színbeállítások");
+		colorSettings.setBounds(10, 30, 120, 30);
+		colorSettings.addActionListener(e -> scrollPane.getVerticalScrollBar().setValue(0));
+		JButton timeSettings = new JButton("Idõbeállítások");
+		timeSettings.addActionListener(e -> scrollPane.getVerticalScrollBar().setValue(400));
+		timeSettings.setBounds(10, 70, 120, 30);
+		
+		scrollPanel.add(colorSettings);
+		scrollPanel.add(timeSettings);
+		
+		addSettingButton(currentClass, 30, "Jelenlegi Óra Színe", scrollPanel, now);
+		addSettingButton(beforeClass, 80, "Következõ Órák Színe", scrollPanel, now);
+		addSettingButton(otherClass, 130, "Más Napok Óráinak Színe", scrollPanel, now);
+		addSettingButton(pastClass, 180, "Elmúlt Órák Színe", scrollPanel, now);
+		addSettingButton(unimportantClass, 230, "Nem Fontos Órák Színe", scrollPanel, now);
+		addSettingButton(dayTimeColor, 280, "Nappali Mód Háttérszíne", scrollPanel, now);
+		addSettingButton(nightTimeColor, 330, "Éjszakai Mód Háttérszíne", scrollPanel, now);
+		
+		addSettingButton(startTimeBox, 430, "Nappali Idõszak Kezdete", scrollPanel, now);
+		addSettingButton(endTimeBox, 480, "Nappali Idõszak Vége", scrollPanel, now);
+		addSettingButton(timeBeforeNoteBox, 530, "Értesítések Frissítési Idõzítései", scrollPanel, now);
+		addSettingButton(updateIntervalBox, 580, "Óra Elõtti Értesítések Percben", scrollPanel, now);
+		
+		addSettingButton(popupCheckBox, 680, "Üzenetek Bekapcsolva", scrollPanel, now);
+		addSettingButton(startupBox, 730, "Indítás PC Indításakor", scrollPanel, now);
+		
+		settingsFrame.setContentPane(scrollPane);
 		settingsFrame.setVisible(true);
 	}
 	
-	private static JPanel constructNewPanel(Consumer<JDialog> saveListener, JComponent... components) {
-		JPanel panel = new JPanel(null);
+	private static void addSettingButton(JComponent component, int y, String labelText, JPanel mainPanel, LocalTime time) {
+		component.setLocation(500, y);
+		mainPanel.add(component);
 		
-		if(saveListener != null) {
-			JButton saveButton = new JButton("Mentés");
-			saveButton.setFocusable(false);
-			saveButton.setBounds(200, 480, 120, 40);
-			saveButton.setBackground(Color.GRAY);
-			saveButton.setForeground(Color.BLACK);
-			saveButton.addActionListener(e -> saveListener.accept((JDialog) panel.getTopLevelAncestor()));
-			panel.add(saveButton);
-		}
-		for(JComponent component : components) panel.add(component);
-		TimeTableMain.handleNightMode(panel, LocalTime.now());
-		return panel;
+		JLabel label = new JLabel(labelText);
+		label.setFont(sectionFont);
+		TimeTableMain.handleNightMode(label, time);
+		label.setBounds(200, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
+		mainPanel.add(label);
 	}
 	
-	private static Process createLink(Path tempScriptFile, String filePath, String toSavePath) {
-		var command = ("Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
-						  "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
-						  	  "oLink.TargetPath = \"" + filePath + "\"\n" + 
-						  	  "oLink.Arguments = \"-window\"\n" + 
-						  	  "oLink.WorkingDirectory = \"" + filePath.substring(0, filePath.lastIndexOf("\\")) + "\"\n" +
-							  "oLink.Save\n").getBytes();
-		try {
-			Files.write(tempScriptFile, command);
-			return Runtime.getRuntime().exec("wscript.exe iconScript.vbs");
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		return null;
-	}
+	
 	
 	private static JButton newColorButton(int y, Color startColor) {
 		JButton butt = new JButton();
@@ -248,13 +258,6 @@ public final class PopupGuis extends AbstractAction{
 			}
 		});
 		return butt;
-	}
-	
-	private static JLabel newLabel(String labelText, int x, int y) {
-		JLabel label = new JLabel(labelText);
-		TimeTableMain.handleNightMode(label, LocalTime.now());
-		label.setBounds(x, y + 12, 200, 20);
-		return label;
 	}
 	
 	public static void showNewDialog(boolean modal, String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {

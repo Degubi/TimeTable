@@ -12,20 +12,19 @@ import javax.swing.plaf.LayerUI;
 import degubi.TimeTableMain;
 
 public class BrightnessOverlay extends LayerUI<JComponent> implements ChangeListener{
-	public static Color meow = new Color(0, 0, 0, 0);
+	private static Color brightnessColor = new Color(0, 0, 0, 0);
 	
 	@Override
 	public void paint(Graphics graphics, JComponent component) {
 		super.paint(graphics, component);
 		
-		graphics.setColor(meow);
+		graphics.setColor(brightnessColor);
 		graphics.fillRect(0, 0, component.getWidth(), component.getHeight());
 	}
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		JSlider comp = (JSlider) e.getSource();
-		meow = new Color(0, 0, 0, (16 - comp.getValue()) * 13);
+		brightnessColor = new Color(0, 0, 0, (16 - ((JSlider) e.getSource()).getValue()) * 13);
 		TimeTableMain.mainPanel.repaint();
 	}
 }

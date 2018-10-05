@@ -4,9 +4,9 @@ import java.awt.Color;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,13 +16,13 @@ public final class PropertyFile {
 	private PropertyFile() {}
 	
 	private static Map<String, String> initPropertyFile() {
-		try(var lines = Files.lines(Paths.get("settings.prop"))){
+		var settingsFile = Paths.get("settings.prop");
+		
+		try(var lines = Files.lines(settingsFile)){
 			return lines.map(line -> line.split(":", 2))
 						.collect(Collectors.toMap(line -> line[0], line -> line[1], (k, v) -> k, LinkedHashMap::new));
 		} catch (IOException e) {
-			try {
-				Files.createFile(Paths.get("settings.prop"));
-			} catch (IOException e1) {}
+			NIO.createNewFile(settingsFile);
 			
 			return new LinkedHashMap<>(11);
 		}
@@ -53,15 +53,11 @@ public final class PropertyFile {
 	
 	public static Map<String, String> getMap(String key){
 		String[] fullData = getString(key, "").split(";");
-		Map<String, String> map = new LinkedHashMap<>();
 		
-		if(!fullData[0].isEmpty()) {
-			for(String data : fullData) {
-				String[] perDataSplit = data.split(" ", 2);
-				map.put(perDataSplit[0], perDataSplit[1]);
-			}
-		}
-		return map;
+		return fullData[0].isEmpty() ? new LinkedHashMap<>() 
+									 : Arrays.stream(fullData)
+									 		 .map(str -> str.split(" ", 2))
+									 		 .collect(Collectors.toMap(str -> str[0], str -> str[1]));
 	}
 	
 	public static void setMap(String key, Map<String, String> map) {
@@ -86,13 +82,11 @@ public final class PropertyFile {
 	}
 	
 	private static void save() {
-		try {
-			Files.write(Paths.get("settings.prop"), 
-						storage.entrySet().stream()
-					   		   .map(entry -> entry.getKey() + ':' + entry.getValue())
-					   		   .collect(Collectors.toList()), 
-					   	StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-		} catch (IOException e1) {}
+		var dataLines = storage.entrySet().stream()
+		   		   			   .map(entry -> entry.getKey() + ':' + entry.getValue())
+		   		   			   .collect(Collectors.toList());
+		
+		NIO.writeAllLines("settings.prop", dataLines);
 	}
 	
 	public static LocalTime dayTimeStart = LocalTime.parse(getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);

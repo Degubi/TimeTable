@@ -5,10 +5,6 @@ import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -31,6 +27,7 @@ import javax.swing.JPanel;
 
 import degubi.TimeTableMain;
 import degubi.listeners.EditClassButtonListener;
+import degubi.tools.NIO;
 import degubi.tools.PropertyFile;
 
 public final class ClassButton extends JButton implements MouseListener{
@@ -87,11 +84,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		var dataLines = TimeTableMain.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
 		reloadData(dataLines, TimeTableMain.dataTable, true);
 		
-		try {
-			Files.write(Paths.get("classData.txt"), dataLines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		NIO.writeAllLines("classData.txt", dataLines);
 	}
 	
 	@Override
