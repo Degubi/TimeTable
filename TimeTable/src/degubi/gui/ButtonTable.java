@@ -32,7 +32,6 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		this.cellHeight = cellHeight;
 		columns = columnNames;
 		
-		Arrays.fill(horizontalIndexers, 0);
 		setBounds(x, y, cellWidth * horizontalIndexers.length + cellWidth, 600);
 		
 		for(int topIndex = 0; topIndex < columnNames.length; ++topIndex) {

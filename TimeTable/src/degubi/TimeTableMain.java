@@ -48,18 +48,16 @@ import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JLayer;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import degubi.gui.BrightnessOverlay;
+import degubi.gui.BrightablePanel;
 import degubi.gui.ButtonTable;
 import degubi.gui.ClassButton;
 import degubi.gui.PopupGuis;
@@ -72,7 +70,7 @@ import degubi.tools.PropertyFile;
 public final class TimeTableMain extends WindowAdapter{
 	public static final int BUILD_NUMBER = 101;
 	public static int INSTALLER_BUILD;
-	public static final JPanel mainPanel = new JPanel(null);
+	public static final BrightablePanel mainPanel = new BrightablePanel();
 	public static final Image icon = getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
@@ -91,9 +89,8 @@ public final class TimeTableMain extends WindowAdapter{
 		mainPanel.add(dataTable);
 		frame.setBounds(0, 0, 950, 713);
 		frame.setLocationRelativeTo(null);
-		BrightnessOverlay overlay = new BrightnessOverlay();
-			
-		frame.add(new JLayer<>(mainPanel, overlay));
+		frame.setContentPane(mainPanel);
+		
 		Path dataFilePath = Paths.get("classData.txt");
 		if(!Files.exists(dataFilePath)) {
 			ExcelParser.showExcelFileBrowser(dataFilePath);
@@ -105,16 +102,15 @@ public final class TimeTableMain extends WindowAdapter{
 		dateLabel.setBounds(320, 5, 300, 40);
 		dateLabel.setFont(ButtonTable.tableHeaderFont);
 		frame.setResizable(false);
-		mainPanel.add(dateLabel);
+		mainPanel.add("DateLabel", dateLabel);
 		frame.addWindowListener(new MainFrameIconifier());
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setIconImage(icon);
 			
 		launchTimerThread(frame);
 			
-		tray.addMouseListener(new SystemTrayListener(initTrayMenu(overlay)));
+		tray.addMouseListener(new SystemTrayListener(initTrayMenu(mainPanel)));
 		SystemTray.getSystemTray().add(tray);
-		System.gc();
 	}
 
 	private static void checkForUpdates(String[] args) throws IOException, MalformedURLException {
@@ -164,7 +160,7 @@ public final class TimeTableMain extends WindowAdapter{
 	}
 
 	@SuppressWarnings("boxing")
-	private static JPopupMenu initTrayMenu(BrightnessOverlay overlay) {
+	private static JPopupMenu initTrayMenu(BrightablePanel overlay) {
 		JSlider brightnessSlider = new JSlider(0, 16, 16);
 		brightnessSlider.addChangeListener(overlay);
 		brightnessSlider.setPaintLabels(true);
@@ -216,13 +212,16 @@ public final class TimeTableMain extends WindowAdapter{
 	
 	private static void addNewFriend(JMenu friendMenu) {
 		String friendName = JOptionPane.showInputDialog("Írd be haverod nevét!");
-		String friendURL = JOptionPane.showInputDialog("Írd be haverod URL-jét!");
 		
-		PropertyFile.friendsMap.put(friendName, friendURL);
+		if(friendName != null && !friendName.isEmpty()) {
+			String friendURL = JOptionPane.showInputDialog("Írd be haverod URL-jét!");
 		
-		reinitFriendsMenu(friendMenu);
-		
-		PropertyFile.setMap("friends", PropertyFile.friendsMap);
+			if(friendURL != null && !friendURL.isEmpty()) {
+				PropertyFile.friendsMap.put(friendName, friendURL);
+				reinitFriendsMenu(friendMenu);
+				PropertyFile.setMap("friends", PropertyFile.friendsMap);
+			}
+		}
 	}
 	
 	private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {

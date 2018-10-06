@@ -42,7 +42,6 @@ public final class InstallerMain {
 				poggersLabel.setBounds(10, 500, 300, 30);
 				
 				frame.setLayout(null);
-				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				frame.add(outputWindow);
 				frame.add(poggersBar);
 				frame.add(poggersLabel);

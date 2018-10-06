@@ -27,13 +27,11 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JLayer;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -116,28 +114,20 @@ public final class PopupGuis extends AbstractAction{
 		Path scriptPath = Paths.get("iconScript.vbs");
 		String cutPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
 		LocalTime now = LocalTime.now();
+		String[] timeValues = {"00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"};
+
+		var currentClass = newColorButton(40, PropertyFile.currentClassColor);
+		var beforeClass = newColorButton(80, PropertyFile.upcomingClassColor);
+		var otherClass = newColorButton(140, PropertyFile.otherClassColor);
+		var pastClass = newColorButton(200, PropertyFile.pastClassColor);
+		var unimportantClass = newColorButton(260, PropertyFile.unimportantClassColor);
+		var dayTimeColor = newColorButton(320, PropertyFile.dayTimeColor);
+		var nightTimeColor = newColorButton(380, PropertyFile.nightTimeColor);
 		
-		JButton currentClass = newColorButton(40, PropertyFile.currentClassColor);
-		JButton beforeClass = newColorButton(80, PropertyFile.upcomingClassColor);
-		JButton otherClass = newColorButton(140, PropertyFile.otherClassColor);
-		JButton pastClass = newColorButton(200, PropertyFile.pastClassColor);
-		JButton unimportantClass = newColorButton(260, PropertyFile.unimportantClassColor);
-		JButton dayTimeColor = newColorButton(320, PropertyFile.dayTimeColor);
-		JButton nightTimeColor = newColorButton(380, PropertyFile.nightTimeColor);
-		
-		String[] dataValues = {"00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"};
-		JComboBox<String> startTimeBox = new JComboBox<>(dataValues);
-		startTimeBox.setBounds(100, 60, 75, 30);
-		startTimeBox.setSelectedItem(PropertyFile.dayTimeStart.toString());
-		JComboBox<String> endTimeBox = new JComboBox<>(dataValues);
-		endTimeBox.setBounds(100, 120, 75, 30);
-		endTimeBox.setSelectedItem(PropertyFile.dayTimeEnd.toString());
-		JComboBox<String> timeBeforeNoteBox = new JComboBox<>(new String[] {"30", "40", "50", "60", "70", "80", "90"});
-		timeBeforeNoteBox.setBounds(100, 270, 75, 30);
-		timeBeforeNoteBox.setSelectedItem(Integer.toString(PropertyFile.noteTime));
-		JComboBox<String> updateIntervalBox = new JComboBox<>(new String[] {"5", "10", "15", "20"});
-		updateIntervalBox.setBounds(100, 340, 75, 30);
-		updateIntervalBox.setSelectedItem(Integer.toString(PropertyFile.updateInterval / 60));
+		var startTimeBox = newComboBox(PropertyFile.dayTimeStart.toString(), 60, timeValues);
+		var endTimeBox = newComboBox(PropertyFile.dayTimeEnd.toString(), 120, timeValues);
+		var timeBeforeNoteBox = newComboBox(Integer.toString(PropertyFile.noteTime), 270, "30", "40", "50", "60", "70", "80", "90");
+		var updateIntervalBox = newComboBox(Integer.toString(PropertyFile.updateInterval / 60), 340, "5", "10", "15", "20");
 		
 		JCheckBox popupCheckBox = new JCheckBox((String)null, PropertyFile.enablePopups);
 		popupCheckBox.setOpaque(false);
@@ -150,68 +140,16 @@ public final class PopupGuis extends AbstractAction{
 		
 		JDialog settingsFrame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), "Beállítások", true);
 		settingsFrame.setResizable(false);
-		
 		settingsFrame.setBounds(0, 0, 800, 600);
 		settingsFrame.setLocationRelativeTo(null);
 		settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
-		Consumer<JDialog> saveListener = frame -> {
-			try {
-				PropertyFile.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
-				PropertyFile.setString("dayTimeStart", (String) startTimeBox.getSelectedItem());
-				PropertyFile.dayTimeEnd = LocalTime.parse((CharSequence) endTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
-				PropertyFile.setString("dayTimeEnd", (String) endTimeBox.getSelectedItem());
-				PropertyFile.setBoolean("enablePopups", PropertyFile.enablePopups = popupCheckBox.isSelected());
-				PropertyFile.setColor("currentClassColor", PropertyFile.currentClassColor = currentClass.getBackground());
-				PropertyFile.setColor("upcomingClassColor", PropertyFile.upcomingClassColor = beforeClass.getBackground());
-				PropertyFile.setColor("otherClassColor", PropertyFile.otherClassColor = otherClass.getBackground());
-				PropertyFile.setColor("pastClassColor", PropertyFile.pastClassColor = pastClass.getBackground());
-				PropertyFile.setColor("unimportantClassColor", PropertyFile.unimportantClassColor = unimportantClass.getBackground());
-				PropertyFile.setColor("dayTimeColor", PropertyFile.dayTimeColor = dayTimeColor.getBackground());
-				PropertyFile.setColor("nightTimeColor", PropertyFile.nightTimeColor = nightTimeColor.getBackground());
-				PropertyFile.setInt("noteTime", PropertyFile.noteTime = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem()));
-				PropertyFile.setInt("updateInterval", PropertyFile.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60);
-				
-				ClassButton.updateAllButtons(false, TimeTableMain.dataTable);
-				frame.dispose();
-			}catch (NumberFormatException | DateTimeParseException e) {
-				JOptionPane.showMessageDialog(frame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
-			}
-			
-			if(startupBox.isSelected()) {
-				Path jarPath = NIO.getFullPath("./TimeTable.jar");
-				if(Files.exists(jarPath)) {
-					Process proc = NIO.createLink(scriptPath, jarPath.toString(), cutPath);
-					
-					while(proc.isAlive()) Thread.onSpinWait();
-				}
-				
-			}else{
-				NIO.deleteIfExists(Paths.get(cutPath));
-			}
-			
-			NIO.deleteIfExists(scriptPath);
-		};
-		
-		/*JTabbedPane tabPane = new JTabbedPane();
-		tabPane.addTab("Rendszer", constructNewPanel(saveListener, newLabel("Buildszám: " + TimeTableMain.BUILD_NUMBER + " - " + TimeTableMain.INSTALLER_BUILD, 360, 490, time), ));
-*/
-		
-		JPanel scrollPanel = new JPanel(null);
+		BrightablePanel scrollPanel = new BrightablePanel();
 		TimeTableMain.handleNightMode(scrollPanel, now);
-		scrollPanel.setPreferredSize(new Dimension(500, 1000));
-		JScrollPane scrollPane = new JScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPanel.setPreferredSize(new Dimension(500, 850));
+		JScrollPane scrollPane = new JScrollPane(scrollPanel);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-		
-		JButton colorSettings = new JButton("Színbeállítások");
-		colorSettings.setBounds(10, 30, 120, 30);
-		colorSettings.addActionListener(e -> scrollPane.getVerticalScrollBar().setValue(0));
-		JButton timeSettings = new JButton("Idõbeállítások");
-		timeSettings.addActionListener(e -> scrollPane.getVerticalScrollBar().setValue(400));
-		timeSettings.setBounds(10, 70, 120, 30);
-		
-		scrollPanel.add(colorSettings);
-		scrollPanel.add(timeSettings);
+		scrollPane.setBorder(null);
 		
 		addSettingButton(currentClass, 30, "Jelenlegi Óra Színe", scrollPanel, now);
 		addSettingButton(beforeClass, 80, "Következõ Órák Színe", scrollPanel, now);
@@ -229,22 +167,70 @@ public final class PopupGuis extends AbstractAction{
 		addSettingButton(popupCheckBox, 680, "Üzenetek Bekapcsolva", scrollPanel, now);
 		addSettingButton(startupBox, 730, "Indítás PC Indításakor", scrollPanel, now);
 		
+		JButton saveButton = new JButton("Mentés");
+		saveButton.setBounds(600, 800, 120, 40);
+		saveButton.setBackground(Color.GRAY);
+		saveButton.setForeground(Color.BLACK);
+		saveButton.addActionListener(ev -> {
+			try {
+				PropertyFile.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
+				PropertyFile.setString("dayTimeStart", (String) startTimeBox.getSelectedItem());
+				PropertyFile.dayTimeEnd = LocalTime.parse((CharSequence) endTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
+				PropertyFile.setString("dayTimeEnd", (String) endTimeBox.getSelectedItem());
+				PropertyFile.setBoolean("enablePopups", PropertyFile.enablePopups = popupCheckBox.isSelected());
+				PropertyFile.setColor("currentClassColor", PropertyFile.currentClassColor = currentClass.getBackground());
+				PropertyFile.setColor("upcomingClassColor", PropertyFile.upcomingClassColor = beforeClass.getBackground());
+				PropertyFile.setColor("otherClassColor", PropertyFile.otherClassColor = otherClass.getBackground());
+				PropertyFile.setColor("pastClassColor", PropertyFile.pastClassColor = pastClass.getBackground());
+				PropertyFile.setColor("unimportantClassColor", PropertyFile.unimportantClassColor = unimportantClass.getBackground());
+				PropertyFile.setColor("dayTimeColor", PropertyFile.dayTimeColor = dayTimeColor.getBackground());
+				PropertyFile.setColor("nightTimeColor", PropertyFile.nightTimeColor = nightTimeColor.getBackground());
+				PropertyFile.setInt("noteTime", PropertyFile.noteTime = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem()));
+				PropertyFile.setInt("updateInterval", PropertyFile.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60);
+				
+				ClassButton.updateAllButtons(false, TimeTableMain.dataTable);
+				settingsFrame.dispose();
+			}catch (NumberFormatException | DateTimeParseException e) {
+				JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
+			}
+			
+			if(startupBox.isSelected()) {
+				Path jarPath = NIO.getFullPath("./TimeTable.jar");
+				if(Files.exists(jarPath)) {
+					Process proc = NIO.createLink(scriptPath, jarPath.toString(), cutPath);
+					
+					while(proc.isAlive()) Thread.onSpinWait();
+				}
+				
+			}else{
+				NIO.deleteIfExists(Paths.get(cutPath));
+			}
+			
+			NIO.deleteIfExists(scriptPath);
+		});
+		scrollPanel.add(saveButton);
+		
 		settingsFrame.setContentPane(scrollPane);
 		settingsFrame.setVisible(true);
 	}
 	
 	private static void addSettingButton(JComponent component, int y, String labelText, JPanel mainPanel, LocalTime time) {
-		component.setLocation(500, y);
+		component.setLocation(400, y);
 		mainPanel.add(component);
 		
 		JLabel label = new JLabel(labelText);
 		label.setFont(sectionFont);
 		TimeTableMain.handleNightMode(label, time);
-		label.setBounds(200, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
+		label.setBounds(100, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
 		mainPanel.add(label);
 	}
 	
-	
+	private static JComboBox<String> newComboBox(String selectedItem, int y, String... data){
+		JComboBox<String> endTimeBox = new JComboBox<>(data);
+		endTimeBox.setBounds(100, y, 75, 30);
+		endTimeBox.setSelectedItem(selectedItem);
+		return endTimeBox;
+	}
 	
 	private static JButton newColorButton(int y, Color startColor) {
 		JButton butt = new JButton();
@@ -262,10 +248,10 @@ public final class PopupGuis extends AbstractAction{
 	
 	public static void showNewDialog(boolean modal, String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
 		JDialog frame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), title, modal);
-		JPanel panel = new JPanel(null);
+		BrightablePanel panel = new BrightablePanel();
 		
 		frame.setIconImage(TimeTableMain.icon);
-		frame.add(new JLayer<>(panel, new BrightnessOverlay()));
+		frame.setContentPane(panel);
 		frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		panel.setLayout(null);
 		frame.setResizable(false);

@@ -3,23 +3,26 @@ package degubi.gui;
 import java.awt.Color;
 import java.awt.Graphics;
 
-import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.plaf.LayerUI;
 
 import degubi.TimeTableMain;
 
-public class BrightnessOverlay extends LayerUI<JComponent> implements ChangeListener{
+public final class BrightablePanel extends JPanel implements ChangeListener{
 	private static Color brightnessColor = new Color(0, 0, 0, 0);
 	
+	public BrightablePanel() {
+		super(null);
+	}
+	
 	@Override
-	public void paint(Graphics graphics, JComponent component) {
-		super.paint(graphics, component);
+	public void paint(Graphics graphics) {
+		super.paint(graphics);
 		
 		graphics.setColor(brightnessColor);
-		graphics.fillRect(0, 0, component.getWidth(), component.getHeight());
+		graphics.fillRect(0, 0, getWidth(), getHeight());
 	}
 
 	@Override

@@ -17,12 +17,10 @@ public final class FriendButtonListener implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		JMenuItem clickedButton = (JMenuItem) event.getSource();
-		
 		ButtonTable<ClassButton> friendTable = new ButtonTable<>(150, 96, 25, 30, false, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 		byte[] data = new byte[1000];
 		int readCount = 0;
-		try(var reader = new URL(clickedButton.getActionCommand()).openStream()){
+		try(var reader = new URL(((JMenuItem) event.getSource()).getActionCommand()).openStream()){
 			readCount = reader.read(data, 0, data.length);
 		} catch (IOException e) {
 			e.printStackTrace();

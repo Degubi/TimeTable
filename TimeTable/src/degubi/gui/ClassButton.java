@@ -21,9 +21,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLayer;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import degubi.TimeTableMain;
 import degubi.listeners.EditClassButtonListener;
@@ -91,9 +89,9 @@ public final class ClassButton extends JButton implements MouseListener{
 	public void mousePressed(MouseEvent event) {
 		if(interactive && event.getButton() == MouseEvent.BUTTON3) {
 			JDialog frame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor());
-			JPanel panel = new JPanel(null);
+			BrightablePanel panel = new BrightablePanel();
 			
-			frame.add(new JLayer<>(panel, new BrightnessOverlay()));
+			frame.setContentPane(panel);
 			frame.addWindowFocusListener(new EditClassButtonListener(frame));
 			frame.setUndecorated(true);
 			frame.setLocationRelativeTo(null);
