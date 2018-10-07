@@ -37,7 +37,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	public final String className, classType, room;
 	public final boolean unImportant, interactive;
 	
-	public ClassButton(String line, ButtonTable<ClassButton> table) {
+	public ClassButton(String line, ButtonTable table) {
 		String[] data = line.split(" ", 7);
 		
 		//UTF-8 BOM char fix
@@ -79,7 +79,7 @@ public final class ClassButton extends JButton implements MouseListener{
 	}
 	
 	private static void rewriteFile() {
-		var dataLines = TimeTableMain.dataTable.tableDataStream().map(ClassButton::toString).collect(Collectors.toList());
+		var dataLines = TimeTableMain.dataTable.tableDataStream().map(JButton::toString).collect(Collectors.toList());
 		reloadData(dataLines, TimeTableMain.dataTable, true);
 		
 		NIO.writeAllLines("classData.txt", dataLines);
@@ -111,7 +111,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		}
 	}
 
-	public static void reloadData(List<String> dataLines, ButtonTable<ClassButton> dataTable, boolean showFrame) {
+	public static void reloadData(List<String> dataLines, ButtonTable dataTable, boolean showFrame) {
 		dataTable.resetTable();
 		
 		dataLines.stream()
@@ -122,7 +122,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		ClassButton.updateAllButtons(showFrame, dataTable);
 	}
 	
-	public static void updateAllButtons(boolean setVisible, ButtonTable<ClassButton> dataTable) {
+	public static void updateAllButtons(boolean setVisible, ButtonTable dataTable) {
 		if(dataTable == TimeTableMain.dataTable) {
 			currentClassButton = null;
 		}
@@ -138,7 +138,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			default: today = "MenjHaza";
 		}
 		
-		dataTable.forEachData(button -> button.updateButton(today, now));
+		dataTable.forEachData(button -> ((ClassButton)button).updateButton(today, now));
 		if(currentClassButton == null) {
 			TimeTableMain.tray.setToolTip("Nincs mára több óra! :)");
 		}

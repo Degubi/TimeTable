@@ -46,7 +46,6 @@ public final class PopupGuis extends AbstractAction{
 	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	private static final Font sectionFont = new Font("SansSerif", Font.PLAIN, 20);
 	
 	private final JTable dataTable;
 	private final char key;
@@ -57,7 +56,7 @@ public final class PopupGuis extends AbstractAction{
 	}
 	
 	public static void showRoomFinder(JTable dataTable) {
-		ButtonTable<JButton> buildingTable = new ButtonTable<>(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
+		ButtonTable buildingTable = new ButtonTable(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
 		
 		showNewDialog(true, "Teremválasztó", 800, 600, frame -> {
 			buildingTable.findFirstButton(button -> button.getBackground() == Color.RED)
@@ -219,7 +218,7 @@ public final class PopupGuis extends AbstractAction{
 		mainPanel.add(component);
 		
 		JLabel label = new JLabel(labelText);
-		label.setFont(sectionFont);
+		label.setFont(ButtonTable.tableHeaderFont);
 		TimeTableMain.handleNightMode(label, time);
 		label.setBounds(100, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
 		mainPanel.add(label);
@@ -305,13 +304,13 @@ public final class PopupGuis extends AbstractAction{
 	}
 	
 	
-	public static final class TableModel extends DefaultTableModel{
+	private static final class TableModel extends DefaultTableModel{
 		@Override public int getRowCount() { return 6; }
 		@Override public int getColumnCount() { return 2; }
 		@Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2 && rowIndex != 5; }
 	}
 	
-	public static final class CustomCellRenderer extends DefaultTableCellRenderer{
+	private static final class CustomCellRenderer extends DefaultTableCellRenderer{
 		@Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 			cell.setForeground(column == 0 ? Color.DARK_GRAY : Color.BLACK);

@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,12 +32,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 
 import javax.imageio.ImageIO;
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
@@ -61,10 +62,9 @@ import degubi.gui.BrightablePanel;
 import degubi.gui.ButtonTable;
 import degubi.gui.ClassButton;
 import degubi.gui.PopupGuis;
-import degubi.listeners.FriendButtonListener;
 import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
-import degubi.tools.ExcelParser;
+import degubi.tools.NIO;
 import degubi.tools.PropertyFile;
 
 public final class TimeTableMain extends WindowAdapter{
@@ -73,7 +73,7 @@ public final class TimeTableMain extends WindowAdapter{
 	public static final BrightablePanel mainPanel = new BrightablePanel();
 	public static final Image icon = getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/tray.png"));
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-	public static final ButtonTable<ClassButton> dataTable = new ButtonTable<>(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+	public static final ButtonTable dataTable = new ButtonTable(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
 	private static int timer = PropertyFile.updateInterval - 100;
 	private static final JCheckBoxMenuItem sleepMode = new JCheckBoxMenuItem("Alvó Mód", new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/sleep.png")).getScaledInstance(24, 24, Image.SCALE_SMOOTH)), false);
@@ -92,17 +92,13 @@ public final class TimeTableMain extends WindowAdapter{
 		frame.setContentPane(mainPanel);
 		
 		Path dataFilePath = Paths.get("classData.txt");
-		if(!Files.exists(dataFilePath)) {
-			ExcelParser.showExcelFileBrowser(dataFilePath);
-		}
-		
-		boolean startHidden = args.length == 1 && args[0].equals("-window");
-		ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, !startHidden);
+		NIO.checkFileOr(dataFilePath, NIO::showExcelFileBrowser);
+		ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, !(args.length == 1 && args[0].equals("-window")));
 			
 		dateLabel.setBounds(320, 5, 300, 40);
 		dateLabel.setFont(ButtonTable.tableHeaderFont);
 		frame.setResizable(false);
-		mainPanel.add("DateLabel", dateLabel);
+		mainPanel.add(dateLabel);
 		frame.addWindowListener(new MainFrameIconifier());
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setIconImage(icon);
@@ -200,7 +196,7 @@ public final class TimeTableMain extends WindowAdapter{
 		PropertyFile.friendsMap.forEach((name, url) -> {
 			JMenuItem friendItem = new JMenuItem(name);
 			friendItem.setActionCommand(url);
-			friendItem.addActionListener(new FriendButtonListener());
+			friendItem.addActionListener(TimeTableMain::handleFriendTable);
 			friendMenu.add(friendItem);
 		});
 		
@@ -208,6 +204,21 @@ public final class TimeTableMain extends WindowAdapter{
 			friendMenu.addSeparator();
 		}
 		friendMenu.add(addFriendItem);
+	}
+	
+	private static void handleFriendTable(ActionEvent event) {
+		var friendTable = new ButtonTable(150, 96, 25, 30, false, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+		var data = new byte[1000];
+		
+		int readCount = 0;
+		try(var reader = new URL(event.getActionCommand()).openStream()){
+			readCount = reader.read(data, 0, data.length);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		ClassButton.reloadData(List.of(new String(data, 0, readCount, StandardCharsets.UTF_8).split("\n")), friendTable, false);
+		PopupGuis.showNewDialog(false, ((JMenuItem)event.getSource()).getText() + " Órarendje", 930, 700, null, friendTable);
 	}
 	
 	private static void addNewFriend(JMenu friendMenu) {
@@ -259,7 +270,7 @@ public final class TimeTableMain extends WindowAdapter{
 						if(timeBetween.toMinutes() < PropertyFile.noteTime) {
 							TimeTableMain.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
 
-							try(AudioInputStream stream = AudioSystem.getAudioInputStream(TimeTableMain.class.getClassLoader().getResource("assets/beep.wav"));
+							try(var stream = AudioSystem.getAudioInputStream(TimeTableMain.class.getClassLoader().getResource("assets/beep.wav"));
 								SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
 								
 								line.open();

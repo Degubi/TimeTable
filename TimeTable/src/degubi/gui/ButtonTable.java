@@ -18,10 +18,10 @@ import javax.swing.JComponent;
 
 import degubi.TimeTableMain;
 
-public final class ButtonTable<T extends JButton> extends JComponent{
+public final class ButtonTable extends JComponent{
 	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
 	
-	private final List<T> dataButtonList = new ArrayList<>();
+	private final List<JButton> dataButtonList = new ArrayList<>();
 	private final String[] columns;
 	private final int[] horizontalIndexers;
 	private final int cellWidth, cellHeight;
@@ -46,12 +46,11 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	public ButtonTable(int perCellWidth, int perCellHeight, int x, int y, Map<String, List<String>> bigData, String currentRoom) {
 		this(perCellWidth, perCellHeight, x, y, false, bigData.keySet().toArray(new String[0]));
 		
 		bigData.forEach((columnName, rows) -> rows.forEach(row -> {
-			T butt = (T) new JButton(row);
+			JButton butt = new JButton(row);
 			boolean isCurrentRoom = row.equals(currentRoom);
 			
 			butt.setForeground(isCurrentRoom ? Color.BLACK : Color.GRAY);
@@ -79,7 +78,7 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		throw new IllegalArgumentException("Unkown Column for Table: " + column);
 	}
 	
-	public void tableRemove(T buttonToRemove) {
+	public void tableRemove(JButton buttonToRemove) {
 		remove(buttonToRemove);
 		dataButtonList.remove(buttonToRemove);
 	}
@@ -95,12 +94,12 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		return isNext ? columns[currentIndex == columns.length - 1 ? 0 : ++currentIndex] : columns[currentIndex == 0 ? columns.length - 1 : --currentIndex];
 	}
 	
-	public Optional<T> findFirstButton(Predicate<T> predicate){ return dataButtonList.stream().filter(predicate).findFirst(); }
-	public Stream<T> tableDataStream(){ return dataButtonList.stream(); }
-	public void tableAddInternal(T button) { dataButtonList.add(button); }
-	public void forEachData(Consumer<T> button) { dataButtonList.forEach(button); }
+	public Optional<JButton> findFirstButton(Predicate<JButton> predicate){ return dataButtonList.stream().filter(predicate).findFirst(); }
+	public Stream<JButton> tableDataStream(){ return dataButtonList.stream(); }
+	public void tableAddInternal(JButton button) { dataButtonList.add(button); }
+	public void forEachData(Consumer<JButton> button) { dataButtonList.forEach(button); }
 	
-	public void tableAdd(String columnName, T buttonToAdd) {
+	public void tableAdd(String columnName, JButton buttonToAdd) {
 		buttonToAdd.setFocusable(false);
 		int column = indexOf(columnName);
 		buttonToAdd.setBounds(getX() + column * cellWidth + (column * 20), getY() + 50 + horizontalIndexers[column], cellWidth, cellHeight);
@@ -109,7 +108,7 @@ public final class ButtonTable<T extends JButton> extends JComponent{
 		dataButtonList.add(buttonToAdd);
 	}
 	
-	public static final class CreateClassListener extends MouseAdapter{
+	private static final class CreateClassListener extends MouseAdapter{
 		private final String dayStr;
 		
 		public CreateClassListener(String dayStr) {
