@@ -6,10 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import degubi.data.Friend;
+import degubi.data.Note;
 
 public final class PropertyFile {
 	private static final Map<String, String> storage = initPropertyFile();
@@ -51,17 +56,13 @@ public final class PropertyFile {
 		return Boolean.parseBoolean(getString(key, String.valueOf(defaultValue)));
 	}
 	
-	public static Map<String, String> getMap(String key){
+	private static<T> List<T> getObjectList(String key, IPropertyObjectBuilder<T> builder){
 		String[] fullData = getString(key, "").split(";");
 		
-		return fullData[0].isEmpty() ? new LinkedHashMap<>() 
-									 : Arrays.stream(fullData)
-									 		 .map(str -> str.split(" ", 2))
-									 		 .collect(Collectors.toMap(str -> str[0], str -> str[1]));
-	}
-	
-	public static void setMap(String key, Map<String, String> map) {
-		setString(key, map.entrySet().stream().map(entry -> entry.getKey() + ' ' + entry.getValue()).collect(Collectors.joining(";")));
+		return fullData[0].isEmpty() ? new ArrayList<>() :
+				Arrays.stream(fullData)
+					  .map(builder::readObject)
+					  .collect(Collectors.toList());
 	}
 	
 	public static void setColor(String key, Color newColor) {
@@ -79,6 +80,10 @@ public final class PropertyFile {
 	public static void setString(String key, String value) {
 		storage.replace(key, value);
 		save();
+	}
+	
+	public static<T> void setObjectList(String key, IPropertyObjectBuilder<T> builder, List<T> value) {
+		setString(key, value.stream().map(builder::writeObject).collect(Collectors.joining(";")));
 	}
 	
 	private static void save() {
@@ -101,5 +106,6 @@ public final class PropertyFile {
 	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
 	public static int noteTime = getInt("noteTime", 60);
 	public static int updateInterval = getInt("updateInterval", 600);
-	public static final Map<String, String> friendsMap = getMap("friends");
+	public static final List<Friend> friends = getObjectList("friends", Friend.builder);
+	public static final List<Note> notes = getObjectList("notes", Note.builder);
 }

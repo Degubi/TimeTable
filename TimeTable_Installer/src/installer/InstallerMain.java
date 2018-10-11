@@ -22,12 +22,14 @@ import javax.swing.border.LineBorder;
 
 public final class InstallerMain {
 	public static final JTextArea outputWindow = new JTextArea();
-	public static final JProgressBar poggersBar = new JProgressBar(0, 7);
+	public static final JProgressBar poggersBar = new JProgressBar(0, 8);
 	public static final JLabel poggersLabel = new JLabel();
-	public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd. HH:mm:ss");
+	public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 	
 	public static void main(String[] args) throws IOException {
-		if(args.length == 0 || !args[0].equals("-window")) {
+		boolean startMinimized = args.length == 1 && args[0].equals("-window");
+		
+		if(!startMinimized) {
 			EventQueue.invokeLater(() -> {
 				JDialog frame = new JDialog((JFrame)null, "TimeTable Installer");
 				
@@ -65,11 +67,12 @@ public final class InstallerMain {
 		downloadFile(true, "lib/poi-ooxml-4.0.0.jar", "https://drive.google.com/uc?authuser=0&id=1Kynmny0BSnahEY4DlM7FeBGm8kv7-yDY&export=download");
 		downloadFile(true, "lib/poi-ooxml-schemas-4.0.0.jar", "https://drive.google.com/uc?authuser=0&id=1eqlZ68BSZ6QK1GYGt6rDpbUuTYMkmWJj&export=download");
 		downloadFile(true, "lib/xmlbeans-3.0.1.jar", "https://drive.google.com/uc?authuser=0&id=1L2fLAFxnj3ycUGcCFtIhZmXj8_UoqnxI&export=download");
+		downloadFile(true, "lib/icon.ico", "https://drive.google.com/uc?authuser=0&id=1zl43T-olB6k-TyYqp33M3uN1mcnqVnMM&export=download");
 		downloadFile(false, "TimeTable.jar", "https://drive.google.com/uc?authuser=0&id=1fmTlv695eloSS3CEr2ihQ-a_wMrVdH0V&export=download");
 		
 		printToConsole("Starting TimeTable.jar");
 		
-		Runtime.getRuntime().exec("java -jar TimeTable.jar" + (args.length == 1 ? " " + args[0] : ""));
+		Runtime.getRuntime().exec("java -jar TimeTable.jar" + (startMinimized ? " -window" : ""));
 		System.exit(0);
 	}
 	
@@ -92,8 +95,7 @@ public final class InstallerMain {
 		try(var urlChannel = Channels.newChannel(new URL(URL).openStream()); 
 			var fileChannel = FileChannel.open(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
 			
-			printToConsole("Writing file: " + filePath);
-			fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE);
+			printToConsole("Downloaded: " + fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE) / 1024 + " kbytes for file: " + filePath);
 		}
 	}
 }

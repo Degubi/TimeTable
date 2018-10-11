@@ -9,14 +9,14 @@ public class MainFrameIconifier extends WindowAdapter{
 
 	@Override
 	public void windowDeiconified(WindowEvent e) {
-		TimeTableMain.screenshotItem.setEnabled(true);
-		TimeTableMain.screenshotItem.setToolTipText(null);
+		SystemTrayListener.screenshotItem.setEnabled(true);
+		SystemTrayListener.screenshotItem.setToolTipText(null);
 	}
 	
 	@Override
 	public void windowIconified(WindowEvent e) {
 		TimeTableMain.mainPanel.getTopLevelAncestor().setVisible(false);
-		TimeTableMain.screenshotItem.setEnabled(false);
-		TimeTableMain.screenshotItem.setToolTipText("Nem lehet fényképet készíteni ha nem látszik az órarend");
+		SystemTrayListener.screenshotItem.setEnabled(false);
+		SystemTrayListener.screenshotItem.setToolTipText("Nem lehet fényképet készíteni ha nem látszik az órarend");
 	}
 }

@@ -1,12 +1,9 @@
 package degubi.gui;
 
-import static java.awt.Toolkit.getDefaultToolkit;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Files;
@@ -42,10 +39,10 @@ import degubi.tools.NIO;
 import degubi.tools.PropertyFile;
 
 public final class PopupGuis extends AbstractAction{
-	public static final ImageIcon editIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/edit.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon deleteIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/delete.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon ignoreIcon = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/ignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-	public static final ImageIcon unIgnore = new ImageIcon(getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/unignore.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+	public static final ImageIcon editIcon = NIO.getIcon("edit.png", 32);
+	public static final ImageIcon deleteIcon = NIO.getIcon("delete.png", 32);
+	public static final ImageIcon ignoreIcon = NIO.getIcon("ignore.png", 32);
+	public static final ImageIcon unIgnore = NIO.getIcon("unignore.png", 32);
 	
 	private final JTable dataTable;
 	private final char key;
@@ -110,18 +107,25 @@ public final class PopupGuis extends AbstractAction{
 	}
 	
 	public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
-		Path scriptPath = Paths.get("iconScript.vbs");
-		String cutPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
+		String startupLinkPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
+		String desktopLinkPath = System.getProperty("user.home") + "\\Desktop\\TimeTable.lnk";
 		LocalTime now = LocalTime.now();
 		String[] timeValues = {"00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"};
-
-		var currentClass = newColorButton(40, PropertyFile.currentClassColor);
-		var beforeClass = newColorButton(80, PropertyFile.upcomingClassColor);
-		var otherClass = newColorButton(140, PropertyFile.otherClassColor);
-		var pastClass = newColorButton(200, PropertyFile.pastClassColor);
-		var unimportantClass = newColorButton(260, PropertyFile.unimportantClassColor);
-		var dayTimeColor = newColorButton(320, PropertyFile.dayTimeColor);
-		var nightTimeColor = newColorButton(380, PropertyFile.nightTimeColor);
+		
+		Consumer<JButton> colorButtonListener = button -> {
+			Color newColor = JColorChooser.showDialog(TimeTableMain.mainPanel, "Színválasztó", button.getBackground());
+			if(newColor != null) {
+				button.setBackground(newColor);
+			}
+		};
+		
+		var currentClass = newColorButton(200, 40, colorButtonListener, PropertyFile.currentClassColor);
+		var beforeClass = newColorButton(200, 80, colorButtonListener, PropertyFile.upcomingClassColor);
+		var otherClass = newColorButton(200, 140, colorButtonListener, PropertyFile.otherClassColor);
+		var pastClass = newColorButton(200, 200, colorButtonListener, PropertyFile.pastClassColor);
+		var unimportantClass = newColorButton(200, 260, colorButtonListener, PropertyFile.unimportantClassColor);
+		var dayTimeColor = newColorButton(200, 320, colorButtonListener, PropertyFile.dayTimeColor);
+		var nightTimeColor = newColorButton(200, 380, colorButtonListener, PropertyFile.nightTimeColor);
 		
 		var startTimeBox = newComboBox(PropertyFile.dayTimeStart.toString(), 60, timeValues);
 		var endTimeBox = newComboBox(PropertyFile.dayTimeEnd.toString(), 120, timeValues);
@@ -132,23 +136,28 @@ public final class PopupGuis extends AbstractAction{
 		popupCheckBox.setOpaque(false);
 		TimeTableMain.handleNightMode(popupCheckBox, now);
 		popupCheckBox.setBounds(150, 660, 200, 20);
-		JCheckBox startupBox = new JCheckBox((String)null, Files.exists(Paths.get(cutPath)));
+		JCheckBox startupBox = new JCheckBox((String)null, Files.exists(Paths.get(startupLinkPath)));
 		startupBox.setOpaque(false);
 		TimeTableMain.handleNightMode(startupBox, now);
 		startupBox.setBounds(150, 700, 200, 20);
-		
-		JDialog settingsFrame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), "Beállítások", true);
-		settingsFrame.setResizable(false);
-		settingsFrame.setBounds(0, 0, 800, 600);
-		settingsFrame.setLocationRelativeTo(null);
-		settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
+		JCheckBox desktopIconBox = new JCheckBox((String)null, Files.exists(Paths.get(desktopLinkPath)));
+		desktopIconBox.setOpaque(false);
+		TimeTableMain.handleNightMode(desktopIconBox, now);
+		desktopIconBox.setBounds(150, 740, 200, 20);
+
 		BrightablePanel scrollPanel = new BrightablePanel();
 		TimeTableMain.handleNightMode(scrollPanel, now);
 		scrollPanel.setPreferredSize(new Dimension(500, 850));
 		JScrollPane scrollPane = new JScrollPane(scrollPanel);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10);
 		scrollPane.setBorder(null);
+		
+		JDialog settingsFrame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), "Beállítások", true);
+		settingsFrame.setResizable(false);
+		settingsFrame.setBounds(0, 0, 800, 600);
+		settingsFrame.setLocationRelativeTo(null);
+		settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		settingsFrame.setContentPane(scrollPane);
 		
 		addSettingButton(currentClass, 30, "Jelenlegi Óra Színe", scrollPanel, now);
 		addSettingButton(beforeClass, 80, "Következõ Órák Színe", scrollPanel, now);
@@ -165,6 +174,7 @@ public final class PopupGuis extends AbstractAction{
 		
 		addSettingButton(popupCheckBox, 680, "Üzenetek Bekapcsolva", scrollPanel, now);
 		addSettingButton(startupBox, 730, "Indítás PC Indításakor", scrollPanel, now);
+		addSettingButton(desktopIconBox, 780, "Asztali Parancsikon", scrollPanel, now);
 		
 		JButton saveButton = new JButton("Mentés");
 		saveButton.setBounds(600, 800, 120, 40);
@@ -192,24 +202,21 @@ public final class PopupGuis extends AbstractAction{
 			}catch (NumberFormatException | DateTimeParseException e) {
 				JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
 			}
+			Path jarPath = NIO.getFullPath("./TimeTable.jar");
 			
 			if(startupBox.isSelected()) {
-				Path jarPath = NIO.getFullPath("./TimeTable.jar");
-				if(Files.exists(jarPath)) {
-					Process proc = NIO.createLink(scriptPath, jarPath.toString(), cutPath);
-					
-					while(proc.isAlive()) Thread.onSpinWait();
-				}
-				
+				NIO.createLink(jarPath.toString(), startupLinkPath, "-window");
 			}else{
-				NIO.deleteIfExists(Paths.get(cutPath));
+				NIO.deleteIfExists(Paths.get(startupLinkPath));
 			}
 			
-			NIO.deleteIfExists(scriptPath);
+			if(desktopIconBox.isSelected()) {
+				NIO.createLink(jarPath.toString(), desktopLinkPath, "");
+			}else{
+				NIO.deleteIfExists(Paths.get(desktopLinkPath));
+			}
 		});
 		scrollPanel.add(saveButton);
-		
-		settingsFrame.setContentPane(scrollPane);
 		settingsFrame.setVisible(true);
 	}
 	
@@ -231,17 +238,13 @@ public final class PopupGuis extends AbstractAction{
 		return endTimeBox;
 	}
 	
-	private static JButton newColorButton(int y, Color startColor) {
+	public static JButton newColorButton(int x, int y, Consumer<JButton> listener, Color startColor) {
 		JButton butt = new JButton();
 		butt.setBackground(startColor);
-		butt.setBounds(200, y, 48, 48);
+		butt.setBounds(x, y, 48, 48);
 		butt.setFocusable(false);
-		butt.addActionListener(e -> {
-			Color newColor = JColorChooser.showDialog(TimeTableMain.mainPanel, "Színválasztó", butt.getBackground());
-			if(newColor != null) {
-				butt.setBackground(newColor);
-			}
-		});
+		butt.setBorder(null);
+		butt.addActionListener(e -> listener.accept(butt));
 		return butt;
 	}
 	
