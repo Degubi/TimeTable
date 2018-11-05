@@ -9,10 +9,6 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,7 +17,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -37,8 +32,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import degubi.TimeTableMain;
 
 public final class NIO extends FileFilter{
-	public static final int BUILD_NUMBER = 103;
-	
 	private NIO() {}
 	
 	public static void showExcelFileBrowser(Path dataFilePath) {
@@ -173,50 +166,5 @@ public final class NIO extends FileFilter{
 			return new ImageIcon(image);
 		}
 		return new ImageIcon(image.getScaledInstance(scale, scale, Image.SCALE_SMOOTH));
-	}
-	
-	public static void checkForUpdates(String[] args) throws IOException, MalformedURLException {
-		int[] buildNumbers = new int[2];  //0: Main Jar Version, 1: Installer Jar Version
-		boolean updateUpdater = false;
-
-		try(var urlInput = new URL("https://pastebin.com/raw/BMxNE6ws").openStream()){
-			byte[] data = new byte[7];
-			urlInput.read(data);
-			
-			buildNumbers[0] = (data[0] - 48) * 100 + (data[1] - 48) * 10 + (data[2] - 48);
-			buildNumbers[1] = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
-		} catch (IOException e) {}
-		
-		try(var jarFile = new JarFile("TimeTableInstaller.jar")){
-			var entry = jarFile.getEntry("version.txt");
-			
-			if(entry != null) {
-				try(var entryInput = jarFile.getInputStream(entry)){
-					byte[] buildData = new byte[3];
-					entryInput.read(buildData);
-					
-					int localBuild = (buildData[0] - 48) * 100 + (buildData[1] - 48) * 10 + (buildData[2] - 48);
-					
-					if(buildNumbers[1] > localBuild) {
-						updateUpdater = true;
-					}
-				}
-			}else{
-				updateUpdater = true;
-			}
-		}
-		
-		if(updateUpdater) {
-			try(var urlChannel = Channels.newChannel(new URL("https://drive.google.com/uc?authuser=0&id=1qYnJ_gsCxu-wfxD-w7QtEzIb7NZhCz0k&export=download").openStream()); 
-				var fileChannel = FileChannel.open(Paths.get("TimeTableInstaller.jar"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
-					
-				fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE);
-			}
-		}
-		
-		if(buildNumbers[0] > BUILD_NUMBER) {
-			Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar" + (args.length == 1 ? " " + args[0] : ""));
-			System.exit(0);
-		}
 	}
 }

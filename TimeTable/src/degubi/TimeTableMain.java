@@ -9,9 +9,14 @@ import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
 import java.awt.event.WindowAdapter;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -31,6 +36,7 @@ import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import degubi.gui.BrightablePanel;
 import degubi.gui.ButtonTable;
@@ -47,11 +53,19 @@ public final class TimeTableMain extends WindowAdapter{
 	public static final ButtonTable dataTable = new ButtonTable(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
 	private static int timer = PropertyFile.updateInterval - 100;
+	private static final int BUILD_NUMBER = 105;
 	
-	public static void main(String[] args) throws AWTException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-		if(args.length == 0 || !args[0].equals("-noupdate")) NIO.checkForUpdates(args);
+	public static void main(String[] args) throws AWTException, IOException, UnsupportedLookAndFeelException {
+		try(var urlInput = new URL("https://pastebin.com/raw/NZfLFzYB").openStream()){
+			byte[] data = new byte[3];
+			urlInput.read(data);
+			
+			if(Integer.parseInt(new String(data)) > BUILD_NUMBER) {
+				checkForUpdates();
+			}
+		}
 		
-		UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		UIManager.setLookAndFeel(new NimbusLookAndFeel());
 		SwingUtilities.updateComponentTreeUI(dataTable);
 		
 		JFrame frame = new JFrame("Órarend");
@@ -76,6 +90,17 @@ public final class TimeTableMain extends WindowAdapter{
 		
 		tray.addMouseListener(new SystemTrayListener());
 		SystemTray.getSystemTray().add(tray);
+	}
+	
+	private static void checkForUpdates() throws IOException, MalformedURLException {
+		try(var urlChannel = Channels.newChannel(new URL("https://drive.google.com/uc?authuser=0&id=1qYnJ_gsCxu-wfxD-w7QtEzIb7NZhCz0k&export=download").openStream()); 
+			var fileChannel = FileChannel.open(Paths.get("TimeTableInstaller.jar"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
+					
+			fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE);
+		}
+		
+		Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar");
+		System.exit(0);
 	}
 	
 	private static void launchTimerThread(JFrame frame) {
