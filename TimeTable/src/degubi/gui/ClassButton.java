@@ -26,7 +26,7 @@ import javax.swing.JOptionPane;
 import degubi.TimeTableMain;
 import degubi.listeners.EditClassButtonListener;
 import degubi.tools.NIO;
-import degubi.tools.PropertyFile;
+import degubi.tools.Settings;
 
 public final class ClassButton extends JButton implements MouseListener{
 	public static ClassButton currentClassButton;
@@ -75,7 +75,7 @@ public final class ClassButton extends JButton implements MouseListener{
 			Duration between = Duration.between(todayTime, startTime);
 			TimeTableMain.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
-		setBackground(unImportant ? PropertyFile.unimportantClassColor : isNext ? PropertyFile.currentClassColor : isBefore ? PropertyFile.upcomingClassColor : isAfter ? PropertyFile.pastClassColor : PropertyFile.otherClassColor);
+		setBackground(unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherClassColor);
 	}
 	
 	private static void rewriteFile() {
@@ -97,16 +97,16 @@ public final class ClassButton extends JButton implements MouseListener{
 			frame.setLocationRelativeTo(null);
 			frame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
 			
-			panel.add(newEditButton(32, "Törlés", PopupGuis.deleteIcon, e -> {
+			panel.add(newEditButton(32, PopupGuis.deleteIcon, e -> {
 				if(JOptionPane.showConfirmDialog(TimeTableMain.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
 					TimeTableMain.dataTable.tableRemove(this);
 					rewriteFile();
 				}
 			}));
-			panel.add(newEditButton(64, unImportant ? "UnIgnorálás" : "Ignorálás", unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
-				addOrReplaceButton(false, this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant);
-			}));
-			panel.add(newEditButton(0, "Szerkesztés", PopupGuis.editIcon, e -> PopupGuis.showEditorGui(false, this)));
+			panel.add(newEditButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> 
+				addOrReplaceButton(false, this, day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + !unImportant)
+			));
+			panel.add(newEditButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorGui(false, this)));
 			frame.setVisible(true);
 		}
 	}
@@ -162,10 +162,8 @@ public final class ClassButton extends JButton implements MouseListener{
 	
 	@Override public void mouseClicked(MouseEvent e) {} @Override public void mouseReleased(MouseEvent e) {} @Override public void mouseEntered(MouseEvent e) {} @Override public void mouseExited(MouseEvent e) {}
 	
-	private static JButton newEditButton(int yPos, String tooltip, ImageIcon icon, ActionListener listener) {
+	private static JButton newEditButton(int yPos, ImageIcon icon, ActionListener listener) {
 		JButton butt = new JButton(icon);
-		butt.setToolTipText(tooltip);
-		butt.setFocusable(false);
 		butt.setBackground(Color.LIGHT_GRAY);
 		butt.setBounds(0, yPos, 32, 32);
 		butt.addActionListener(listener);

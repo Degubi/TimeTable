@@ -5,7 +5,7 @@ import java.awt.event.WindowEvent;
 
 import degubi.TimeTableMain;
 
-public class MainFrameIconifier extends WindowAdapter{
+public final class MainFrameIconifier extends WindowAdapter{
 
 	@Override
 	public void windowDeiconified(WindowEvent e) {

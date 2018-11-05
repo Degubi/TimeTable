@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -94,12 +93,11 @@ public final class NIO extends FileFilter{
 		return "Only Excel Documents";
 	}
 	
-	public static void createLink(String filePath, String toSavePath, String cmdArgs) {
-		var scriptPath = Paths.get("iconScript.vbs");
+	public static void createLink(String filePath, String toSavePath) {
+		var scriptPath = Path.of("iconScript.vbs");
 		var command = ("Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
 						  "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
 						  	  "oLink.TargetPath = \"" + filePath + "\"\n" + 
-						  	  "oLink.Arguments = \"" + cmdArgs + "\"\n" + 
 						  	  "oLink.IconLocation = \"" + getFullPath("./lib/icon.ico") + "\"\n" +
 						  	  "oLink.WorkingDirectory = \"" + filePath.substring(0, filePath.lastIndexOf("\\")) + "\"\n" +
 							  "oLink.Save\n").getBytes();
@@ -139,7 +137,7 @@ public final class NIO extends FileFilter{
 	
 	public static void writeAllLines(String filePath, List<String> lines) {
 		try {
-			Files.write(Paths.get(filePath), lines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+			Files.write(Path.of(filePath), lines, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -147,7 +145,7 @@ public final class NIO extends FileFilter{
 	
 	public static Path getFullPath(String strPath) {
 		try {
-			return Paths.get(strPath).toRealPath();
+			return Path.of(strPath).toRealPath();
 		} catch (IOException e) {
 			return null;
 		}

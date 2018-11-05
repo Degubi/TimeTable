@@ -6,7 +6,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public final class InstallerMain {
@@ -24,6 +23,7 @@ public final class InstallerMain {
 		downloadFile(true, "lib/poi-ooxml-4.0.0.jar", "https://drive.google.com/uc?authuser=0&id=1Kynmny0BSnahEY4DlM7FeBGm8kv7-yDY&export=download");
 		downloadFile(true, "lib/poi-ooxml-schemas-4.0.0.jar", "https://drive.google.com/uc?authuser=0&id=1eqlZ68BSZ6QK1GYGt6rDpbUuTYMkmWJj&export=download");
 		downloadFile(true, "lib/xmlbeans-3.0.1.jar", "https://drive.google.com/uc?authuser=0&id=1L2fLAFxnj3ycUGcCFtIhZmXj8_UoqnxI&export=download");
+		downloadFile(true, "lib/gson-2.8.5.jar", "https://drive.google.com/uc?authuser=0&id=1E9Z5mfv1Cgf7XH4OHaAqUpx8CqAVnQ3a&export=download");
 		downloadFile(true, "lib/icon.ico", "https://drive.google.com/uc?authuser=0&id=1zl43T-olB6k-TyYqp33M3uN1mcnqVnMM&export=download");
 		downloadFile(false, "TimeTable.jar", "https://drive.google.com/uc?authuser=0&id=1fmTlv695eloSS3CEr2ihQ-a_wMrVdH0V&export=download");
 		
@@ -32,7 +32,7 @@ public final class InstallerMain {
 	}
 	
 	private static void downloadFile(boolean checkIfExists, String filePath, String URL) throws IOException {
-		var path = Paths.get(filePath);
+		var path = Path.of(filePath);
 		
 		if(checkIfExists && Files.exists(path)) {
 			return;

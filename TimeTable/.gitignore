@@ -3,6 +3,6 @@
 .project
 /.settings/
 classData.txt
-settings.prop
+settings.json
 /lib/
 /META-INF/

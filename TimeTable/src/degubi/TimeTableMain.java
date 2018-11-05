@@ -15,7 +15,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -44,7 +43,7 @@ import degubi.gui.ClassButton;
 import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
 import degubi.tools.NIO;
-import degubi.tools.PropertyFile;
+import degubi.tools.Settings;
 
 public final class TimeTableMain extends WindowAdapter{
 	public static final BrightablePanel mainPanel = new BrightablePanel();
@@ -52,7 +51,7 @@ public final class TimeTableMain extends WindowAdapter{
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final ButtonTable dataTable = new ButtonTable(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
-	private static int timer = PropertyFile.updateInterval - 100;
+	private static int timer = Settings.updateInterval - 100;
 	private static final int BUILD_NUMBER = 105;
 	
 	public static void main(String[] args) throws AWTException, IOException, UnsupportedLookAndFeelException {
@@ -74,7 +73,7 @@ public final class TimeTableMain extends WindowAdapter{
 		frame.setLocationRelativeTo(null);
 		frame.setContentPane(mainPanel);
 		
-		Path dataFilePath = Paths.get("classData.txt");
+		Path dataFilePath = Path.of("classData.txt");
 		NIO.checkFileOr(dataFilePath, NIO::showExcelFileBrowser);
 		ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, !(args.length == 1 && args[0].equals("-window")));
 			
@@ -94,7 +93,7 @@ public final class TimeTableMain extends WindowAdapter{
 	
 	private static void checkForUpdates() throws IOException, MalformedURLException {
 		try(var urlChannel = Channels.newChannel(new URL("https://drive.google.com/uc?authuser=0&id=1qYnJ_gsCxu-wfxD-w7QtEzIb7NZhCz0k&export=download").openStream()); 
-			var fileChannel = FileChannel.open(Paths.get("TimeTableInstaller.jar"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
+			var fileChannel = FileChannel.open(Path.of("TimeTableInstaller.jar"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
 					
 			fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE);
 		}
@@ -111,17 +110,17 @@ public final class TimeTableMain extends WindowAdapter{
 				dateLabel.setText(LocalDateTime.now().format(displayTimeFormat));
 			}
 			
-			if(++timer == PropertyFile.updateInterval) {
+			if(++timer == Settings.updateInterval) {
 				ClassButton.updateAllButtons(false, TimeTableMain.dataTable);
 
 				if(!SystemTrayListener.sleepMode.isSelected() && !frame.isVisible()) {
 					LocalTime now = LocalTime.now();
 					ClassButton current = ClassButton.currentClassButton;
 		
-					if(PropertyFile.enablePopups && current != null && now.isBefore(current.startTime)) {
+					if(Settings.enablePopups && current != null && now.isBefore(current.startTime)) {
 						var timeBetween = Duration.between(now, current.startTime);
 						
-						if(timeBetween.toMinutes() < PropertyFile.noteTime) {
+						if(timeBetween.toMinutes() < Settings.noteTime) {
 							TimeTableMain.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
 
 							try(var stream = AudioSystem.getAudioInputStream(TimeTableMain.class.getClassLoader().getResource("assets/beep.wav"));
@@ -145,12 +144,12 @@ public final class TimeTableMain extends WindowAdapter{
 	}
 	
 	public static void handleNightMode(Container container, LocalTime time) {
-		boolean isDarkMode = time.isAfter(PropertyFile.dayTimeEnd) || time.isBefore(PropertyFile.dayTimeStart);
+		boolean isDarkMode = time.isAfter(Settings.dayTimeEnd) || time.isBefore(Settings.dayTimeStart);
 	
 		if(container instanceof JLabel || container instanceof JCheckBox) {
 			container.setForeground(isDarkMode ? Color.WHITE : Color.BLACK);
 		}else{
-			container.setBackground(isDarkMode ? PropertyFile.nightTimeColor : PropertyFile.dayTimeColor);
+			container.setBackground(isDarkMode ? Settings.nightTimeColor : Settings.dayTimeColor);
 		}
 	}
 }

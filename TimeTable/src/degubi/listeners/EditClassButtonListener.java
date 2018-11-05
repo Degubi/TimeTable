@@ -5,7 +5,7 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JDialog;
 
-public class EditClassButtonListener extends WindowAdapter{
+public final class EditClassButtonListener extends WindowAdapter{
 	private final JDialog passFrame;
 	
 	public EditClassButtonListener(JDialog frame) {
