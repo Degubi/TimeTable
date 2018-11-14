@@ -94,6 +94,8 @@ public class SystemTrayListener extends MouseAdapter {
 		friendMenu.removeAll();
 		JMenuItem addFriendItem = new JMenuItem("Ismerõs Hozzáadása");
 		addFriendItem.addActionListener(e -> addNewFriend(friendMenu));
+		JMenuItem removeFriendItem = new JMenuItem("Ismerõs Eltávolítása");
+		removeFriendItem.addActionListener(e -> removeFriend(friendMenu));
 		
 		Settings.friends.forEach(friend -> {
 			JMenuItem friendItem = new JMenuItem(friend.getAsJsonObject().get("name").getAsString());
@@ -106,6 +108,7 @@ public class SystemTrayListener extends MouseAdapter {
 			friendMenu.addSeparator();
 		}
 		friendMenu.add(addFriendItem);
+		friendMenu.add(removeFriendItem);
 	}
 	
 	private static void addNewFriend(JMenu friendMenu) {
@@ -123,6 +126,25 @@ public class SystemTrayListener extends MouseAdapter {
 		}
 	}
 	
+	private static void removeFriend(JMenu friendMenu) {
+		var friends = Settings.stream(Settings.friends)
+							  .map(obj -> obj.get("name").getAsString())
+							  .toArray(String[]::new);
+		
+		if(friends.length == 0) {
+			JOptionPane.showMessageDialog(null, "Nincsenek barátaid. :)");
+		}else{
+			String selection = (String) JOptionPane.showInputDialog(null, "Válaszd ki a \"barátod\"", "Temetés", JOptionPane.OK_CANCEL_OPTION, null, friends, friends[0]);
+			
+			if(selection != null) {
+				Settings.friends.remove(Settings.indexOf(selection, friends));
+				Settings.save();
+				reinitFriendsMenu(friendMenu);
+			}
+		}
+	}
+	
+	//https://drive.google.com/uc?authuser=0&id=1qJzkoov0hPyKEujgVXWUU8L__StF_fK6&export=download
 	private static void handleFriendTable(ActionEvent event) {
 		var friendTable = new ButtonTable(150, 96, 25, 30, false, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 		var data = new byte[1000];

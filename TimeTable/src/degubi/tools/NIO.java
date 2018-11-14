@@ -93,11 +93,12 @@ public final class NIO extends FileFilter{
 		return "Only Excel Documents";
 	}
 	
-	public static void createLink(String filePath, String toSavePath) {
+	public static void createLink(String filePath, String toSavePath, String cmdArgs) {
 		var scriptPath = Path.of("iconScript.vbs");
 		var command = ("Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
 						  "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
 						  	  "oLink.TargetPath = \"" + filePath + "\"\n" + 
+						  	  "oLink.Arguments = \"" + cmdArgs + "\"\n" +
 						  	  "oLink.IconLocation = \"" + getFullPath("./lib/icon.ico") + "\"\n" +
 						  	  "oLink.WorkingDirectory = \"" + filePath.substring(0, filePath.lastIndexOf("\\")) + "\"\n" +
 							  "oLink.Save\n").getBytes();

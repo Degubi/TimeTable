@@ -194,13 +194,13 @@ public final class PopupGuis extends AbstractAction{
 			var jarPath = NIO.getFullPath("./TimeTable.jar");
 			
 			if(startupBox.isSelected()) {
-				NIO.createLink(jarPath.toString(), startupLinkPath);
+				NIO.createLink(jarPath.toString(), startupLinkPath, "-window");
 			}else{
 				NIO.deleteIfExists(Path.of(startupLinkPath));
 			}
 			
 			if(desktopIconBox.isSelected()) {
-				NIO.createLink(jarPath.toString(), desktopLinkPath);
+				NIO.createLink(jarPath.toString(), desktopLinkPath, "");
 			}else{
 				NIO.deleteIfExists(Path.of(desktopLinkPath));
 			}

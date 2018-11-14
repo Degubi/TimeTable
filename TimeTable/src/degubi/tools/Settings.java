@@ -7,10 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -32,8 +35,7 @@ public final class Settings {
 	public static int updateInterval = getInt("updateInterval", 600);
 	public static final JsonArray friends = getArray("friends");
 	public static final JsonArray notes = getArray("notes");
-	
-	/*public static List<JsonObject> classes = getList("classes", 
+	/*public static final JsonArray classes = getArray("classes", 
 			lines("classData.txt").stream()
 				 				  .map(line -> line.split(" "))
 				 				  .map(data -> newClassObject(data[0], data[1], data[2], data[3], data[4], data[5], Boolean.parseBoolean(data[6])))
@@ -45,8 +47,8 @@ public final class Settings {
 		} catch (IOException e) {
 			return List.of();
 		}
-	}*/
-	
+	}
+	*/
 	private Settings() {}
 	
 	private static JsonObject getMainSettingsObject() {
@@ -93,7 +95,7 @@ public final class Settings {
 		return settingsObject.get(key).getAsString();
 	}
 	
-	private static JsonArray getArray(String key, JsonObject... defaults){
+	private static JsonArray getArray(String key, Object... defaults){
 		if(!settingsObject.has(key)) {
 			settingsObject.add(key, gson.toJsonTree(defaults));
 			save();
@@ -146,6 +148,19 @@ public final class Settings {
 	
 	public static void updateString(String key, String val) {
 		settingsObject.addProperty(key, val);
+	}
+	
+	public static Stream<JsonObject> stream(JsonArray array){
+		return StreamSupport.stream(array.spliterator(), false).map(JsonElement::getAsJsonObject);
+	}
+	
+	public static<T> int indexOf(T find, T[] array) {
+		for(int k = 0; k < array.length; ++k) {
+			if(array[k].equals(find)) {
+				return k;
+			}
+		}
+		return -1;
 	}
 	
 	public static void save() {

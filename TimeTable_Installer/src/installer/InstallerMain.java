@@ -31,14 +31,14 @@ public final class InstallerMain {
 		System.exit(0);
 	}
 	
-	private static void downloadFile(boolean checkIfExists, String filePath, String URL) throws IOException {
+	private static void downloadFile(boolean checkIfExists, String filePath, String url) throws IOException {
 		var path = Path.of(filePath);
 		
 		if(checkIfExists && Files.exists(path)) {
 			return;
 		}
 		
-		try(var urlChannel = Channels.newChannel(new URL(URL).openStream()); 
+		try(var urlChannel = Channels.newChannel(new URL(url).openStream()); 
 			var fileChannel = FileChannel.open(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE)){
 			
 			fileChannel.transferFrom(urlChannel, 0, Integer.MAX_VALUE);

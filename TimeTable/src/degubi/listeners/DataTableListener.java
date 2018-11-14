@@ -22,13 +22,13 @@ public final class DataTableListener extends MouseAdapter{
 		if(event.getClickCount() == 2 && dataTable.getSelectedColumn() == 1 && dataTable.getSelectedRow() == 5) {
 			ButtonTable buildingTable = new ButtonTable(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
 				
-			PopupGuis.showNewDialog(true, "Teremválasztó", 800, 600, frame -> {
+			PopupGuis.showNewDialog(true, "Teremválasztó", 800, 600, frame -> 
 				buildingTable.findFirstButton(button -> button.getBackground() == Color.RED)
 							 .ifPresent(button -> {
 								 dataTable.setValueAt(button.getText(), 5, 1);
 								 frame.dispose();
-							 });
-			}, buildingTable);
+							 })
+			, buildingTable);
 		}
 	}
 }

@@ -72,7 +72,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		if(interactive && isNext) {
 			currentClassButton = this;
 			
-			Duration between = Duration.between(todayTime, startTime);
+			var between = Duration.between(todayTime, startTime);
 			TimeTableMain.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + className + ' ' + classType + "\nIdõpont: " + startTime + '-' + endTime + "\nTerem: " + room);
 		}
 		setBackground(unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherClassColor);
