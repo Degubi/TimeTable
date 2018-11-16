@@ -2,7 +2,5 @@
 .classpath
 .project
 /.settings/
-classData.txt
 settings.json
 /lib/
-/META-INF/

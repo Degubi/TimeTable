@@ -18,7 +18,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -32,16 +31,18 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.google.gson.JsonObject;
+
 import degubi.TimeTableMain;
 import degubi.listeners.DataTableListener;
-import degubi.tools.NIO;
+import degubi.tools.GuiTools;
 import degubi.tools.Settings;
 
 public final class PopupGuis extends AbstractAction{
-	public static final ImageIcon editIcon = NIO.getIcon("edit.png", 32);
-	public static final ImageIcon deleteIcon = NIO.getIcon("delete.png", 32);
-	public static final ImageIcon ignoreIcon = NIO.getIcon("ignore.png", 32);
-	public static final ImageIcon unIgnore = NIO.getIcon("unignore.png", 32);
+	public static final ImageIcon editIcon = GuiTools.getIcon("edit.png", 32);
+	public static final ImageIcon deleteIcon = GuiTools.getIcon("delete.png", 32);
+	public static final ImageIcon ignoreIcon = GuiTools.getIcon("ignore.png", 32);
+	public static final ImageIcon unIgnore = GuiTools.getIcon("unignore.png", 32);
 	
 	private final JTable dataTable;
 	private final char key;
@@ -51,7 +52,7 @@ public final class PopupGuis extends AbstractAction{
 		this.dataTable = dataTable;
 	}
 	
-	public static void showEditorGui(boolean isNew, ClassButton dataButton) {
+	public static void showEditorGui(JsonObject currentObj, ClassButton dataButton) {
 		JTable dataTable = new JTable(new TableModel());
 		dataTable.addMouseListener(new DataTableListener(dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
@@ -87,13 +88,17 @@ public final class PopupGuis extends AbstractAction{
 		showNewDialog(true, "Editor Gui", 400, 300, frame -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
-			String newData = dataTable.getValueAt(1, 1).toString() + ' ' + dataTable.getValueAt(0, 1) + ' ' + dataTable.getValueAt(2, 1) + ' ' + dataTable.getValueAt(3, 1) + ' ' + dataTable.getValueAt(4, 1) + ' ' + dataTable.getValueAt(5, 1) + ' ' + dataButton.unImportant;
-			ClassButton.addOrReplaceButton(isNew, dataButton, newData);
+			if(currentObj == null) {
+				TimeTableMain.dataTable.addNewClass(Settings.classes, Settings.newClassObject(dataTable, dataButton.unImportant));
+			}else{
+				TimeTableMain.dataTable.editClass(Settings.classes, currentObj, Settings.newClassObject(dataTable, dataButton.unImportant));
+			}
+			
 			frame.dispose();
 		}, dataTable);
 	}
 	
-	public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
+	public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) { // NO_UCD (unused code)
 		var startupLinkPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
 		var desktopLinkPath = System.getProperty("user.home") + "\\Desktop\\TimeTable.lnk";
 		var now = LocalTime.now();
@@ -106,34 +111,34 @@ public final class PopupGuis extends AbstractAction{
 			}
 		};
 		
-		var currentClass = newColorButton(200, 40, colorButtonListener, Settings.currentClassColor);
-		var beforeClass = newColorButton(200, 80, colorButtonListener, Settings.upcomingClassColor);
-		var otherClass = newColorButton(200, 140, colorButtonListener, Settings.otherClassColor);
-		var pastClass = newColorButton(200, 200, colorButtonListener, Settings.pastClassColor);
-		var unimportantClass = newColorButton(200, 260, colorButtonListener, Settings.unimportantClassColor);
-		var dayTimeColor = newColorButton(200, 320, colorButtonListener, Settings.dayTimeColor);
-		var nightTimeColor = newColorButton(200, 380, colorButtonListener, Settings.nightTimeColor);
+		var currentClass = GuiTools.newColorButton(200, 40, colorButtonListener, Settings.currentClassColor);
+		var beforeClass = GuiTools.newColorButton(200, 80, colorButtonListener, Settings.upcomingClassColor);
+		var otherClass = GuiTools.newColorButton(200, 140, colorButtonListener, Settings.otherDayClassColor);
+		var pastClass = GuiTools.newColorButton(200, 200, colorButtonListener, Settings.pastClassColor);
+		var unimportantClass = GuiTools.newColorButton(200, 260, colorButtonListener, Settings.unimportantClassColor);
+		var dayTimeColor = GuiTools.newColorButton(200, 320, colorButtonListener, Settings.dayTimeColor);
+		var nightTimeColor = GuiTools.newColorButton(200, 380, colorButtonListener, Settings.nightTimeColor);
 		
-		var startTimeBox = newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
-		var endTimeBox = newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
-		var timeBeforeNoteBox = newComboBox(Integer.toString(Settings.noteTime), 270, "30", "40", "50", "60", "70", "80", "90");
-		var updateIntervalBox = newComboBox(Integer.toString(Settings.updateInterval / 60), 340, "5", "10", "15", "20");
+		var startTimeBox = GuiTools.newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
+		var endTimeBox = GuiTools.newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
+		var timeBeforeNoteBox = GuiTools.newComboBox(Integer.toString(Settings.noteTime), 270, "30", "40", "50", "60", "70", "80", "90");
+		var updateIntervalBox = GuiTools.newComboBox(Integer.toString(Settings.updateInterval / 60), 340, "5", "10", "15", "20");
 		
 		var popupCheckBox = new JCheckBox((String)null, Settings.enablePopups);
 		popupCheckBox.setOpaque(false);
-		TimeTableMain.handleNightMode(popupCheckBox, now);
+		GuiTools.handleNightMode(popupCheckBox, now);
 		popupCheckBox.setBounds(150, 660, 200, 20);
 		var startupBox = new JCheckBox((String)null, Files.exists(Path.of(startupLinkPath)));
 		startupBox.setOpaque(false);
-		TimeTableMain.handleNightMode(startupBox, now);
+		GuiTools.handleNightMode(startupBox, now);
 		startupBox.setBounds(150, 700, 200, 20);
 		var desktopIconBox = new JCheckBox((String)null, Files.exists(Path.of(desktopLinkPath)));
 		desktopIconBox.setOpaque(false);
-		TimeTableMain.handleNightMode(desktopIconBox, now);
+		GuiTools.handleNightMode(desktopIconBox, now);
 		desktopIconBox.setBounds(150, 740, 200, 20);
 
 		var scrollPanel = new BrightablePanel();
-		TimeTableMain.handleNightMode(scrollPanel, now);
+		GuiTools.handleNightMode(scrollPanel, now);
 		scrollPanel.setPreferredSize(new Dimension(500, 850));
 		var scrollPane = new JScrollPane(scrollPanel);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10);
@@ -177,7 +182,7 @@ public final class PopupGuis extends AbstractAction{
 				Settings.updateColor("currentClassColor", Settings.currentClassColor = currentClass.getBackground());
 				Settings.updateColor("currentClassColor", Settings.currentClassColor = currentClass.getBackground());
 				Settings.updateColor("upcomingClassColor", Settings.upcomingClassColor = beforeClass.getBackground());
-				Settings.updateColor("otherClassColor", Settings.otherClassColor = otherClass.getBackground());
+				Settings.updateColor("otherDayClassColor", Settings.otherDayClassColor = otherClass.getBackground());
 				Settings.updateColor("pastClassColor", Settings.pastClassColor = pastClass.getBackground());
 				Settings.updateColor("unimportantClassColor", Settings.unimportantClassColor = unimportantClass.getBackground());
 				Settings.updateColor("dayTimeColor", Settings.dayTimeColor = dayTimeColor.getBackground());
@@ -191,18 +196,18 @@ public final class PopupGuis extends AbstractAction{
 			}catch (NumberFormatException | DateTimeParseException e) {
 				JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
 			}
-			var jarPath = NIO.getFullPath("./TimeTable.jar");
+			var jarPath = Settings.getFullPath("./TimeTable.jar");
 			
 			if(startupBox.isSelected()) {
-				NIO.createLink(jarPath.toString(), startupLinkPath, "-window");
+				Settings.createLink(jarPath.toString(), startupLinkPath, "-window");
 			}else{
-				NIO.deleteIfExists(Path.of(startupLinkPath));
+				Settings.deleteIfExists(Path.of(startupLinkPath));
 			}
 			
 			if(desktopIconBox.isSelected()) {
-				NIO.createLink(jarPath.toString(), desktopLinkPath, "");
+				Settings.createLink(jarPath.toString(), desktopLinkPath, "");
 			}else{
-				NIO.deleteIfExists(Path.of(desktopLinkPath));
+				Settings.deleteIfExists(Path.of(desktopLinkPath));
 			}
 		});
 		scrollPanel.add(saveButton);
@@ -215,26 +220,9 @@ public final class PopupGuis extends AbstractAction{
 		
 		var label = new JLabel(labelText);
 		label.setFont(ButtonTable.tableHeaderFont);
-		TimeTableMain.handleNightMode(label, time);
+		GuiTools.handleNightMode(label, time);
 		label.setBounds(100, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
 		mainPanel.add(label);
-	}
-	
-	private static JComboBox<String> newComboBox(String selectedItem, int y, String... data){
-		var endTimeBox = new JComboBox<>(data);
-		endTimeBox.setBounds(100, y, 75, 30);
-		endTimeBox.setSelectedItem(selectedItem);
-		return endTimeBox;
-	}
-	
-	public static JButton newColorButton(int x, int y, Consumer<JButton> listener, Color startColor) {
-		JButton butt = new JButton();
-		butt.setBackground(startColor);
-		butt.setBounds(x, y, 48, 48);
-		butt.setFocusable(false);
-		butt.setBorder(null);
-		butt.addActionListener(e -> listener.accept(butt));
-		return butt;
 	}
 	
 	public static void showNewDialog(boolean modal, String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
@@ -259,7 +247,7 @@ public final class PopupGuis extends AbstractAction{
 		}
 		
 		for(var component : components) panel.add(component);
-		TimeTableMain.handleNightMode(panel, LocalTime.now());
+		GuiTools.handleNightMode(panel, LocalTime.now());
 		frame.setVisible(true);
 	}
 	

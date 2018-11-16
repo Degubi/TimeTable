@@ -2,26 +2,27 @@ package degubi.gui;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 import degubi.TimeTableMain;
+import degubi.tools.GuiTools;
+import degubi.tools.Settings;
 
 public final class ButtonTable extends JComponent{
 	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
 	
-	private final List<JButton> dataButtonList = new ArrayList<>();
+	public final List<JButton> dataButtonList = new ArrayList<>();
 	private final String[] columns;
 	private final int[] horizontalIndexers;
 	private final int cellWidth, cellHeight;
@@ -35,7 +36,7 @@ public final class ButtonTable extends JComponent{
 		setBounds(x, y, cellWidth * horizontalIndexers.length + cellWidth, 600);
 		
 		for(int topIndex = 0; topIndex < columnNames.length; ++topIndex) {
-			JButton topAdd = new JButton(columnNames[topIndex]);
+			var topAdd = new JButton(columnNames[topIndex]);
 			topAdd.setFocusable(false);
 			if(addListener) topAdd.addMouseListener(new CreateClassListener(columnNames[topIndex]));
 			topAdd.setBackground(Color.GRAY);
@@ -50,8 +51,8 @@ public final class ButtonTable extends JComponent{
 		this(perCellWidth, perCellHeight, x, y, false, bigData.keySet().toArray(new String[0]));
 		
 		bigData.forEach((columnName, rows) -> rows.forEach(row -> {
-			JButton butt = new JButton(row);
-			boolean isCurrentRoom = row.equals(currentRoom);
+			var butt = new JButton(row);
+			var isCurrentRoom = row.equals(currentRoom);
 			
 			butt.setForeground(isCurrentRoom ? Color.BLACK : Color.GRAY);
 			butt.setBackground(isCurrentRoom ? Color.RED : Color.LIGHT_GRAY);
@@ -69,46 +70,55 @@ public final class ButtonTable extends JComponent{
 		}));
 	}
 	
-	public int indexOf(String column) {
-		for(int k = 0; k < columns.length; ++k) {
-			if(column.equals(columns[k])) {
-				return k;
-			}
-		}
-		throw new IllegalArgumentException("Unkown Column for Table: " + column);
-	}
-	
-	public void tableRemove(JButton buttonToRemove) {
-		remove(buttonToRemove);
-		dataButtonList.remove(buttonToRemove);
-	}
-	
-	public void resetTable() {
+	private void resetTable() {
 		dataButtonList.forEach(this::remove);
 		dataButtonList.clear();
 		Arrays.fill(horizontalIndexers, 0);
 	}
 	
 	public String getNextOrPrevColumn(boolean isNext, String day) {
-		int currentIndex = indexOf(day);
+		int currentIndex = Settings.indexOf(day, columns);
 		return isNext ? columns[currentIndex == columns.length - 1 ? 0 : ++currentIndex] : columns[currentIndex == 0 ? columns.length - 1 : --currentIndex];
 	}
 	
-	public Optional<JButton> findFirstButton(Predicate<JButton> predicate){ return dataButtonList.stream().filter(predicate).findFirst(); }
-	public Stream<JButton> tableDataStream(){ return dataButtonList.stream(); }
-	public void tableAddInternal(JButton button) { dataButtonList.add(button); }
-	public void forEachData(Consumer<JButton> button) { dataButtonList.forEach(button); }
-	
 	public void tableAdd(String columnName, JButton buttonToAdd) {
 		buttonToAdd.setFocusable(false);
-		int column = indexOf(columnName);
+		int column = Settings.indexOf(columnName, columns);
 		buttonToAdd.setBounds(getX() + column * cellWidth + (column * 20), getY() + 50 + horizontalIndexers[column], cellWidth, cellHeight);
 		horizontalIndexers[column] += cellHeight + 6;
 		add(buttonToAdd);
 		dataButtonList.add(buttonToAdd);
 	}
 	
-	private static final class CreateClassListener extends MouseAdapter{
+	public void addNewClass(JsonArray array, JsonObject newClass) {
+		array.add(newClass);
+		reloadTable(array, false);
+		Settings.save();
+	}
+	
+	public void editClass(JsonArray array, JsonObject oldClass, JsonObject newClass) {
+		array.remove(oldClass);
+		addNewClass(array, newClass);
+	}
+	
+	public void deleteClass(JsonArray array, JsonObject classObject) {
+		array.remove(classObject);
+		reloadTable(array, false);
+		Settings.save();
+	}
+	
+	public void reloadTable(JsonArray data, boolean showFrame) {
+		resetTable();
+		
+		Settings.stream(data)
+				 .map(object -> new ClassButton(object, this))
+				 .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, columns)).thenComparing(button -> button.startTime).thenComparing(button -> button.className))
+				 .forEach(button -> tableAdd(button.day, button));
+		
+		ClassButton.updateAllButtons(showFrame, this);
+	}
+	
+	private static final class CreateClassListener implements GuiTools{
 		private final String dayStr;
 		
 		public CreateClassListener(String dayStr) {
@@ -118,7 +128,8 @@ public final class ButtonTable extends JComponent{
 		@Override
 		public void mousePressed(MouseEvent event) {
 			if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-				PopupGuis.showEditorGui(true, new ClassButton(dayStr + " Óra Elõadás 08:00 10:00 Terem false", TimeTableMain.dataTable));
+				var newDay = Settings.newClassObject(dayStr, "Óra", "Elõadás", "08:00", "10:00", "Terem", false);
+				PopupGuis.showEditorGui(null, new ClassButton(newDay, TimeTableMain.dataTable));
 			}
 		}
 	}

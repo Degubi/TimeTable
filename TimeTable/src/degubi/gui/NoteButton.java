@@ -20,11 +20,11 @@ import javax.swing.border.LineBorder;
 
 import com.google.gson.JsonObject;
 
-import degubi.tools.NIO;
+import degubi.tools.GuiTools;
 import degubi.tools.Settings;
 
 public final class NoteButton extends JButton{
-	private static final ImageIcon deleteIcon = NIO.getIcon("delete.png", 28);
+	private static final ImageIcon deleteIcon = GuiTools.getIcon("delete.png", 28);
 	public static int yPos = 10;
 	
 	public NoteButton(JsonObject note, JPanel panel) {
@@ -68,7 +68,7 @@ public final class NoteButton extends JButton{
 					 .map(note -> new NoteButton(note.getAsJsonObject(), notesPanel))
 					 .forEach(notesPanel::add);
 		
-		JButton addNoteButton = new JButton(NIO.getIcon("addnote.png", 0));
+		JButton addNoteButton = new JButton(GuiTools.getIcon("addnote.png", 0));
 		addNoteButton.setBackground(Color.GRAY);
 		addNoteButton.setBounds(10, NoteButton.yPos + 10, 250, 80);
 		addNoteButton.addActionListener(e -> addNewNote(notesPanel));
@@ -90,10 +90,10 @@ public final class NoteButton extends JButton{
 			   	   .filter(passed -> !passed.getBackground().equals(button.getBackground()))
 			   	   .forEach(passed -> passed.setBorder(null));
 		};
-		buttons.add(PopupGuis.newColorButton(20, 150, listener, Color.YELLOW));
-		buttons.add(PopupGuis.newColorButton(80, 150, listener, Color.RED));
-		buttons.add(PopupGuis.newColorButton(140, 150, listener, Color.GREEN));
-		buttons.add(PopupGuis.newColorButton(200, 150, listener, Color.CYAN));
+		buttons.add(GuiTools.newColorButton(20, 150, listener, Color.YELLOW));
+		buttons.add(GuiTools.newColorButton(80, 150, listener, Color.RED));
+		buttons.add(GuiTools.newColorButton(140, 150, listener, Color.GREEN));
+		buttons.add(GuiTools.newColorButton(200, 150, listener, Color.CYAN));
 		
 		JButton saveButton = new JButton("Mentés");
 		saveButton.setBounds(100, 300, 120, 40);

@@ -1,8 +1,6 @@
 package degubi;
 
 import java.awt.AWTException;
-import java.awt.Color;
-import java.awt.Container;
 import java.awt.Image;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
@@ -13,7 +11,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
@@ -29,7 +26,6 @@ import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
@@ -42,17 +38,17 @@ import degubi.gui.ButtonTable;
 import degubi.gui.ClassButton;
 import degubi.listeners.MainFrameIconifier;
 import degubi.listeners.SystemTrayListener;
-import degubi.tools.NIO;
+import degubi.tools.GuiTools;
 import degubi.tools.Settings;
 
 public final class TimeTableMain extends WindowAdapter{
 	public static final BrightablePanel mainPanel = new BrightablePanel();
-	public static final Image icon = NIO.getIcon("tray.png", 0).getImage();
+	public static final Image icon = GuiTools.getIcon("tray.png", 0).getImage();
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-	public static final ButtonTable dataTable = new ButtonTable(150, 96, 25, 30, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+	public static final ButtonTable dataTable = new ButtonTable(150, 100, 25, 25, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
 	private static int timer = Settings.updateInterval - 100;
-	private static final int BUILD_NUMBER = 105;
+	private static final int BUILD_NUMBER = 106;
 	
 	public static void main(String[] args) throws AWTException, IOException, UnsupportedLookAndFeelException {
 		checkForUpdates();
@@ -60,16 +56,14 @@ public final class TimeTableMain extends WindowAdapter{
 		UIManager.setLookAndFeel(new NimbusLookAndFeel());
 		SwingUtilities.updateComponentTreeUI(dataTable);
 		
-		JFrame frame = new JFrame("Órarend");
+		var frame = new JFrame("Órarend");
 		mainPanel.add(dataTable);
 		frame.setBounds(0, 0, 950, 713);
 		frame.setLocationRelativeTo(null);
 		frame.setContentPane(mainPanel);
 		
-		Path dataFilePath = Path.of("classData.txt");
-		NIO.checkFileOr(dataFilePath, NIO::showExcelFileBrowser);
-		ClassButton.reloadData(Files.readAllLines(dataFilePath), dataTable, !(args.length == 1 && args[0].equals("-window")));
-			
+		dataTable.reloadTable(Settings.classes, !(args.length == 1 && args[0].equals("-window")));
+		
 		dateLabel.setBounds(320, 5, 300, 40);
 		dateLabel.setFont(ButtonTable.tableHeaderFont);
 		frame.setResizable(false);
@@ -86,7 +80,7 @@ public final class TimeTableMain extends WindowAdapter{
 	
 	private static void checkForUpdates() throws IOException, MalformedURLException {
 		try(var urlInput = new URL("https://pastebin.com/raw/NZfLFzYB").openStream()){
-			byte[] data = new byte[3];
+			var data = new byte[3];
 			urlInput.read(data);
 			
 			if(Integer.parseInt(new String(data)) > BUILD_NUMBER) {
@@ -114,8 +108,8 @@ public final class TimeTableMain extends WindowAdapter{
 				ClassButton.updateAllButtons(false, TimeTableMain.dataTable);
 
 				if(!SystemTrayListener.sleepMode.isSelected() && !frame.isVisible()) {
-					LocalTime now = LocalTime.now();
-					ClassButton current = ClassButton.currentClassButton;
+					var now = LocalTime.now();
+					var current = ClassButton.currentClassButton;
 		
 					if(Settings.enablePopups && current != null && now.isBefore(current.startTime)) {
 						var timeBetween = Duration.between(now, current.startTime);
@@ -124,32 +118,22 @@ public final class TimeTableMain extends WindowAdapter{
 							TimeTableMain.tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
 
 							try(var stream = AudioSystem.getAudioInputStream(TimeTableMain.class.getClassLoader().getResource("assets/beep.wav"));
-								SourceDataLine line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
+								var line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
 								
 								line.open();
 								((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
 								line.start();
-								byte[] buf = new byte[8900];
+								var buf = new byte[8900];
 								stream.read(buf);
 								line.write(buf, 0, 8900);
 								line.drain();
 							}catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
 						}
 					}
-					handleNightMode(dateLabel, now);
+					GuiTools.handleNightMode(dateLabel, now);
 				}
 				timer = 0;
 			}
 		}, 0, 1, TimeUnit.SECONDS);
-	}
-	
-	public static void handleNightMode(Container container, LocalTime time) {
-		boolean isDarkMode = time.isAfter(Settings.dayTimeEnd) || time.isBefore(Settings.dayTimeStart);
-	
-		if(container instanceof JLabel || container instanceof JCheckBox) {
-			container.setForeground(isDarkMode ? Color.WHITE : Color.BLACK);
-		}else{
-			container.setBackground(isDarkMode ? Settings.nightTimeColor : Settings.dayTimeColor);
-		}
 	}
 }
