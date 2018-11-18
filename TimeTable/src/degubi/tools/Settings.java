@@ -8,10 +8,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -30,6 +28,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+@SuppressWarnings("boxing")
 public final class Settings extends FileFilter{
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final JsonObject settingsObject = getMainSettingsObject();
@@ -171,8 +170,7 @@ public final class Settings extends FileFilter{
 				return k;
 			}
 		}
-		System.out.println(Arrays.stream(array).map(Object::toString).collect(Collectors.joining(", ")));
-		throw new IllegalArgumentException("WTF Bro: " + find);
+		return -1;
 	}
 	
 	public static void save() {

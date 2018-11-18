@@ -63,7 +63,6 @@ public final class TimeTableMain extends WindowAdapter{
 		frame.setContentPane(mainPanel);
 		
 		dataTable.reloadTable(Settings.classes, !(args.length == 1 && args[0].equals("-window")));
-		
 		dateLabel.setBounds(320, 5, 300, 40);
 		dateLabel.setFont(ButtonTable.tableHeaderFont);
 		frame.setResizable(false);

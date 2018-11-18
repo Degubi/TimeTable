@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Hashtable;
@@ -152,7 +153,7 @@ public class SystemTrayListener implements GuiTools {
 		var friendTable = new ButtonTable(150, 96, 25, 30, false, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 		
 		try(var reader = new URL(event.getActionCommand()).openStream()){
-			var data = new JsonParser().parse(new String(reader.readAllBytes())).getAsJsonObject();
+			var data = new JsonParser().parse(new String(reader.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
 			
 			friendTable.reloadTable(data.get("classes").getAsJsonArray(), false);
 			PopupGuis.showNewDialog(false, ((JMenuItem)event.getSource()).getText() + " Órarendje", 930, 700, null, friendTable);

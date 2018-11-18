@@ -20,10 +20,10 @@ import javax.swing.JMenuItem;
 import degubi.TimeTableMain;
 
 public interface GuiTools extends MouseListener{
-    default void mouseClicked(MouseEvent e) {};
-    default void mouseReleased(MouseEvent e) {}
-    default void mouseEntered(MouseEvent e) {}
-    default void mouseExited(MouseEvent e) {}
+    @Override default void mouseClicked(MouseEvent e) {};
+    @Override default void mouseReleased(MouseEvent e) {}
+    @Override default void mouseEntered(MouseEvent e) {}
+    @Override default void mouseExited(MouseEvent e) {}
     
     public static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
 		var item = new JMenuItem(text, iconPath == null ? null : getIcon(iconPath, 24));
