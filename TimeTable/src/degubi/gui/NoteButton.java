@@ -4,9 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.StreamSupport;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -30,7 +28,7 @@ public final class NoteButton extends JButton{
 	public NoteButton(JsonObject note, JPanel panel) {
 		super("<html>" + note.get("message").getAsString().replace("\n", "<br>"));
 		
-		JButton deleteButton = new JButton(deleteIcon);
+		var deleteButton = new JButton(deleteIcon);
 		deleteButton.setBounds(227, yPos, 32, 32);
 		deleteButton.setOpaque(false);
 		deleteButton.addActionListener(e -> {
@@ -64,11 +62,11 @@ public final class NoteButton extends JButton{
 		NoteButton.yPos = 10;
 		notesPanel.setPreferredSize(new Dimension(270, Settings.notes.size() * 100 + 100));
 		
-		StreamSupport.stream(Settings.notes.spliterator(), false)
-					 .map(note -> new NoteButton(note.getAsJsonObject(), notesPanel))
-					 .forEach(notesPanel::add);
+		Settings.stream(Settings.notes)
+				.map(note -> new NoteButton(note, notesPanel))
+				.forEach(notesPanel::add);
 		
-		JButton addNoteButton = new JButton(GuiTools.getIcon("addnote.png", 0));
+		var addNoteButton = new JButton(GuiTools.getIcon("addnote.png", 0));
 		addNoteButton.setBackground(Color.GRAY);
 		addNoteButton.setBounds(10, NoteButton.yPos + 10, 250, 80);
 		addNoteButton.addActionListener(e -> addNewNote(notesPanel));
@@ -76,14 +74,14 @@ public final class NoteButton extends JButton{
 	}
 	
 	private static void addNewNote(JPanel panel) {
-		JDialog noteDialog = new JDialog((JFrame)null, "Új Jegyzet", true);
+		var noteDialog = new JDialog((JFrame)null, "Új Jegyzet", true);
 		noteDialog.setLayout(null);
 		noteDialog.setResizable(false);
 		
-		JTextArea noteField = new JTextArea("Jegyzet szövege");
+		var noteField = new JTextArea("Jegyzet szövege");
 		noteField.setBounds(20, 20, 260, 100);
 		
-		List<JButton> buttons = new ArrayList<>();
+		var buttons = new ArrayList<JButton>();
 		Consumer<JButton> listener = button -> {
 			button.setBorder(new LineBorder(Color.RED, 4));
 			buttons.stream()
@@ -95,7 +93,7 @@ public final class NoteButton extends JButton{
 		buttons.add(GuiTools.newColorButton(140, 150, listener, Color.GREEN));
 		buttons.add(GuiTools.newColorButton(200, 150, listener, Color.CYAN));
 		
-		JButton saveButton = new JButton("Mentés");
+		var saveButton = new JButton("Mentés");
 		saveButton.setBounds(100, 300, 120, 40);
 		saveButton.setBackground(Color.LIGHT_GRAY);
 		saveButton.addActionListener(e -> buttons.stream().filter(button -> button.getBorder() != null).findFirst()

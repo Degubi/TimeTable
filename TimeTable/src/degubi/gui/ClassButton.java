@@ -7,11 +7,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -105,9 +103,9 @@ public final class ClassButton extends JButton implements GuiTools{
 		if(dataTable == TimeTableMain.dataTable) {
 			currentClassButton = null;
 		}
-		String today;
+		String today;   //TODO Java 12 ezen tud majd szépíteni
 		var now = LocalTime.now();
-
+		
 		switch(LocalDateTime.now().getDayOfWeek()) {
 			case MONDAY: today = "Hétfõ"; break;
 			case TUESDAY: today = "Kedd"; break;
@@ -148,21 +146,14 @@ public final class ClassButton extends JButton implements GuiTools{
 		return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
 	}
 	
-	
-	private static Map<String, List<String>> createRoomData(){
-		var map = new LinkedHashMap<String, List<String>>(4);
-		map.put("TIK", List.of("Kongresszusi", "Alagsor"));
-		map.put("Irinyi", List.of("214", "217", "218", "222", "224", "225"));
-		map.put("Bolyai", List.of("Kerékjártó", "Farkas", "Árpád"));
-		map.put("Külvilág", List.of("Teniszpálya"));
-		return map;
-	}
-	
-	public static final Map<String, List<String>> roomData = createRoomData();
-	private static final Set<Entry<String, List<String>>> dataCache = roomData.entrySet();
+	public static final Map<String, List<String>> roomData = Map.of(
+					"TIK", List.of("Kongresszusi", "Alagsor"),
+					"Irinyi", List.of("214", "217", "218", "222", "224", "225"),
+					"Bolyai", List.of("Kerékjártó", "Farkas", "Árpád"),
+					"Külvilág", List.of("Teniszpálya"));
 
 	private static String getBuildingForRoom(String room) {
-		return dataCache.stream()
+		return roomData.entrySet().stream()
 					    .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
 					    .map(Entry::getKey)
 					    .findFirst()

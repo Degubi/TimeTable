@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -47,7 +46,7 @@ public final class Settings extends FileFilter{
 	public static int updateInterval = getInt("updateInterval", 600);
 	public static final JsonArray friends = getArray("friends", () -> new JsonObject[0]);
 	public static final JsonArray notes = getArray("notes", () -> new JsonObject[0]);
-	public static final JsonArray classes = getArray("classes", () -> getClassData());
+	public static final JsonArray classes = getArray("classes", () -> showExcelFileBrowser());
 	
 	private Settings() {}
 	
@@ -242,7 +241,7 @@ public final class Settings extends FileFilter{
 	
 	private static JsonObject[] showExcelFileBrowser() {
 		if(JOptionPane.showConfirmDialog(null, "Van Excel Fájlod Cica?", "Excel Keresõ", JOptionPane.YES_NO_OPTION) == 0) {
-			JFileChooser chooser = new JFileChooser("./");
+			var chooser = new JFileChooser("./");
 			chooser.setFileFilter(new Settings());
 			
 			if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -261,14 +260,14 @@ public final class Settings extends FileFilter{
 		var classType = row.getCell(3).getStringCellValue();
 		var classInfo = row.getCell(5).getStringCellValue();
 		var className = row.getCell(1).getStringCellValue()
-				 			  			 .replace(" BSc", "")
-				 			  			 .replace(" gyakorlat", "")
-				 			  			 .replace(" gyak", "")
-				 			  			 .replace(".", "");
+				 			  		  .replace(" BSc", "")
+				 			  		  .replace(" gyakorlat", "")
+				 			  		  .replace(" gyak", "")
+				 			  		  .replace(".", "");
 		
 		if(!classInfo.isEmpty()) {
-			int divisorIndex = classInfo.indexOf('-');
-			char dayChar = classInfo.charAt(0);
+			var divisorIndex = classInfo.indexOf('-');
+			var dayChar = classInfo.charAt(0);
 			
 			var startTime = classInfo.substring(divisorIndex - 5, divisorIndex);
 			var endTime = classInfo.substring(divisorIndex + 1, divisorIndex + 6);
@@ -278,38 +277,5 @@ public final class Settings extends FileFilter{
 			return Settings.newClassObject(day, className, classType, startTime, endTime, room, false);
 		}
 		return Settings.newClassObject("Péntek", className, classType, "08:00", "10:00", "Ismeretlen", false);
-	}
-	
-	
-	
-	//TODO Ez alatt törlendõ dolgok
-	private static JsonObject newClassObjectInternal(String day, String className, String classType, String startTime, String endTime, String room, boolean unImportant) {
-		var obj = new JsonObject();
-		obj.addProperty("day", day);
-		obj.addProperty("className", className.replace('_', ' '));
-		obj.addProperty("classType", classType);
-		obj.addProperty("startTime", startTime);
-		obj.addProperty("endTime", endTime);
-		obj.addProperty("room", room);
-		obj.addProperty("unImportant", unImportant);
-		return obj;
-	}
-	
-	private static JsonObject[] getClassData() {
-		if(Files.exists(Path.of("classData.txt"))) {
-			return lines("classData.txt").stream()
-					 .map(line -> line.split(" "))
-					 .map(data -> newClassObjectInternal(data[0], data[1], data[2], data[3], data[4], data[5], Boolean.parseBoolean(data[6])))
-					 .toArray(JsonObject[]::new);
-		}
-		return showExcelFileBrowser();
-	}
-	
-	private static List<String> lines(String file){
-		try {
-			return Files.readAllLines(Path.of(file));
-		} catch (IOException e) {
-			return List.of();
-		}
 	}
 }

@@ -48,7 +48,7 @@ public final class TimeTableMain extends WindowAdapter{
 	public static final ButtonTable dataTable = new ButtonTable(150, 100, 25, 25, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
 	private static int timer = Settings.updateInterval - 100;
-	private static final int BUILD_NUMBER = 106;
+	private static final int BUILD_NUMBER = 100;
 	
 	public static void main(String[] args) throws AWTException, IOException, UnsupportedLookAndFeelException {
 		checkForUpdates();
@@ -78,7 +78,7 @@ public final class TimeTableMain extends WindowAdapter{
 	}
 	
 	private static void checkForUpdates() throws IOException, MalformedURLException {
-		try(var urlInput = new URL("https://pastebin.com/raw/NZfLFzYB").openStream()){
+		try(var urlInput = new URL("https://pastebin.com/raw/cUUvFdiS").openStream()){
 			var data = new byte[3];
 			urlInput.read(data);
 			
@@ -96,7 +96,7 @@ public final class TimeTableMain extends WindowAdapter{
 	}
 	
 	private static void launchTimerThread(JFrame frame) {	
-		DateTimeFormatter displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
+		var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
 
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
 			if(frame.isVisible()) {

@@ -139,7 +139,7 @@ public class SystemTrayListener implements GuiTools {
 		if(friends.length == 0) {
 			JOptionPane.showMessageDialog(null, "Nincsenek barátaid. :)");
 		}else{
-			String selection = (String) JOptionPane.showInputDialog(null, "Válaszd ki a \"barátod\"", "Temetés", JOptionPane.OK_CANCEL_OPTION, null, friends, friends[0]);
+			var selection = (String) JOptionPane.showInputDialog(null, "Válaszd ki a \"barátod\"", "Temetés", JOptionPane.OK_CANCEL_OPTION, null, friends, friends[0]);
 			
 			if(selection != null) {
 				Settings.friends.remove(Settings.indexOf(selection, friends));

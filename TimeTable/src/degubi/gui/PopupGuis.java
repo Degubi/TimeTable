@@ -53,7 +53,7 @@ public final class PopupGuis extends AbstractAction{
 	}
 	
 	public static void showEditorGui(JsonObject currentObj, ClassButton dataButton) {
-		JTable dataTable = new JTable(new TableModel());
+		var dataTable = new JTable(new TableModel());
 		dataTable.addMouseListener(new DataTableListener(dataTable));
 		dataTable.setBackground(Color.LIGHT_GRAY);
 		dataTable.setRowHeight(20);
@@ -293,7 +293,7 @@ public final class PopupGuis extends AbstractAction{
 	
 	private static final class CustomCellRenderer extends DefaultTableCellRenderer{
 		@Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+			var cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 			cell.setForeground(column == 0 ? Color.DARK_GRAY : Color.BLACK);
 			return cell;
 		}
