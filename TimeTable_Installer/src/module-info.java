@@ -1,3 +1,3 @@
 module degubi.updater {
-	requires java.desktop;
+	requires java.net.http;
 }
