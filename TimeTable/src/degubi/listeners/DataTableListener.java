@@ -1,14 +1,10 @@
 package degubi.listeners;
 
-import java.awt.Color;
-import java.awt.event.MouseEvent;
-
-import javax.swing.JTable;
-
-import degubi.gui.ButtonTable;
-import degubi.gui.ClassButton;
-import degubi.gui.PopupGuis;
-import degubi.tools.GuiTools;
+import degubi.gui.*;
+import degubi.tools.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 
 public final class DataTableListener implements GuiTools{
 	private final JTable dataTable;

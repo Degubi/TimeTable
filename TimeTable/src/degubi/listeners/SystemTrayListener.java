@@ -1,42 +1,19 @@
 package degubi.listeners;
 
-import java.awt.AWTException;
-import java.awt.Dimension;
-import java.awt.HeadlessException;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Hashtable;
-
-import javax.imageio.ImageIO;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.SwingUtilities;
-
-import com.google.gson.JsonParser;
-
-import degubi.TimeTableMain;
-import degubi.gui.ButtonTable;
-import degubi.gui.ClassButton;
-import degubi.gui.NoteButton;
-import degubi.gui.PopupGuis;
-import degubi.tools.GuiTools;
-import degubi.tools.Settings;
+import com.google.gson.*;
+import degubi.*;
+import degubi.gui.*;
+import degubi.tools.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
+import javax.imageio.*;
+import javax.swing.*;
 
 public class SystemTrayListener implements GuiTools {
 	public static final JMenuItem screenshotItem = GuiTools.newMenuItem("Órarend Fénykép", "screencap.png", SystemTrayListener::createScreenshot);

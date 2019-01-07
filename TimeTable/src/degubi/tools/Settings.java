@@ -1,34 +1,17 @@
 package degubi.tools;
 
-import java.awt.Color;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.filechooser.FileFilter;
-
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
+import java.awt.*;
+import java.io.*;
+import java.nio.file.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.function.*;
+import java.util.stream.*;
+import javax.swing.*;
 
 @SuppressWarnings("boxing")
-public final class Settings extends FileFilter{
+public final class Settings{
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final JsonObject settingsObject = getMainSettingsObject();
 	
@@ -46,7 +29,7 @@ public final class Settings extends FileFilter{
 	public static int updateInterval = getInt("updateInterval", 600);
 	public static final JsonArray friends = getArray("friends", () -> new JsonObject[0]);
 	public static final JsonArray notes = getArray("notes", () -> new JsonObject[0]);
-	public static final JsonArray classes = getArray("classes", () -> showExcelFileBrowser());
+	public static final JsonArray classes = getArray("classes", () -> new JsonObject[0]);
 	
 	private Settings() {}
 	
@@ -188,7 +171,7 @@ public final class Settings extends FileFilter{
 					   "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
 						  	  "oLink.TargetPath = \"" + filePath + "\"\n" + 
 						  	  "oLink.Arguments = \"" + cmdArgs + "\"\n" +
-						  	  "oLink.IconLocation = \"" + getFullPath("./lib/icon.ico") + "\"\n" +
+						  	  "oLink.IconLocation = \"" + getFullPath("./icon.ico") + "\"\n" +
 						  	  "oLink.WorkingDirectory = \"" + filePath.substring(0, filePath.lastIndexOf("\\")) + "\"\n" +
 							  "oLink.Save\n");
 		try {
@@ -217,65 +200,5 @@ public final class Settings extends FileFilter{
 		} catch (IOException e) {
 			return null;
 		}
-	}
-	
-	
-	
-	
-	@Override
-	public boolean accept(File file) {
-		if(file.isDirectory()) {
-			return true;
-		}
-		if(file.isFile()) {
-			String fileName = file.getName();
-			return fileName.substring(fileName.lastIndexOf('.') + 1, fileName.length()).equals("xlsx");
-		}
-		return false;
-	}
-
-	@Override
-	public String getDescription() {
-		return "Only Excel Documents";
-	}
-	
-	private static JsonObject[] showExcelFileBrowser() {
-		if(JOptionPane.showConfirmDialog(null, "Van Excel Fájlod Cica?", "Excel Keresõ", JOptionPane.YES_NO_OPTION) == 0) {
-			var chooser = new JFileChooser("./");
-			chooser.setFileFilter(new Settings());
-			
-			if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-				try(var book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
-					return StreamSupport.stream(book.getSheetAt(0).spliterator(), false)
-								 		.filter(row -> row.getRowNum() > 0)
-								 		.map(Settings::mapToClassObject)
-								 		.toArray(JsonObject[]::new);
-				} catch (IOException e) {}
-			}
-		}
-		return new JsonObject[0];
-	}
-	
-	private static JsonObject mapToClassObject(Row row) {
-		var classType = row.getCell(3).getStringCellValue();
-		var classInfo = row.getCell(5).getStringCellValue();
-		var className = row.getCell(1).getStringCellValue()
-				 			  		  .replace(" BSc", "")
-				 			  		  .replace(" gyakorlat", "")
-				 			  		  .replace(" gyak", "")
-				 			  		  .replace(".", "");
-		
-		if(!classInfo.isEmpty()) {
-			var divisorIndex = classInfo.indexOf('-');
-			var dayChar = classInfo.charAt(0);
-			
-			var startTime = classInfo.substring(divisorIndex - 5, divisorIndex);
-			var endTime = classInfo.substring(divisorIndex + 1, divisorIndex + 6);
-			var room = classInfo.replace('-', ' ').split(" ", 9)[7];
-			var day = dayChar == 'H' ? "Hétfõ" : dayChar == 'K' ? "Kedd" : dayChar == 'S' ? "Szerda" : dayChar == 'C' ? "Csütörtök" : "Péntek";
-			
-			return Settings.newClassObject(day, className, classType, startTime, endTime, room, false);
-		}
-		return Settings.newClassObject("Péntek", className, classType, "08:00", "10:00", "Ismeretlen", false);
 	}
 }

@@ -1,23 +1,13 @@
 package degubi.gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import com.google.gson.*;
+import degubi.*;
+import degubi.tools.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import degubi.TimeTableMain;
-import degubi.tools.GuiTools;
-import degubi.tools.Settings;
+import javax.swing.*;
 
 public final class ButtonTable extends JComponent{
 	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);

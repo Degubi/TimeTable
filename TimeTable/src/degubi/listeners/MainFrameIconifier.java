@@ -1,9 +1,7 @@
 package degubi.listeners;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import degubi.TimeTableMain;
+import degubi.*;
+import java.awt.event.*;
 
 public final class MainFrameIconifier extends WindowAdapter{
 

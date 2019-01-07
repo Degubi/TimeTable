@@ -1,42 +1,18 @@
 package degubi.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.function.Consumer;
-
-import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.KeyStroke;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.google.gson.JsonObject;
-
-import degubi.TimeTableMain;
-import degubi.listeners.DataTableListener;
-import degubi.tools.GuiTools;
-import degubi.tools.Settings;
+import com.google.gson.*;
+import degubi.*;
+import degubi.listeners.*;
+import degubi.tools.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.nio.file.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.function.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.table.*;
 
 public final class PopupGuis extends AbstractAction{
 	public static final ImageIcon editIcon = GuiTools.getIcon("edit.png", 32);

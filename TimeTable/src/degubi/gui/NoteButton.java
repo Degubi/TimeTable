@@ -1,25 +1,12 @@
 package degubi.gui;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.util.ArrayList;
-import java.util.function.Consumer;
-
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
-import javax.swing.border.LineBorder;
-
-import com.google.gson.JsonObject;
-
-import degubi.tools.GuiTools;
-import degubi.tools.Settings;
+import com.google.gson.*;
+import degubi.tools.*;
+import java.awt.*;
+import java.util.*;
+import java.util.function.*;
+import javax.swing.*;
+import javax.swing.border.*;
 
 public final class NoteButton extends JButton{
 	private static final ImageIcon deleteIcon = GuiTools.getIcon("delete.png", 28);

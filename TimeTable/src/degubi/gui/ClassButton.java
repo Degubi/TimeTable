@@ -1,27 +1,17 @@
 package degubi.gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.MouseEvent;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import com.google.gson.*;
+import degubi.*;
+import degubi.listeners.*;
+import degubi.tools.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
-import com.google.gson.JsonObject;
-
-import degubi.TimeTableMain;
-import degubi.listeners.EditClassButtonListener;
-import degubi.tools.GuiTools;
-import degubi.tools.Settings;
+import java.util.Map.*;
+import javax.swing.*;
 
 public final class ClassButton extends JButton implements GuiTools{
 	public static ClassButton currentClassButton;

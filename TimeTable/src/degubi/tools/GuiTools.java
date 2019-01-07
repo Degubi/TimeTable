@@ -1,23 +1,11 @@
 package degubi.tools;
 
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.time.LocalTime;
-import java.util.function.Consumer;
-
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-
-import degubi.TimeTableMain;
+import degubi.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.time.*;
+import java.util.function.*;
+import javax.swing.*;
 
 public interface GuiTools extends MouseListener{
     @Override default void mouseClicked(MouseEvent e) {};

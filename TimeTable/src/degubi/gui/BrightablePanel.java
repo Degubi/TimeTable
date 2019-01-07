@@ -1,14 +1,9 @@
 package degubi.gui;
 
-import java.awt.Color;
-import java.awt.Graphics;
-
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import degubi.TimeTableMain;
+import degubi.*;
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.event.*;
 
 public final class BrightablePanel extends JPanel implements ChangeListener{
 	private static Color brightnessColor = new Color(0, 0, 0, 0);

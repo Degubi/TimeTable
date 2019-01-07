@@ -1,9 +1,7 @@
 package degubi.listeners;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.swing.JDialog;
+import java.awt.event.*;
+import javax.swing.*;
 
 public final class EditClassButtonListener extends WindowAdapter{
 	private final JDialog passFrame;
