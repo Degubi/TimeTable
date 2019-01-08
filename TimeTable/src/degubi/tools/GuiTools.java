@@ -8,7 +8,7 @@ import java.util.function.*;
 import javax.swing.*;
 
 public interface GuiTools extends MouseListener{
-    @Override default void mouseClicked(MouseEvent e) {};
+    @Override default void mouseClicked(MouseEvent e) {}
     @Override default void mouseReleased(MouseEvent e) {}
     @Override default void mouseEntered(MouseEvent e) {}
     @Override default void mouseExited(MouseEvent e) {}
