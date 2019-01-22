@@ -1,9 +1,6 @@
-package degubi.gui;
+package degubi;
 
 import com.google.gson.*;
-import degubi.*;
-import degubi.listeners.*;
-import degubi.tools.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.time.*;
@@ -13,7 +10,7 @@ import java.util.List;
 import java.util.Map.*;
 import javax.swing.*;
 
-public final class ClassButton extends JButton implements GuiTools{
+public final class ClassButton extends JButton implements MouseListener{
 	public static ClassButton currentClassButton;
 	public static final Font importantFont = new Font("SansSerif", Font.BOLD, 12);
 
@@ -67,7 +64,7 @@ public final class ClassButton extends JButton implements GuiTools{
 	public void mousePressed(MouseEvent event) {
 		if(interactive && event.getButton() == MouseEvent.BUTTON3) {
 			var frame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor());
-			var panel = new BrightablePanel();
+			var panel = new JPanel(null);
 			
 			frame.setContentPane(panel);
 			frame.addWindowFocusListener(new EditClassButtonListener(frame));
@@ -75,16 +72,16 @@ public final class ClassButton extends JButton implements GuiTools{
 			frame.setLocationRelativeTo(null);
 			frame.setBounds(getLocationOnScreen().x + 118, getLocationOnScreen().y, 32, 96);
 			
-			panel.add(GuiTools.newEditButton(32, PopupGuis.deleteIcon, e -> {
+			panel.add(newEditButton(32, PopupGuis.deleteIcon, e -> {
 				if(JOptionPane.showConfirmDialog(TimeTableMain.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
 					TimeTableMain.dataTable.deleteClass(Settings.classes, classObject);
 				}
 			}));
-			panel.add(GuiTools.newEditButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
-				TimeTableMain.dataTable.editClass(Settings.classes, classObject, Settings.newClassObject(day, className, classType, startTime.toString(), endTime.toString(), room, !unImportant));
+			panel.add(newEditButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
+				TimeTableMain.dataTable.editClass(Settings.classes, classObject, Settings.classObjectFromData(day, className, classType, startTime.toString(), endTime.toString(), room, !unImportant));
 				frame.dispose();
 			}));
-			panel.add(GuiTools.newEditButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorGui(classObject, this)));
+			panel.add(newEditButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorGui(classObject, this)));
 			frame.setVisible(true);
 		}
 	}
@@ -110,8 +107,8 @@ public final class ClassButton extends JButton implements GuiTools{
 			TimeTableMain.tray.setToolTip("Nincs mára több óra! :)");
 		}
 		
-		GuiTools.handleNightMode(TimeTableMain.dateLabel, now);
-		GuiTools.handleNightMode(TimeTableMain.mainPanel, now);
+		TimeTableMain.handleNightMode(TimeTableMain.dateLabel, now);
+		TimeTableMain.handleNightMode(TimeTableMain.mainPanel, now);
 		TimeTableMain.mainPanel.repaint();
 		
 		if(setVisible) {
@@ -144,9 +141,35 @@ public final class ClassButton extends JButton implements GuiTools{
 
 	private static String getBuildingForRoom(String room) {
 		return roomData.entrySet().stream()
-					    .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
-					    .map(Entry::getKey)
-					    .findFirst()
-					    .orElse("Ismeretlen");
+					   .filter(entry -> entry.getValue().stream().anyMatch(checkRoom -> checkRoom.equals(room)))
+					   .map(Entry::getKey)
+					   .findFirst()
+					   .orElse("Ismeretlen");
+	}
+	
+	private static JButton newEditButton(int yPos, ImageIcon icon, ActionListener listener) {
+		var butt = new JButton(icon);
+		butt.setBackground(Color.LIGHT_GRAY);
+		butt.setBounds(0, yPos, 32, 32);
+		butt.addActionListener(listener);
+		return butt;
+	}
+
+	@Override public void mouseClicked(MouseEvent e) {}
+	@Override public void mouseReleased(MouseEvent e) {}
+	@Override public void mouseEntered(MouseEvent e) {}
+	@Override public void mouseExited(MouseEvent e) {}
+	
+	private static final class EditClassButtonListener extends WindowAdapter{
+		private final JDialog passFrame;
+		
+		public EditClassButtonListener(JDialog frame) {
+			passFrame = frame;
+		}
+		
+		@Override
+		public void windowLostFocus(WindowEvent event) {
+			passFrame.dispose();
+		}
 	}
 }

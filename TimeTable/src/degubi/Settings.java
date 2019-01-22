@@ -1,4 +1,4 @@
-package degubi.tools;
+package degubi;
 
 import com.google.gson.*;
 import java.awt.*;
@@ -6,7 +6,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
-import java.util.function.*;
 import java.util.stream.*;
 import javax.swing.*;
 
@@ -27,9 +26,8 @@ public final class Settings{
 	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
 	public static int noteTime = getInt("noteTime", 60);
 	public static int updateInterval = getInt("updateInterval", 600);
-	public static final JsonArray friends = getArray("friends", () -> new JsonObject[0]);
-	public static final JsonArray notes = getArray("notes", () -> new JsonObject[0]);
-	public static final JsonArray classes = getArray("classes", () -> new JsonObject[0]);
+	public static final JsonArray friends = getArray("friends");
+	public static final JsonArray classes = getArray("classes");
 	
 	private Settings() {}
 	
@@ -77,15 +75,15 @@ public final class Settings{
 		return settingsObject.get(key).getAsString();
 	}
 	
-	private static JsonArray getArray(String key, Supplier<JsonObject[]> defaults){
+	private static JsonArray getArray(String key){
 		if(!settingsObject.has(key)) {
-			settingsObject.add(key, gson.toJsonTree(defaults.get()));
+			settingsObject.add(key, gson.toJsonTree(new JsonObject[0]));
 			save();
 		}
 		return settingsObject.getAsJsonArray(key);
 	}
 	
-	public static JsonObject newClassObject(String day, String className, String classType, String startTime, String endTime, String room, boolean unImportant) {
+	public static JsonObject classObjectFromData(String day, String className, String classType, String startTime, String endTime, String room, boolean unImportant) {
 		var obj = new JsonObject();
 		obj.addProperty("day", day);
 		obj.addProperty("className", className);
@@ -97,8 +95,8 @@ public final class Settings{
 		return obj;
 	}
 	
-	public static JsonObject newClassObject(JTable table, boolean unImportant) {
-		return newClassObject(table.getValueAt(1, 1).toString(), 
+	public static JsonObject classObjectFromTable(JTable table, boolean unImportant) {
+		return classObjectFromData(table.getValueAt(1, 1).toString(), 
 							  table.getValueAt(0, 1).toString(), 
 							  table.getValueAt(2, 1).toString(), 
 							  table.getValueAt(3, 1).toString(), 
@@ -117,13 +115,6 @@ public final class Settings{
 	public static Color parseFromString(String color) {
 		var split = color.split(" ", 3);
 		return new Color(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-	}
-	
-	public static JsonObject newNoteObject(String message, Color color) {
-		var obj = new JsonObject();
-		obj.addProperty("color", color.getRed() + " " + color.getGreen() + " " + color.getBlue());
-		obj.addProperty("message", message);
-		return obj;
 	}
 	
 	public static void updateColor(String key, Color val) {
@@ -178,9 +169,9 @@ public final class Settings{
 			Files.writeString(scriptPath, command);
 			var proc = Runtime.getRuntime().exec("wscript.exe iconScript.vbs");
 			
-			while(proc.isAlive()) Thread.onSpinWait();
+			proc.waitFor();
 			Files.delete(scriptPath);
-		} catch (IOException e1) {
+		} catch (IOException | InterruptedException e1) {
 			e1.printStackTrace();
 		}
 	}

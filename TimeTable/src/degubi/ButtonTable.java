@@ -1,8 +1,6 @@
-package degubi.gui;
+package degubi;
 
 import com.google.gson.*;
-import degubi.*;
-import degubi.tools.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -108,7 +106,7 @@ public final class ButtonTable extends JComponent{
 		ClassButton.updateAllButtons(showFrame, this);
 	}
 	
-	private static final class CreateClassListener implements GuiTools{
+	private static final class CreateClassListener extends MouseAdapter{
 		private final String dayStr;
 		
 		public CreateClassListener(String dayStr) {
@@ -118,7 +116,7 @@ public final class ButtonTable extends JComponent{
 		@Override
 		public void mousePressed(MouseEvent event) {
 			if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-				var newDay = Settings.newClassObject(dayStr, "Óra", "Elõadás", "08:00", "10:00", "Terem", false);
+				var newDay = Settings.classObjectFromData(dayStr, "Óra", "Elõadás", "08:00", "10:00", "Terem", false);
 				PopupGuis.showEditorGui(null, new ClassButton(newDay, TimeTableMain.dataTable));
 			}
 		}
