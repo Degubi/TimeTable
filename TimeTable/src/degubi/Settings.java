@@ -112,11 +112,6 @@ public final class Settings{
 		return obj;
 	}
 	
-	public static Color parseFromString(String color) {
-		var split = color.split(" ", 3);
-		return new Color(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-	}
-	
 	public static void updateColor(String key, Color val) {
 		settingsObject.addProperty(key, val.getRed() + " " + val.getGreen() + " " + val.getBlue());
 	}

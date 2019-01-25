@@ -1,5 +1,7 @@
 package degubi;
 
+import static java.nio.file.StandardOpenOption.*;
+
 import com.google.gson.*;
 import java.awt.*;
 import java.awt.TrayIcon.*;
@@ -33,7 +35,7 @@ public final class TimeTableMain extends WindowAdapter{
 			
 			if(Integer.parseInt(buildStr) > 200) {
 				client.send(HttpRequest.newBuilder(URI.create("https://drive.google.com/uc?authuser=0&id=1qYnJ_gsCxu-wfxD-w7QtEzIb7NZhCz0k&export=download")).build(),
-							BodyHandlers.ofFileDownload(Path.of("./"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
+							BodyHandlers.ofFileDownload(Path.of("./"), TRUNCATE_EXISTING, WRITE, CREATE));
 				
 				Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar");
 				System.exit(0);
@@ -60,6 +62,7 @@ public final class TimeTableMain extends WindowAdapter{
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setIconImage(icon);
 		
+		//System tray menu
 		var sleepMode = new JCheckBoxMenuItem("Alvó Mód", getIcon("sleep.png", 24), false);
 		var popMenu = new JPopupMenu();
 
@@ -142,7 +145,7 @@ public final class TimeTableMain extends WindowAdapter{
 		}
 	}
 	
-	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) { // NO_UCD (unused code)
+	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
 		var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
 		try {
 			ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));

@@ -35,29 +35,6 @@ public final class ButtonTable extends JComponent{
 		}
 	}
 	
-	public ButtonTable(int perCellWidth, int perCellHeight, int x, int y, Map<String, List<String>> bigData, String currentRoom) {
-		this(perCellWidth, perCellHeight, x, y, false, bigData.keySet().toArray(new String[0]));
-		
-		bigData.forEach((columnName, rows) -> rows.forEach(row -> {
-			var butt = new JButton(row);
-			var isCurrentRoom = row.equals(currentRoom);
-			
-			butt.setForeground(isCurrentRoom ? Color.BLACK : Color.GRAY);
-			butt.setBackground(isCurrentRoom ? Color.RED : Color.LIGHT_GRAY);
-			tableAdd(columnName, butt);
-			
-			butt.addActionListener(e -> {
-				dataButtonList.forEach(checkButton -> {
-					checkButton.setForeground(Color.GRAY);
-					checkButton.setBackground(Color.LIGHT_GRAY);
-				});
-				
-				butt.setForeground(Color.BLACK);
-				butt.setBackground(Color.RED);
-			});
-		}));
-	}
-	
 	private void resetTable() {
 		dataButtonList.forEach(this::remove);
 		dataButtonList.clear();

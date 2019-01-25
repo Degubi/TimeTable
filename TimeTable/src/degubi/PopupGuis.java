@@ -6,6 +6,7 @@ import java.awt.event.*;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
+import java.util.*;
 import java.util.function.*;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -31,7 +32,6 @@ public final class PopupGuis extends AbstractAction{
 		dataTable.setBackground(Color.LIGHT_GRAY);
 		dataTable.setRowHeight(20);
 		dataTable.setBorder(new LineBorder(Color.BLACK, 2, true));
-		var cellRenderer = new CustomCellRenderer();
 		
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "DOWN");
 		dataTable.getActionMap().put("DOWN", new PopupGuis('D', dataTable));
@@ -41,8 +41,6 @@ public final class PopupGuis extends AbstractAction{
 		dataTable.getActionMap().put("RIGHT", new PopupGuis('R', dataTable));
 		dataTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "UP");
 		dataTable.getActionMap().put("UP", new PopupGuis('U', dataTable));
-		dataTable.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);
-		dataTable.getColumnModel().getColumn(1).setCellRenderer(cellRenderer);
 		dataTable.setFont(new Font("Arial", Font.BOLD, 12));
 		dataTable.setBounds(20, 20, 340, 122);
 		dataTable.setValueAt("Óra Neve", 0, 0);
@@ -214,6 +212,26 @@ public final class PopupGuis extends AbstractAction{
 		 butt.addActionListener(e -> listener.accept(butt));
 		 return butt;
 	 }
+
+	 private static JButton newButton(String text, Color foreground, Color background, Dimension preferredSize) {
+		 var butt = new JButton(text);
+		 butt.setFocusPainted(false);
+		 butt.setForeground(foreground);
+		 butt.setBackground(background);
+		 butt.setPreferredSize(preferredSize);
+		 return butt;
+	 }
+
+	 private static JDialog newFrame(String title, int width, int height, int minWidth, int minHeight, boolean modal) {
+		 var frame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), title, modal);
+
+		 frame.setIconImage(TimeTableMain.icon);
+		 frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		 frame.setBounds(0, 0, width, height);
+		 frame.setLocationRelativeTo(TimeTableMain.mainPanel);
+		 frame.setMinimumSize(new Dimension(minWidth, minHeight));
+		 return frame;
+	 }
 	
 	public static void showNewDialog(boolean modal, String title, int width, int height, Consumer<JDialog> saveListener, JComponent... components) {
 		var frame = new JDialog((JFrame)TimeTableMain.mainPanel.getTopLevelAncestor(), title, modal);
@@ -282,14 +300,6 @@ public final class PopupGuis extends AbstractAction{
 		@Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2 && rowIndex != 5; }
 	}
 	
-	private static final class CustomCellRenderer extends DefaultTableCellRenderer{
-		@Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-			var cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			cell.setForeground(column == 0 ? Color.DARK_GRAY : Color.BLACK);
-			return cell;
-		}
-	}
-	
 	private static final class DataTableListener extends MouseAdapter{
 		private final JTable dataTable;
 		
@@ -300,18 +310,52 @@ public final class PopupGuis extends AbstractAction{
 		@Override
 		public void mousePressed(MouseEvent event) {
 			if(event.getClickCount() == 2 && dataTable.getSelectedColumn() == 1 && dataTable.getSelectedRow() == 5) {
-				var buildingTable = new ButtonTable(120, 40, 20, 20, ClassButton.roomData, (String) dataTable.getValueAt(5, 1));
+				var frame = newFrame("Teremválasztó", 700, 600, 550, 500, true);
+				var topPanel = new JPanel(new GridBagLayout());
+				var cons = new GridBagConstraints(0, -1, 1, 1, 1D, 0D, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, null, 0, 0);
+				var buttonDimension = new Dimension(120, 40);
+				var topInsent = new Insets(10, 5, 20, 5);
+				var bottomInsent = new Insets(0, 5, 5, 5);
+				var roomButtons = new ArrayList<JButton>(ClassButton.roomData.values().size());
+				var currentRoom = dataTable.getValueAt(5, 1).toString();
+
+				ClassButton.roomData.forEach((building, rooms) -> {
+					cons.insets = topInsent;
+					topPanel.add(newButton(building, Color.BLACK, Color.GRAY, buttonDimension), cons);
+					cons.insets = bottomInsent;
 					
-				PopupGuis.showNewDialog(true, "Teremválasztó", 800, 600, frame -> 
-					
-					buildingTable.dataButtonList.stream()
-								 .filter(button -> button.getBackground() == Color.RED)
-								 .findFirst()
-								 .ifPresent(button -> {
-									 dataTable.setValueAt(button.getText(), 5, 1);
-									 frame.dispose();
-								 })
-				, buildingTable);
+					Arrays.stream(rooms).forEach(room -> {
+						var isCurrentRoom = currentRoom != null && room.equals(currentRoom);
+						var roomButton = newButton(room, isCurrentRoom ? Color.BLACK : Color.GRAY, isCurrentRoom ? Color.RED : Color.LIGHT_GRAY, buttonDimension);
+						
+						roomButton.addActionListener(e -> {
+							roomButtons.forEach(roomButts -> {
+								roomButts.setForeground(Color.GRAY);
+								roomButts.setBackground(Color.LIGHT_GRAY);
+							});
+							roomButton.setForeground(Color.BLACK);
+							roomButton.setBackground(Color.RED);
+						});
+						roomButtons.add(roomButton);
+						topPanel.add(roomButton, cons);
+					});
+					++cons.gridx;
+				});
+				
+				var bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+				var saveButton = newButton("Save", Color.BLACK, Color.GRAY, new Dimension(120, 40));
+				saveButton.addActionListener(e -> roomButtons.stream()
+															 .filter(button -> button.getBackground() == Color.RED)
+															 .findFirst()
+															 .ifPresent(button -> {
+																 dataTable.setValueAt(button.getText(), 5, 1);
+																 frame.dispose();
+															 }));
+				bottomPanel.add(saveButton);
+
+				frame.add(topPanel, BorderLayout.NORTH);
+				frame.add(bottomPanel, BorderLayout.SOUTH);
+				frame.setVisible(true);
 			}
 		}
 	}
