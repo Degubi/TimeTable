@@ -1,139 +1,74 @@
 package degubi;
 
-import com.google.gson.*;
+import static java.nio.file.StandardOpenOption.*;
+
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
+import java.util.*;
+import java.util.List;
 import java.util.stream.*;
-import javax.swing.*;
+import javax.json.*;
+import javax.json.bind.*;
 
-@SuppressWarnings("boxing")
-public final class Settings{
-	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-	private static final JsonObject settingsObject = getMainSettingsObject();
+public final class Settings {
+	public static final String userDir = Path.of(".").toAbsolutePath().normalize().getParent().toString();
+
+	public static boolean enablePopups;
+	public static LocalTime dayTimeStart;
+	public static LocalTime dayTimeEnd;
+	public static Color dayTimeColor;
+	public static Color nightTimeColor;
+	public static Color currentClassColor;
+	public static Color upcomingClassColor;
+	public static Color otherDayClassColor;
+	public static Color pastClassColor;
+	public static Color unimportantClassColor;
+	public static int timeBeforeNotification;
+	public static int updateInterval;
+	public static Map<String, List<ClassButton>> classes;
 	
-	public static boolean enablePopups = getBoolean("enablePopups", true);
-	public static LocalTime dayTimeStart = LocalTime.parse(getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-	public static LocalTime dayTimeEnd = LocalTime.parse(getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-	public static Color dayTimeColor = getColor("dayTimeColor", 235, 235, 235);
-	public static Color nightTimeColor = getColor("nightTimeColor", 64, 64, 64);
-	public static Color currentClassColor = getColor("currentClassColor", 255, 69, 69);
-	public static Color upcomingClassColor = getColor("upcomingClassColor", 0, 147, 3);
-	public static Color otherDayClassColor = getColor("otherDayClassColor", 84, 113, 142);
-	public static Color pastClassColor = getColor("pastClassColor", 247, 238, 90);
-	public static Color unimportantClassColor = getColor("unimportantClassColor", 192, 192, 192);
-	public static int noteTime = getInt("noteTime", 60);
-	public static int updateInterval = getInt("updateInterval", 600);
-	public static final JsonArray friends = getArray("friends");
-	public static final JsonArray classes = getArray("classes");
-	
-	private Settings() {}
-	
-	private static JsonObject getMainSettingsObject() {
+	static {
 		var filePath = Path.of("settings.json");
-		var parser = new JsonParser();
+		
+		if(!Files.exists(filePath)) {
+			try {
+				Files.writeString(filePath, "{}");
+			} catch (IOException e) {}
+		}
 		
 		try {
-			return parser.parse(Files.readString(filePath)).getAsJsonObject();
-		} catch (IOException e) {
-			try {
-				Files.writeString(filePath, "{}", StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-			} catch (IOException e1) {}
+			var settingsObject = Main.json.fromJson(Files.readString(filePath), JsonObject.class);
 			
-			return parser.parse("{}").getAsJsonObject();
+			enablePopups = getOrDefaultBoolean("enablePopups", true, settingsObject);
+			timeBeforeNotification = getOrDefaultInt("timeBeforeNotification", 60, settingsObject);
+			updateInterval = getOrDefaultInt("updateInterval", 600, settingsObject);
+			dayTimeStart = LocalTime.parse(getOrDefaultString("dayTimeStart", "07:00", settingsObject), DateTimeFormatter.ISO_LOCAL_TIME);
+			dayTimeEnd = LocalTime.parse(getOrDefaultString("dayTimeEnd", "19:00", settingsObject), DateTimeFormatter.ISO_LOCAL_TIME);
+			
+			dayTimeColor = getOrDefaultColor("dayTimeColor", 235, 235, 235, settingsObject);
+			nightTimeColor = getOrDefaultColor("nightTimeColor", 64, 64, 64, settingsObject);
+			currentClassColor = getOrDefaultColor("currentClassColor", 255, 69, 69, settingsObject);
+			upcomingClassColor = getOrDefaultColor("upcomingClassColor", 0, 147, 3, settingsObject);
+			otherDayClassColor = getOrDefaultColor("otherDayClassColor", 84, 113, 142, settingsObject);
+			pastClassColor = getOrDefaultColor("pastClassColor", 247, 238, 90, settingsObject);
+			unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
+			classes = getArraySetting("classes", settingsObject).stream()
+																.map(JsonValue::asJsonObject)
+																.collect(Collectors.groupingBy(k -> k.getString("day"), 
+																		 Collectors.mapping(ClassButton::new, Collectors.toList())));
+			
+			Arrays.stream(new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"})
+				  .forEach(day -> classes.computeIfAbsent(day, ignore -> new ArrayList<>()));
+		} catch (JsonbException | IOException e) {
+			throw new IllegalStateException("Something is fucked with settings brah");
 		}
-	}
-	
-	private static boolean getBoolean(String key, boolean defaultValue) {
-		if(!settingsObject.has(key)) {
-			settingsObject.addProperty(key, defaultValue);
-			save();
-		}
-		return settingsObject.get(key).getAsBoolean();
-	}
-	
-	private static int getInt(String key, int defaultValue) {
-		if(!settingsObject.has(key)) {
-			settingsObject.addProperty(key, defaultValue);
-			save();
-		}
-		return settingsObject.get(key).getAsInt();
-	}
-	
-	private static Color getColor(String key, int r, int g, int b) {
-		var color = getString(key, r + " " + g + " " + b).split(" ", 3);
-		return new Color(Integer.parseInt(color[0]), Integer.parseInt(color[1]), Integer.parseInt(color[2]));
-	}
-	
-	private static String getString(String key, String defaultValue) {
-		if(!settingsObject.has(key)) {
-			settingsObject.addProperty(key, defaultValue);
-			save();
-		}
-		return settingsObject.get(key).getAsString();
-	}
-	
-	private static JsonArray getArray(String key){
-		if(!settingsObject.has(key)) {
-			settingsObject.add(key, gson.toJsonTree(new JsonObject[0]));
-			save();
-		}
-		return settingsObject.getAsJsonArray(key);
-	}
-	
-	public static JsonObject classObjectFromData(String day, String className, String classType, String startTime, String endTime, String room, boolean unImportant) {
-		var obj = new JsonObject();
-		obj.addProperty("day", day);
-		obj.addProperty("className", className);
-		obj.addProperty("classType", classType);
-		obj.addProperty("startTime", startTime);
-		obj.addProperty("endTime", endTime);
-		obj.addProperty("room", room);
-		obj.addProperty("unImportant", unImportant);
-		return obj;
-	}
-	
-	public static JsonObject classObjectFromTable(JTable table, boolean unImportant) {
-		return classObjectFromData(table.getValueAt(1, 1).toString(), 
-							  table.getValueAt(0, 1).toString(), 
-							  table.getValueAt(2, 1).toString(), 
-							  table.getValueAt(3, 1).toString(), 
-							  table.getValueAt(4, 1).toString(), 
-							  table.getValueAt(5, 1).toString(), 
-							  unImportant);
-	}
-	
-	public static JsonObject newFriendObject(String name, String URL) {
-		var obj = new JsonObject();
-		obj.addProperty("name", name);
-		obj.addProperty("url", URL);
-		return obj;
-	}
-	
-	public static void updateColor(String key, Color val) {
-		settingsObject.addProperty(key, val.getRed() + " " + val.getGreen() + " " + val.getBlue());
-	}
-	
-	public static void updateBoolean(String key, boolean val) {
-		settingsObject.addProperty(key, val);
-	}
-	
-	public static void updateInt(String key, int val) {
-		settingsObject.addProperty(key, val);
-	}
-	
-	public static void updateString(String key, String val) {
-		settingsObject.addProperty(key, val);
-	}
-	
-	public static Stream<JsonObject> stream(JsonArray array){
-		return StreamSupport.stream(array.spliterator(), false).map(JsonElement::getAsJsonObject);
 	}
 	
 	public static<T> int indexOf(T find, T[] array) {
-		for(int k = 0; k < array.length; ++k) {
+		for(var k = 0; k < array.length; ++k) {
 			if(array[k].equals(find)) {
 				return k;
 			}
@@ -141,15 +76,84 @@ public final class Settings{
 		return -1;
 	}
 	
-	public static void save() {
+	private Settings() {}
+	
+	public static void saveSettings() {
+		var clazzez = classes.values().stream()
+						 	 .flatMap(List::stream)
+						 	 .map(k -> Json.createObjectBuilder()
+									   	   .add("day", k.day)
+									   	   .add("className", k.className)
+									   	   .add("classType", k.classType)
+									   	   .add("startTime", k.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+									   	   .add("endTime", k.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+									   	   .add("room", k.room)
+									   	   .add("unImportant", k.unImportant)
+									   	   .build())
+						 	 .reduce(Json.createArrayBuilder(), JsonArrayBuilder::add, JsonArrayBuilder::addAll)
+						 	 .build();
+		
+		var settingsObject = Json.createObjectBuilder()
+								 .add("enablePopups", enablePopups)
+								 .add("timeBeforeNotification", timeBeforeNotification)
+								 .add("updateInterval", updateInterval)
+								 .add("dayTimeEnd", dayTimeEnd.format(DateTimeFormatter.ISO_LOCAL_TIME))
+								 .add("dayTimeStart", dayTimeStart.format(DateTimeFormatter.ISO_LOCAL_TIME))
+								 .add("dayTimeColor", colorToString(dayTimeColor))
+								 .add("nightTimeColor", colorToString(nightTimeColor))
+								 .add("currentClassColor", colorToString(currentClassColor))
+								 .add("upcomingClassColor", colorToString(upcomingClassColor))
+								 .add("otherDayClassColor", colorToString(otherDayClassColor))
+								 .add("pastClassColor", colorToString(pastClassColor))
+								 .add("unimportantClassColor", colorToString(unimportantClassColor))
+								 .add("classes", clazzez);
+		
+		var filePath = Path.of("settings.json");
 		try {
-			Files.writeString(Path.of("settings.json"), gson.toJson(settingsObject), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+			Files.writeString(filePath, Main.json.toJson(settingsObject.build()), CREATE, WRITE, TRUNCATE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
+	private static String colorToString(Color color) {
+		return color.getRed() + " " + color.getGreen() + " " + color.getBlue();
+	}
 	
+	private static int getOrDefaultInt(String key, int defaultValue, JsonObject settingsObject) {
+		if(!settingsObject.containsKey(key)) {
+			return defaultValue;
+		}
+		return settingsObject.getInt(key);
+	}
+	
+	private static Color getOrDefaultColor(String key, int r, int g, int b, JsonObject settingsObject) {
+		var color = getOrDefaultString(key, r + " " + g + " " + b, settingsObject).split(" ", 3);
+		return new Color(Integer.parseInt(color[0]), Integer.parseInt(color[1]), Integer.parseInt(color[2]));
+	}
+	
+	private static boolean getOrDefaultBoolean(String key, boolean defaultValue, JsonObject settingsObject) {
+		if(!settingsObject.containsKey(key)) {
+			return defaultValue;
+		}
+		
+		return settingsObject.getBoolean(key);
+	}
+	
+	private static JsonArray getArraySetting(String key, JsonObject settingsObject){
+		if(!settingsObject.containsKey(key)) {
+			return Json.createArrayBuilder().build();
+		}
+		
+		return settingsObject.getJsonArray(key);
+	}
+	
+	private static String getOrDefaultString(String key, String defaultValue, JsonObject settingsObject) {
+		if(!settingsObject.containsKey(key)) {
+			return defaultValue;
+		}
+		return settingsObject.getString(key);
+	}
 	
 	public static void createLink(String filePath, String toSavePath, String cmdArgs) {
 		var scriptPath = Path.of("iconScript.vbs");

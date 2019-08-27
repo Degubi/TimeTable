@@ -1,35 +1,36 @@
 package degubi;
 
-import static java.nio.file.StandardOpenOption.*;
-
-import com.google.gson.*;
 import java.awt.*;
 import java.awt.TrayIcon.*;
 import java.awt.event.*;
 import java.io.*;
-import java.net.*;
-import java.net.http.*;
-import java.net.http.HttpClient.*;
-import java.net.http.HttpResponse.*;
-import java.nio.charset.*;
-import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
+import java.util.*;
+import java.util.stream.*;
 import javax.imageio.*;
+import javax.json.bind.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.*;
 
-public final class TimeTableMain extends WindowAdapter{
+public final class Main extends WindowAdapter{
+	private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
+	
 	public static final JPanel mainPanel = new JPanel(null);
 	public static final Image icon = getIcon("tray.png", 0).getImage();
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-	public static final ButtonTable dataTable = new ButtonTable(150, 100, 25, 25, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
+	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
+	public static ClassButton currentClassButton;
+
+	//public static final ButtonTable dataTable = new ButtonTable(150, 100, 25, 25, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
 	public static final JLabel dateLabel = new JLabel();
-	public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", TimeTableMain::createScreenshot);
+	public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
 	
-	public static void main(String[] args) throws AWTException, IOException, UnsupportedLookAndFeelException, InterruptedException {
-		{	//Update checking
+	public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
+	
+	public static void main(String[] args) throws AWTException, UnsupportedLookAndFeelException, InterruptedException {
+		/*{	//Update checking
 			var client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 			var buildStr = client.send(HttpRequest.newBuilder(URI.create("https://drive.google.com/uc?authuser=0&id=1qyyC0HAvmIQmIZxaf479rRGXDA7f0ZnT&export=download")).build(), BodyHandlers.ofString()).body();
 			
@@ -41,39 +42,49 @@ public final class TimeTableMain extends WindowAdapter{
 				System.exit(0);
 			}
 		}
-		
+		*/
 		//Main frame & style setup
 		UIManager.setLookAndFeel(new NimbusLookAndFeel());
-		SwingUtilities.updateComponentTreeUI(dataTable);
 		
 		var frame = new JFrame("Órarend");
-		mainPanel.add(dataTable);
 		frame.setBounds(0, 0, 950, 713);
 		frame.setLocationRelativeTo(null);
 		frame.setContentPane(mainPanel);
 		
-		dataTable.reloadTable(Settings.classes, !(args.length == 1 && args[0].equals("-window")));
-		dateLabel.setBounds(320, 5, 300, 40);
-		dateLabel.setFont(ButtonTable.tableHeaderFont);
+		var days = new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
+		
+		IntStream.range(0, 5)
+				 .forEach(i -> {
+					 var currentDay = days[i];
+					 var topAdd = new JButton(currentDay);
+					 
+					 topAdd.setFocusable(false);
+					 topAdd.addMouseListener(new CreateClassListener(currentDay));
+					 topAdd.setBackground(Color.GRAY);
+					 topAdd.setForeground(Color.BLACK);
+					 topAdd.setFont(tableHeaderFont);
+					 topAdd.setBounds(20 + (i * 180), 100, 150, 40);
+					 mainPanel.add(topAdd);
+				  });
+		
+		updateClasses();
+		dateLabel.setBounds(325, 5, 300, 40);
+		dateLabel.setFont(tableHeaderFont);
 		frame.setResizable(false);
 		mainPanel.add(dateLabel);
-		var listeners = new TimeTableMain();
+		var listeners = new Main();
 		frame.addWindowListener(listeners);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setIconImage(icon);
+		frame.setVisible(true);
 		
 		//System tray menu
 		var sleepMode = new JCheckBoxMenuItem("Alvó Mód", getIcon("sleep.png", 24), false);
 		var popMenu = new JPopupMenu();
 
-		var friendMenu = new JMenu("Ismerõsök");
-		friendMenu.setIcon(getIcon("friends.png", 24));
-		reinitFriendsMenu(friendMenu);
-		
 		popMenu.setPreferredSize(new Dimension(160, 200));
-		popMenu.add(newMenuItem("Megnyitás", "open.png", TimeTableMain::trayOpenGui));
+		popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
 		popMenu.addSeparator();
-		popMenu.add(friendMenu);
 		popMenu.add(sleepMode);
 		popMenu.add(screenshotItem);
 		popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
@@ -94,12 +105,16 @@ public final class TimeTableMain extends WindowAdapter{
 			@Override
 			public void mousePressed(MouseEvent event) {
 				if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-					ClassButton.updateAllButtons(true, dataTable);
-					((JFrame)mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
+					//ClassButton.updateAllButtons(true, dataTable);
+					var top = (JFrame) mainPanel.getTopLevelAncestor();
+					top.setVisible(true);
+					top.setExtendedState(JFrame.NORMAL);
 				}
 			}
 		});
 		SystemTray.getSystemTray().add(tray);
+		
+		Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
 		
 		//Time label update
 		var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
@@ -111,7 +126,7 @@ public final class TimeTableMain extends WindowAdapter{
 			}
 
 			if(++timer == Settings.updateInterval) {
-				ClassButton.updateAllButtons(false, dataTable);
+				//ClassButton.updateAllButtons(false, dataTable);
 
 				if(!sleepMode.isSelected() && !frame.isVisible()) {
 					var now = LocalTime.now();
@@ -120,10 +135,10 @@ public final class TimeTableMain extends WindowAdapter{
 					if(Settings.enablePopups && current != null && now.isBefore(current.startTime)) {
 						var timeBetween = Duration.between(now, current.startTime);
 
-						if(timeBetween.toMinutes() < Settings.noteTime) {
+						if(timeBetween.toMinutes() < Settings.timeBeforeNotification) {
 							tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
 
-							try(var stream = AudioSystem.getAudioInputStream(TimeTableMain.class.getClassLoader().getResource("assets/beep.wav"));
+							try(var stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
 								var line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
 
 								line.open();
@@ -153,74 +168,12 @@ public final class TimeTableMain extends WindowAdapter{
 	}
 	
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
-		ClassButton.updateAllButtons(true, dataTable);
-		((JFrame)mainPanel.getTopLevelAncestor()).setExtendedState(JFrame.NORMAL);
+		//ClassButton.updateAllButtons(true, dataTable);
+		var top = (JFrame) mainPanel.getTopLevelAncestor();
+		top.setVisible(true);
+		top.setExtendedState(JFrame.NORMAL);
 	}
 	
-	
-	public static void reinitFriendsMenu(JMenu friendMenu) {
-		friendMenu.removeAll();
-		var addFriendItem = newMenuItem("Ismerõs Hozzáadása", null, e -> addNewFriend(friendMenu));
-		var removeFriendItem = newMenuItem("Ismerõs Eltávolítása", null, e -> removeFriend(friendMenu));
-		
-		Settings.friends.forEach(friend -> {
-			var friendItem = newMenuItem(friend.getAsJsonObject().get("name").getAsString(), null, TimeTableMain::handleFriendTable);
-			friendItem.setActionCommand(friend.getAsJsonObject().get("url").getAsString());
-			friendMenu.add(friendItem);
-		});
-		
-		if(Settings.friends.size() != 0) {
-			friendMenu.addSeparator();
-		}
-		friendMenu.add(addFriendItem);
-		friendMenu.add(removeFriendItem);
-	}
-	
-	private static void addNewFriend(JMenu friendMenu) {
-		var friendName = JOptionPane.showInputDialog("Írd be haverod nevét!");
-		
-		if(friendName != null && !friendName.isEmpty()) {
-			var friendURL = JOptionPane.showInputDialog("Írd be haverod URL-jét!");
-		
-			if(friendURL != null && !friendURL.isEmpty()) {
-				var newFriend = Settings.newFriendObject(friendName, friendURL);
-				Settings.friends.add(newFriend);
-				reinitFriendsMenu(friendMenu);
-				Settings.save();
-			}
-		}
-	}
-	
-	private static void removeFriend(JMenu friendMenu) {
-		var friends = Settings.stream(Settings.friends)
-							  .map(obj -> obj.get("name").getAsString())
-							  .toArray(String[]::new);
-		
-		if(friends.length == 0) {
-			JOptionPane.showMessageDialog(null, "Nincsenek barátaid. :)");
-		}else{
-			var selection = (String) JOptionPane.showInputDialog(null, "Válaszd ki a \"barátod\"", "Temetés", JOptionPane.OK_CANCEL_OPTION, null, friends, friends[0]);
-			
-			if(selection != null) {
-				Settings.friends.remove(Settings.indexOf(selection, friends));
-				Settings.save();
-				reinitFriendsMenu(friendMenu);
-			}
-		}
-	}
-	
-	private static void handleFriendTable(ActionEvent event) {
-		var friendTable = new ButtonTable(150, 96, 25, 30, false, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
-		
-		try(var reader = new URL(event.getActionCommand()).openStream()){
-			var data = new JsonParser().parse(new String(reader.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
-			
-			friendTable.reloadTable(data.get("classes").getAsJsonArray(), false);
-			PopupGuis.showNewDialog(false, ((JMenuItem)event.getSource()).getText() + " Órarendje", 930, 700, null, friendTable);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
 		var item = new JMenuItem(text, iconPath == null ? null : getIcon(iconPath, 24));
@@ -238,8 +191,68 @@ public final class TimeTableMain extends WindowAdapter{
 		}
 	}
 	
+	public static void updateClasses() {
+		classButtons.forEach(mainPanel::remove);
+		classButtons.clear();
+		currentClassButton = null;
+		
+		var dayLabels = new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
+		String today;
+		var now = LocalTime.now();
+		
+		switch(LocalDateTime.now().getDayOfWeek()) {
+			case MONDAY: today = "Hétfõ"; break;
+			case TUESDAY: today = "Kedd"; break;
+			case WEDNESDAY: today = "Szerda"; break;
+			case THURSDAY: today = "Csütörtök"; break;
+			case FRIDAY: today = "Péntek"; break;
+			default: today = "MenjHaza";
+		}
+
+		Settings.classes
+				.forEach((day, rawClasses) -> {
+					var yPosition = new int[] {40};
+					int xPosition;
+
+					switch(day) {   //TODO: Java14-be remélhetõleg ez szebb lehet végre
+						case "Hétfõ": xPosition = 20; break;
+						case "Kedd": xPosition = 200; break;
+						case "Szerda": xPosition = 380; break;
+						case "Csütörtök": xPosition = 560; break;
+						case "Péntek": xPosition = 740; break;
+						default: throw new IllegalStateException("HUH?");
+					}
+					
+					rawClasses.stream()
+							  .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, dayLabels))
+											    .thenComparing(button -> button.startTime)
+											    .thenComparing(button -> button.className))
+							  .forEach(clazz -> {
+								  clazz.setBounds(xPosition, yPosition[0] += 110, 150, 100);
+								  
+								  var isToday = day.equalsIgnoreCase(today);
+								  var isBefore = isToday && now.isBefore(clazz.startTime);
+								  var isAfter = isToday && (now.isAfter(clazz.startTime) || now.equals(clazz.startTime));
+								  var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && now.equals(clazz.startTime));
+									
+								  if(isNext) {
+									  currentClassButton = clazz;
+										
+									  var between = Duration.between(now, clazz.startTime);
+									  Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdõpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
+								  }
+								  clazz.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
+								  
+								  mainPanel.add(clazz);
+								  classButtons.add(clazz);
+							  });
+					});
+		
+		mainPanel.repaint();
+	}
+	
 	public static ImageIcon getIcon(String path, int scale) {
-		var image = Toolkit.getDefaultToolkit().getImage(TimeTableMain.class.getResource("/assets/" + path));
+		var image = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/" + path));
 		if(scale == 0 || image.getWidth(null) == scale) {
 			return new ImageIcon(image);
 		}

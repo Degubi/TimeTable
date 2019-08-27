@@ -3,5 +3,6 @@ module degubi.timetable {
 	requires java.sql;
 	requires java.net.http;
 	
-	requires gson;
+	requires java.json.bind;
+	requires java.json;
 }
