@@ -36,7 +36,6 @@ public final class ClassButton extends JButton implements MouseListener{
 		if(classType.charAt(0) == 'G') {
 			setFont(importantFont);
 		}
-		setForeground(unImportant ? Color.GRAY : Color.BLACK);
 		setFocusable(false);
 		addMouseListener(this);
 	}

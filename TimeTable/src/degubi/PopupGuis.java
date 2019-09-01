@@ -42,6 +42,7 @@ public final class PopupGuis extends AbstractAction{
 		dataTable.getActionMap().put("UP", new PopupGuis('U', dataTable));
 		dataTable.setFont(new Font("Arial", Font.BOLD, 12));
 		dataTable.setBounds(20, 20, 340, 122);
+		
 		dataTable.setValueAt("Óra Neve", 0, 0);
 		dataTable.setValueAt(dataButton.className, 0, 1);
 		dataTable.setValueAt("Nap", 1, 0);
@@ -49,27 +50,26 @@ public final class PopupGuis extends AbstractAction{
 		dataTable.setValueAt("Óra Típusa", 2, 0);
 		dataTable.setValueAt(dataButton.classType, 2, 1);
 		dataTable.setValueAt("Kezdés Idõ", 3, 0);
-		dataTable.setValueAt(dataButton.startTime, 3, 1);
+		dataTable.setValueAt(dataButton.startTime.toString(), 3, 1);
 		dataTable.setValueAt("Végzés Idõ", 4, 0);
-		dataTable.setValueAt(dataButton.endTime, 4, 1);
+		dataTable.setValueAt(dataButton.endTime.toString(), 4, 1);
 		dataTable.setValueAt("Terem", 5, 0);
 		dataTable.setValueAt(dataButton.room, 5, 1);
 		
 		showNewDialog(true, "Editor Gui", 400, 300, frame -> {
 			if(dataTable.getCellEditor() != null) dataTable.getCellEditor().stopCellEditing();
 			
-			var asd = Settings.classes.get(day);
-			
-			if(isNew) {
-				asd.add(dataButton);
-			}else {
-				asd.remove(dataButton);
-				asd.add(new ClassButton(day, (String) dataTable.getValueAt(0, 1),
-											 (String) dataTable.getValueAt(2, 1),
-											 LocalTime.parse((String) dataTable.getValueAt(3, 1), DateTimeFormatter.ISO_LOCAL_TIME),
-											 LocalTime.parse((String) dataTable.getValueAt(4, 1), DateTimeFormatter.ISO_LOCAL_TIME),
-											 (String) dataTable.getValueAt(5, 1), (boolean) dataTable.getValueAt(6, 1)));
+			if(!isNew) {
+				Settings.classes.get(day).remove(dataButton);
 			}
+			
+			var newDay = (String) dataTable.getValueAt(1, 1);
+			Settings.classes.get(newDay)
+					.add(new ClassButton(newDay, (String) dataTable.getValueAt(0, 1),
+											  	 (String) dataTable.getValueAt(2, 1),
+											  	 LocalTime.parse((String) dataTable.getValueAt(3, 1), DateTimeFormatter.ISO_LOCAL_TIME),
+											  	 LocalTime.parse((String) dataTable.getValueAt(4, 1), DateTimeFormatter.ISO_LOCAL_TIME),
+											  	 (String) dataTable.getValueAt(5, 1), dataButton.unImportant));
 			
 			Main.updateClasses();
 			frame.dispose();
@@ -167,7 +167,7 @@ public final class PopupGuis extends AbstractAction{
 				Settings.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60;
 				Settings.saveSettings();
 				
-				//ClassButton.updateAllButtons(false, Main.dataTable);
+				Main.updateClasses();
 				settingsFrame.dispose();
 			}catch (NumberFormatException | DateTimeParseException e) {
 				JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
@@ -249,6 +249,7 @@ public final class PopupGuis extends AbstractAction{
 		frame.setResizable(false);
 		frame.setBounds(0, 0, width, height);
 		frame.setLocationRelativeTo(Main.mainPanel);
+		
 		if(saveListener != null) {
 			JButton saveButton = new JButton("Mentés");
 			saveButton.setFocusable(false);
@@ -275,12 +276,10 @@ public final class PopupGuis extends AbstractAction{
 		int row = dataTable.getSelectedRow();
 		
 		if(row == 1) {
-			var days = new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
-			
 			if(key == 'R') {
-				dataTable.setValueAt(getNextOrPrevColumn(true, days, dataTable.getValueAt(1, 1).toString()), 1, 1);
+				dataTable.setValueAt(getNextOrPrevColumn(true, Main.days, dataTable.getValueAt(1, 1).toString()), 1, 1);
 			}else if(key == 'L') {
-				dataTable.setValueAt(getNextOrPrevColumn(false, days, dataTable.getValueAt(1, 1).toString()), 1, 1);
+				dataTable.setValueAt(getNextOrPrevColumn(false, Main.days, dataTable.getValueAt(1, 1).toString()), 1, 1);
 			}
 		}else if(row == 2) {
 			if(key == 'R' || key == 'L') {

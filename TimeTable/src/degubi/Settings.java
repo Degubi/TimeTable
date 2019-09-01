@@ -59,8 +59,7 @@ public final class Settings {
 																.map(JsonValue::asJsonObject)
 																.collect(Collectors.groupingBy(k -> k.getString("day"), 
 																		 Collectors.mapping(ClassButton::new, Collectors.toList())));
-			
-			Arrays.stream(new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"})
+			Arrays.stream(Main.days)
 				  .forEach(day -> classes.computeIfAbsent(day, ignore -> new ArrayList<>()));
 		} catch (JsonbException | IOException e) {
 			throw new IllegalStateException("Something is fucked with settings brah");

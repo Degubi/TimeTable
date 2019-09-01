@@ -16,17 +16,15 @@ import javax.swing.plaf.nimbus.*;
 
 public final class Main extends WindowAdapter{
 	private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
-	
+	public static ClassButton currentClassButton;
+
+	public static final String[] days = {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
+	public static final JLabel dateLabel = new JLabel();
 	public static final JPanel mainPanel = new JPanel(null);
 	public static final Image icon = getIcon("tray.png", 0).getImage();
 	public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 	public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
-	public static ClassButton currentClassButton;
-
-	//public static final ButtonTable dataTable = new ButtonTable(150, 100, 25, 25, true, "Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek");
-	public static final JLabel dateLabel = new JLabel();
 	public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
-	
 	public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
 	
 	public static void main(String[] args) throws AWTException, UnsupportedLookAndFeelException, InterruptedException {
@@ -43,15 +41,12 @@ public final class Main extends WindowAdapter{
 			}
 		}
 		*/
-		//Main frame & style setup
 		UIManager.setLookAndFeel(new NimbusLookAndFeel());
 		
 		var frame = new JFrame("Órarend");
 		frame.setBounds(0, 0, 950, 713);
 		frame.setLocationRelativeTo(null);
 		frame.setContentPane(mainPanel);
-		
-		var days = new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
 		
 		IntStream.range(0, 5)
 				 .forEach(i -> {
@@ -63,19 +58,20 @@ public final class Main extends WindowAdapter{
 					 topAdd.setBackground(Color.GRAY);
 					 topAdd.setForeground(Color.BLACK);
 					 topAdd.setFont(tableHeaderFont);
-					 topAdd.setBounds(20 + (i * 180), 100, 150, 40);
+					 topAdd.setBounds(20 + (i * 180), 80, 150, 40);
 					 mainPanel.add(topAdd);
 				  });
 		
 		updateClasses();
 		dateLabel.setBounds(325, 5, 300, 40);
 		dateLabel.setFont(tableHeaderFont);
-		frame.setResizable(false);
 		mainPanel.add(dateLabel);
+		
 		var listeners = new Main();
 		frame.addWindowListener(listeners);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setIconImage(icon);
+		frame.setResizable(false);
 		frame.setVisible(true);
 		
 		//System tray menu
@@ -92,29 +88,11 @@ public final class Main extends WindowAdapter{
 		popMenu.add(newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
 		SwingUtilities.updateComponentTreeUI(popMenu);
 		
-		tray.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseReleased(MouseEvent event) {
-				if(event.getButton() == MouseEvent.BUTTON3) {
-					popMenu.setLocation(event.getX() - 160, event.getY());
-					popMenu.setInvoker(popMenu);
-					popMenu.setVisible(true);
-				}
-			}
-			
-			@Override
-			public void mousePressed(MouseEvent event) {
-				if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-					//ClassButton.updateAllButtons(true, dataTable);
-					var top = (JFrame) mainPanel.getTopLevelAncestor();
-					top.setVisible(true);
-					top.setExtendedState(JFrame.NORMAL);
-				}
-			}
-		});
+		tray.addMouseListener(new SystemTrayListener(popMenu));
 		SystemTray.getSystemTray().add(tray);
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
+		
 		
 		//Time label update
 		var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
@@ -126,8 +104,6 @@ public final class Main extends WindowAdapter{
 			}
 
 			if(++timer == Settings.updateInterval) {
-				//ClassButton.updateAllButtons(false, dataTable);
-
 				if(!sleepMode.isSelected() && !frame.isVisible()) {
 					var now = LocalTime.now();
 					var current = ClassButton.currentClassButton;
@@ -162,13 +138,16 @@ public final class Main extends WindowAdapter{
 	
 	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
 		var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
+		var fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".png";
+		
 		try {
-			ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 50, window.y + 80, 870, 600)), "PNG", new File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) +".png"));
+			ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 20, window.y + 90, 890, 600)), "PNG", new File(fileName));
+			JOptionPane.showMessageDialog(mainPanel.getTopLevelAncestor(), "TimeTable saved as: " + fileName);
 		} catch (HeadlessException | AWTException | IOException e1) {}
 	}
 	
 	private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
-		//ClassButton.updateAllButtons(true, dataTable);
+		updateClasses();
 		var top = (JFrame) mainPanel.getTopLevelAncestor();
 		top.setVisible(true);
 		top.setExtendedState(JFrame.NORMAL);
@@ -196,9 +175,11 @@ public final class Main extends WindowAdapter{
 		classButtons.clear();
 		currentClassButton = null;
 		
-		var dayLabels = new String[] {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
 		String today;
 		var now = LocalTime.now();
+		
+		handleNightMode(mainPanel, now);
+		handleNightMode(dateLabel, now);
 		
 		switch(LocalDateTime.now().getDayOfWeek()) {
 			case MONDAY: today = "Hétfõ"; break;
@@ -211,7 +192,7 @@ public final class Main extends WindowAdapter{
 
 		Settings.classes
 				.forEach((day, rawClasses) -> {
-					var yPosition = new int[] {40};
+					var yPosition = new int[] {20};
 					int xPosition;
 
 					switch(day) {   //TODO: Java14-be remélhetõleg ez szebb lehet végre
@@ -224,7 +205,7 @@ public final class Main extends WindowAdapter{
 					}
 					
 					rawClasses.stream()
-							  .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, dayLabels))
+							  .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, days))
 											    .thenComparing(button -> button.startTime)
 											    .thenComparing(button -> button.className))
 							  .forEach(clazz -> {
@@ -242,6 +223,7 @@ public final class Main extends WindowAdapter{
 									  Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdõpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
 								  }
 								  clazz.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
+								  clazz.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
 								  
 								  mainPanel.add(clazz);
 								  classButtons.add(clazz);
