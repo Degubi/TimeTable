@@ -1,4 +1,4 @@
-package degubi;
+package timetable;
 
 import java.awt.event.*;
 import javax.swing.*;

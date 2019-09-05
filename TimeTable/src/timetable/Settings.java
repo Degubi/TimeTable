@@ -1,4 +1,4 @@
-package degubi;
+package timetable;
 
 import static java.nio.file.StandardOpenOption.*;
 

@@ -1,14 +1,21 @@
-package degubi;
+package timetable;
 
 import java.awt.*;
 import java.awt.TrayIcon.*;
 import java.awt.event.*;
 import java.io.*;
+import java.net.*;
+import java.net.http.*;
+import java.net.http.HttpClient.*;
+import java.net.http.HttpResponse.*;
+import java.nio.charset.*;
+import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
 import java.util.stream.*;
 import javax.imageio.*;
+import javax.json.*;
 import javax.json.bind.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -27,20 +34,26 @@ public final class Main extends WindowAdapter{
 	public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
 	public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
 	
-	public static void main(String[] args) throws AWTException, UnsupportedLookAndFeelException, InterruptedException {
-		/*{	//Update checking
-			var client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
-			var buildStr = client.send(HttpRequest.newBuilder(URI.create("https://drive.google.com/uc?authuser=0&id=1qyyC0HAvmIQmIZxaf479rRGXDA7f0ZnT&export=download")).build(), BodyHandlers.ofString()).body();
-			
-			if(Integer.parseInt(buildStr) > 200) {
-				client.send(HttpRequest.newBuilder(URI.create("https://drive.google.com/uc?authuser=0&id=1qYnJ_gsCxu-wfxD-w7QtEzIb7NZhCz0k&export=download")).build(),
-							BodyHandlers.ofFileDownload(Path.of("./"), TRUNCATE_EXISTING, WRITE, CREATE));
-				
-				Runtime.getRuntime().exec("java -jar TimeTableInstaller.jar");
-				System.exit(0);
-			}
-		}
-		*/
+	public static void main(String[] args) throws AWTException, UnsupportedLookAndFeelException, InterruptedException, IOException {
+		var client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
+		var versionResponse = sendNormalRequest("https://drive.google.com/uc?id=1npUG3eZp3cvCotp2yBxY8woyOJUMDK4f&export=download", ofJsonObject(), client);
+    	var build = 100;
+    	var lib = 1;
+    	var runtime = 1;
+    	
+    	if(versionResponse.getInt("build") > build) {
+    		sendNormalRequest("https://drive.google.com/uc?id=1QOk9UHU79pICwWxCzF2mj6-16oDW0G7Z&export=download", BodyHandlers.ofFileDownload(Path.of("./")), client);
+
+			if(versionResponse.getInt("runtime") > runtime) {
+				Runtime.getRuntime().exec("cmd /c start run.bat runtime");
+			}else if(versionResponse.getInt("library") > lib) {
+				Runtime.getRuntime().exec("cmd /c start run.bat lib");
+			}else{
+    			Runtime.getRuntime().exec("cmd /c start run.bat jar");
+    		}
+    		System.exit(0);
+    	}
+		
 		UIManager.setLookAndFeel(new NimbusLookAndFeel());
 		
 		var frame = new JFrame("Órarend");
@@ -134,6 +147,23 @@ public final class Main extends WindowAdapter{
 
 			Thread.sleep(1000);
 		}
+	}
+	
+	public static<T> T sendNormalRequest(String url, BodyHandler<T> bodyHandler, HttpClient client){
+		return sendRequest(HttpRequest.newBuilder(URI.create(url)).build(), bodyHandler, client);
+	}
+	
+	private static<T> T sendRequest(HttpRequest request, BodyHandler<T> handler, HttpClient client) {
+		try {
+			return client.send(request, handler).body();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Unable to send request to URL: " + request.uri());
+		}
+	}
+	
+	public static BodyHandler<JsonObject> ofJsonObject(){
+		return info -> BodySubscribers.mapping(BodySubscribers.ofString(StandardCharsets.ISO_8859_1), data -> json.fromJson(data, JsonObject.class));
 	}
 	
 	private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
