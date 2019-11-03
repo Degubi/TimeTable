@@ -100,6 +100,7 @@ public final class ClassButton extends JButton implements MouseListener{
 		return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
 	}
 	
+	//TODO: Ezt a mapot érdemes lenne megfordítani, akkor a lenti függvény felesleges lenne
 	public static final Map<String, String[]> roomData = Map.of(
 					"TIK", new String[] {"Kongresszusi", "Alagsor"},
 					"Irinyi", new String[] {"214", "217", "218", "219", "222", "224", "225"},
