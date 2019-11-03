@@ -18,10 +18,10 @@ print("Generating runtime")
 jlinkCommand = (r"jlink --module-path .;..\lib\app "
                  "--output ./runtime/ "
                  "--add-modules java.desktop "
-				 "--add-modules java.logging "
-				 "--add-modules java.sql "
-				 "--add-modules java.net.http "
-				 "--add-modules jdk.crypto.ec "
+                 "--add-modules java.logging "
+                 "--add-modules java.sql "
+                 "--add-modules java.net.http "
+                 "--add-modules jdk.crypto.ec "
                  "--no-man-pages "
                  "--no-header-files")
 
