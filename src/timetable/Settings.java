@@ -15,6 +15,7 @@ import javax.json.bind.*;
 
 public final class Settings {
     public static final String userDir = Path.of(".").toAbsolutePath().normalize().getParent().toString();
+    private static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
 
     public static boolean enablePopups;
     public static LocalTime dayTimeStart;
@@ -40,7 +41,7 @@ public final class Settings {
         }
         
         try {
-            var settingsObject = Main.json.fromJson(Files.readString(filePath), JsonObject.class);
+            var settingsObject = json.fromJson(Files.readString(filePath), JsonObject.class);
             
             enablePopups = getOrDefaultBoolean("enablePopups", true, settingsObject);
             timeBeforeNotification = getOrDefaultInt("timeBeforeNotification", 60, settingsObject);
@@ -109,7 +110,7 @@ public final class Settings {
         
         var filePath = Path.of("settings.json");
         try {
-            Files.writeString(filePath, Main.json.toJson(settingsObject.build()), CREATE, WRITE, TRUNCATE_EXISTING);
+            Files.writeString(filePath, json.toJson(settingsObject.build()), CREATE, WRITE, TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }

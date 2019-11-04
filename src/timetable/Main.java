@@ -9,7 +9,6 @@ import java.time.format.*;
 import java.util.*;
 import java.util.stream.*;
 import javax.imageio.*;
-import javax.json.bind.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.*;
@@ -24,16 +23,9 @@ public final class Main {
     public static final Image icon = getIcon("tray.png", 0).getImage();
     public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
     public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
-    public static final JMenuItem screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
-    public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
     
-    public static void main(String[] args) throws AWTException, UnsupportedLookAndFeelException, InterruptedException {
+    public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
-        
-        var frame = new JFrame("Órarend");
-        frame.setBounds(0, 0, 950, 713);
-        frame.setLocationRelativeTo(null);
-        frame.setContentPane(mainPanel);
         
         IntStream.range(0, 5)
                  .forEach(i -> {
@@ -54,7 +46,12 @@ public final class Main {
         dateLabel.setFont(tableHeaderFont);
         mainPanel.add(dateLabel);
         
-        frame.addWindowListener(new ScreenshotWindowListener());
+        var screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
+        var frame = new JFrame("Órarend");
+        frame.setBounds(0, 0, 950, 713);
+        frame.setLocationRelativeTo(null);
+        frame.setContentPane(mainPanel);
+        frame.addWindowListener(new ScreenshotWindowListener(screenshotItem));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setIconImage(icon);
         frame.setResizable(false);
@@ -76,7 +73,6 @@ public final class Main {
         
         tray.addMouseListener(new SystemTrayListener(popMenu));
         SystemTray.getSystemTray().add(tray);
-        
         Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
         
         
@@ -161,35 +157,17 @@ public final class Main {
         classButtons.clear();
         currentClassButton = null;
         
-        String today;
+        var today = days[LocalDateTime.now().getDayOfWeek().ordinal()];
         var now = LocalTime.now();
         
         handleNightMode(mainPanel, now);
         handleNightMode(dateLabel, now);
         
-        switch(LocalDateTime.now().getDayOfWeek()) {
-            case MONDAY: today = "Hétfõ"; break;
-            case TUESDAY: today = "Kedd"; break;
-            case WEDNESDAY: today = "Szerda"; break;
-            case THURSDAY: today = "Csütörtök"; break;
-            case FRIDAY: today = "Péntek"; break;
-            default: today = "MenjHaza";
-        }
-
         Settings.classes
                 .forEach((day, rawClasses) -> {
                     var yPosition = new int[] {20};
-                    int xPosition;
+                    var xPosition = 20 + Settings.indexOf(day, days) * 180;
 
-                    switch(day) {   //TODO: Java14-be remélhetõleg ez szebb lehet végre
-                        case "Hétfõ": xPosition = 20; break;
-                        case "Kedd": xPosition = 200; break;
-                        case "Szerda": xPosition = 380; break;
-                        case "Csütörtök": xPosition = 560; break;
-                        case "Péntek": xPosition = 740; break;
-                        default: throw new IllegalStateException("HUH?");
-                    }
-                    
                     rawClasses.stream()
                               .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, days))
                                                 .thenComparing(button -> button.startTime)
@@ -220,7 +198,7 @@ public final class Main {
     }
     
     public static ImageIcon getIcon(String path, int scale) {
-        var image = Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/" + path));
+        var image = Toolkit.getDefaultToolkit().createImage(Main.class.getResource("/assets/" + path));
         if(scale == 0 || image.getWidth(null) == scale) {
             return new ImageIcon(image);
         }

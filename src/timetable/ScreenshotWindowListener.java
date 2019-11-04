@@ -3,9 +3,15 @@ package timetable;
 import static timetable.Main.*;
 
 import java.awt.event.*;
+import javax.swing.*;
 
 public final class ScreenshotWindowListener extends WindowAdapter{
+    private final JMenuItem screenshotItem;
     
+    public ScreenshotWindowListener(JMenuItem screenshotItem) {
+        this.screenshotItem = screenshotItem;
+    }
+
     @Override
     public void windowDeiconified(WindowEvent e) {
         screenshotItem.setEnabled(true);
