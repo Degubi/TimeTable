@@ -82,7 +82,6 @@ public final class PopupGuis extends AbstractAction{
     @SuppressWarnings("boxing")
     public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
         var startupLinkPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
-        var desktopLinkPath = System.getProperty("user.home") + "\\Desktop\\TimeTable.lnk";
         var settingsFrame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), "Beállítások", true);
         var timeValues = IntStream.range(0, 24)
                                   .mapToObj(k -> String.format("%02d:00", k))
@@ -148,14 +147,10 @@ public final class PopupGuis extends AbstractAction{
         startupBox.setOpaque(false);
         Components.handleNightMode(startupBox, now);
         startupBox.setBounds(150, 700, 200, 20);
-        var desktopIconBox = new JCheckBox((String)null, Files.exists(Path.of(desktopLinkPath)));
-        desktopIconBox.setOpaque(false);
-        Components.handleNightMode(desktopIconBox, now);
-        desktopIconBox.setBounds(150, 740, 200, 20);
 
         var scrollPanel = new JPanel(null);
         Components.handleNightMode(scrollPanel, now);
-        scrollPanel.setPreferredSize(new Dimension(500, 850));
+        scrollPanel.setPreferredSize(new Dimension(500, 800));
         var scrollPane = new JScrollPane(scrollPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
@@ -181,10 +176,9 @@ public final class PopupGuis extends AbstractAction{
         
         addSettingButton(popupCheckBox, 680, "Üzenetek Bekapcsolva", scrollPanel, now);
         addSettingButton(startupBox, 730, "Indítás PC Indításakor", scrollPanel, now);
-        addSettingButton(desktopIconBox, 780, "Asztali Parancsikon", scrollPanel, now);
         
         JButton saveButton = new JButton("Mentés");
-        saveButton.setBounds(600, 800, 120, 40);
+        saveButton.setBounds(600, 720, 120, 40);
         saveButton.setBackground(Color.GRAY);
         saveButton.setForeground(Color.BLACK);
         saveButton.addActionListener(ev -> {
@@ -209,19 +203,12 @@ public final class PopupGuis extends AbstractAction{
             }catch (NumberFormatException | DateTimeParseException e) {
                 JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
             }
-            var jarPath = Settings.getFullPath("./TimeTable.jar");
-            
-            if(startupBox.isSelected()) {
-                Settings.createLink(jarPath.toString(), startupLinkPath, "-window");
+            //TODO: Fix this
+            /*if(startupBox.isSelected()) {
+                Settings.createLink(Settings.getFullPath("./TimeTable.jar").toString(), startupLinkPath, "-window");
             }else{
                 Settings.deleteIfExists(Path.of(startupLinkPath));
-            }
-            
-            if(desktopIconBox.isSelected()) {
-                Settings.createLink(jarPath.toString(), desktopLinkPath, "");
-            }else{
-                Settings.deleteIfExists(Path.of(desktopLinkPath));
-            }
+            }*/
         });
         scrollPanel.add(saveButton);
         settingsFrame.setVisible(true);

@@ -2,8 +2,8 @@ from subprocess import call
 from distutils.dir_util import copy_tree as copydir
 from urllib.request import urlretrieve as download
 from inspect import cleandoc as format
-from shutil import rmtree as removedir
-from os import mkdir, rename, remove as removefile, devnull
+from shutil import copyfile, rmtree as removedir
+from os import mkdir, rename, remove as removefile
 
 print("Generating runtime")
 jlinkCommand = (r"jlink --module-path .;..\lib\app "
@@ -40,8 +40,7 @@ rename("TimeTable.jar", "./TimeTable/TimeTable.jar")
 removefile("Manifest.txt")
 removedir("compile")
 
-print("Creating exe file")
-call(r"c:\windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /t:exe /win32icon:icon.ico /out:TimeTable.exe Runner.cs", stdout = open(devnull, 'w'))
-rename("TimeTable.exe", "./TimeTable/TimeTable.exe")
+copyfile("shortcut.py", "./TimeTable/shortcut.py")
+copyfile("icon.ico", "./TimeTable/icon.ico")
 
 print("Done")

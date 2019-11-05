@@ -55,7 +55,10 @@ public final class Main {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setIconImage(icon);
         frame.setResizable(false);
-        frame.setVisible(true);
+        
+        if(args.length == 0 || !args[0].equals("-nowindow")) {
+            frame.setVisible(true);
+        }
         
         //System tray menu
         var sleepMode = new JCheckBoxMenuItem("Alvó Mód", Components.getIcon("sleep.png", 24), false);
