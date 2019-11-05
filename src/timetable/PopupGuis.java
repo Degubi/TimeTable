@@ -13,10 +13,10 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 public final class PopupGuis extends AbstractAction{
-    public static final ImageIcon editIcon = Main.getIcon("edit.png", 32);
-    public static final ImageIcon deleteIcon = Main.getIcon("delete.png", 32);
-    public static final ImageIcon ignoreIcon = Main.getIcon("ignore.png", 32);
-    public static final ImageIcon unIgnore = Main.getIcon("unignore.png", 32);
+    public static final ImageIcon editIcon = Components.getIcon("edit.png", 32);
+    public static final ImageIcon deleteIcon = Components.getIcon("delete.png", 32);
+    public static final ImageIcon ignoreIcon = Components.getIcon("ignore.png", 32);
+    public static final ImageIcon unIgnore = Components.getIcon("unignore.png", 32);
     
     private final JTable dataTable;
     private final char key;
@@ -83,53 +83,83 @@ public final class PopupGuis extends AbstractAction{
     public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
         var startupLinkPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
         var desktopLinkPath = System.getProperty("user.home") + "\\Desktop\\TimeTable.lnk";
+        var settingsFrame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), "Beállítások", true);
         var timeValues = IntStream.range(0, 24)
                                   .mapToObj(k -> String.format("%02d:00", k))
                                   .toArray(String[]::new);
         
-        //TODO: Színválasztót megcsinálni, hogy ne tûnjön külön ablaknak. (kis oldalranyíló ablak színpalettával)
         Consumer<JButton> colorButtonListener = button -> {
-            Color newColor = JColorChooser.showDialog(Main.mainPanel, "Színválasztó", button.getBackground());
-            if(newColor != null) {
-                button.setBackground(newColor);
-            }
+            var frame = new JDialog(settingsFrame, null, false);
+            var panel = new JPanel(null);
+            panel.setBorder(new LineBorder(Color.GRAY));
+
+            Consumer<JButton> colorButtonPressedListener = e -> {
+                button.setBackground(e.getBackground());
+                frame.dispose();
+            };
+            
+            panel.add(Components.newColorButton(0, 0, colorButtonPressedListener, new Color(235, 235, 235)));
+            panel.add(Components.newColorButton(48, 0, colorButtonPressedListener, new Color(0, 147, 3)));
+            panel.add(Components.newColorButton(96, 0, colorButtonPressedListener, new Color(255, 69, 69)));
+            panel.add(Components.newColorButton(144, 0, colorButtonPressedListener, new Color(64, 64, 64)));
+            panel.add(Components.newColorButton(0, 48, colorButtonPressedListener, new Color(84, 113, 142)));
+            panel.add(Components.newColorButton(48, 48, colorButtonPressedListener, new Color(247, 238, 90)));
+            panel.add(Components.newColorButton(96, 48, colorButtonPressedListener, new Color(192, 192, 192)));
+            panel.add(Components.newColorButton(144, 48, colorButtonPressedListener, Color.ORANGE));
+            panel.add(Components.newColorButton(0, 96, colorButtonPressedListener, Color.CYAN));
+            panel.add(Components.newColorButton(48, 96, colorButtonPressedListener, Color.MAGENTA));
+            panel.add(Components.newColorButton(96, 96, colorButtonPressedListener, Color.YELLOW));
+            panel.add(Components.newColorButton(144, 96, colorButtonPressedListener, Color.RED));
+            panel.add(Components.newColorButton(0, 144, colorButtonPressedListener, Color.GREEN));
+            panel.add(Components.newColorButton(48, 144, colorButtonPressedListener, Color.GRAY));
+            panel.add(Components.newColorButton(96, 144, colorButtonPressedListener, Color.PINK));
+            panel.add(Components.newColorButton(144, 144, colorButtonPressedListener, new Color(100, 70, 80)));
+            
+            Components.handleNightMode(panel, LocalTime.now());
+            
+            var mouse = MouseInfo.getPointerInfo().getLocation();
+            frame.setContentPane(panel);
+            frame.setUndecorated(true);
+            frame.setLocationRelativeTo(Main.mainPanel);
+            frame.addFocusListener(new FocusLostListener(frame));
+            frame.setBounds(mouse.x, mouse.y, 192, 192);
+            frame.setVisible(true);
         };
         
-        var currentClass = newColorButton(200, 40, colorButtonListener, Settings.currentClassColor);
-        var beforeClass = newColorButton(200, 80, colorButtonListener, Settings.upcomingClassColor);
-        var otherClass = newColorButton(200, 140, colorButtonListener, Settings.otherDayClassColor);
-        var pastClass = newColorButton(200, 200, colorButtonListener, Settings.pastClassColor);
-        var unimportantClass = newColorButton(200, 260, colorButtonListener, Settings.unimportantClassColor);
-        var dayTimeColor = newColorButton(200, 320, colorButtonListener, Settings.dayTimeColor);
-        var nightTimeColor = newColorButton(200, 380, colorButtonListener, Settings.nightTimeColor);
+        var currentClass = Components.newColorButton(200, 40, colorButtonListener, Settings.currentClassColor);
+        var beforeClass = Components.newColorButton(200, 80, colorButtonListener, Settings.upcomingClassColor);
+        var otherClass = Components.newColorButton(200, 140, colorButtonListener, Settings.otherDayClassColor);
+        var pastClass = Components.newColorButton(200, 200, colorButtonListener, Settings.pastClassColor);
+        var unimportantClass = Components.newColorButton(200, 260, colorButtonListener, Settings.unimportantClassColor);
+        var dayTimeColor = Components.newColorButton(200, 320, colorButtonListener, Settings.dayTimeColor);
+        var nightTimeColor = Components.newColorButton(200, 380, colorButtonListener, Settings.nightTimeColor);
         
-        var startTimeBox = newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
-        var endTimeBox = newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
-        var timeBeforeNoteBox = newComboBox(Integer.toString(Settings.timeBeforeNotification), 270, "30", "40", "50", "60", "70", "80", "90");
-        var updateIntervalBox = newComboBox(Integer.toString(Settings.updateInterval / 60), 340, "5", "10", "15", "20");
+        var startTimeBox = Components.newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
+        var endTimeBox = Components.newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
+        var timeBeforeNoteBox = Components.newComboBox(Integer.toString(Settings.timeBeforeNotification), 270, "30", "40", "50", "60", "70", "80", "90");
+        var updateIntervalBox = Components.newComboBox(Integer.toString(Settings.updateInterval / 60), 340, "5", "10", "15", "20");
         
         var now = LocalTime.now();
         var popupCheckBox = new JCheckBox((String)null, Settings.enablePopups);
         popupCheckBox.setOpaque(false);
-        Main.handleNightMode(popupCheckBox, now);
+        Components.handleNightMode(popupCheckBox, now);
         popupCheckBox.setBounds(150, 660, 200, 20);
         var startupBox = new JCheckBox((String)null, Files.exists(Path.of(startupLinkPath)));
         startupBox.setOpaque(false);
-        Main.handleNightMode(startupBox, now);
+        Components.handleNightMode(startupBox, now);
         startupBox.setBounds(150, 700, 200, 20);
         var desktopIconBox = new JCheckBox((String)null, Files.exists(Path.of(desktopLinkPath)));
         desktopIconBox.setOpaque(false);
-        Main.handleNightMode(desktopIconBox, now);
+        Components.handleNightMode(desktopIconBox, now);
         desktopIconBox.setBounds(150, 740, 200, 20);
 
         var scrollPanel = new JPanel(null);
-        Main.handleNightMode(scrollPanel, now);
+        Components.handleNightMode(scrollPanel, now);
         scrollPanel.setPreferredSize(new Dimension(500, 850));
         var scrollPane = new JScrollPane(scrollPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
         
-        var settingsFrame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), "Beállítások", true);
         settingsFrame.setResizable(false);
         settingsFrame.setBounds(0, 0, 800, 600);
         settingsFrame.setLocationRelativeTo(null);
@@ -203,38 +233,11 @@ public final class PopupGuis extends AbstractAction{
         
         var label = new JLabel(labelText);
         label.setFont(Main.tableHeaderFont);
-        Main.handleNightMode(label, time);
+        Components.handleNightMode(label, time);
         label.setBounds(100, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
         mainPanel.add(label);
     }
     
-     private static JComboBox<String> newComboBox(String selectedItem, int y, String... data){
-         var endTimeBox = new JComboBox<>(data);
-         endTimeBox.setBounds(100, y, 75, 30);
-         endTimeBox.setEditable(true);
-         endTimeBox.setSelectedItem(selectedItem);
-         return endTimeBox;
-    }
-
-     private static JButton newColorButton(int x, int y, Consumer<JButton> listener, Color startColor) {
-         var butt = new JButton();
-         butt.setBackground(startColor);
-         butt.setBounds(x, y, 48, 48);
-         butt.setFocusable(false);
-         butt.setBorder(null);
-         butt.addActionListener(e -> listener.accept(butt));
-         return butt;
-     }
-
-     private static JButton newButton(String text, Color foreground, Color background, Dimension preferredSize) {
-         var butt = new JButton(text);
-         butt.setFocusPainted(false);
-         butt.setForeground(foreground);
-         butt.setBackground(background);
-         butt.setPreferredSize(preferredSize);
-         return butt;
-     }
-
      private static JDialog newFrame(String title, int width, int height, int minWidth, int minHeight, boolean modal) {
          var frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), title, modal);
 
@@ -269,7 +272,7 @@ public final class PopupGuis extends AbstractAction{
         }
         
         for(var component : components) panel.add(component);
-        Main.handleNightMode(panel, LocalTime.now());
+        Components.handleNightMode(panel, LocalTime.now());
         frame.setVisible(true);
     }
     
@@ -319,6 +322,19 @@ public final class PopupGuis extends AbstractAction{
         @Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2 && rowIndex != 5; }
     }
     
+    private static final class FocusLostListener extends FocusAdapter{
+        private final JDialog component;
+        
+        public FocusLostListener(JDialog component) {
+            this.component = component;
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            component.dispose();
+        }
+    }
+    
     private static final class DataTableListener extends MouseAdapter{
         private final JTable dataTable;
         
@@ -340,12 +356,12 @@ public final class PopupGuis extends AbstractAction{
 
                 ClassButton.roomData.forEach((building, rooms) -> {
                     cons.insets = topInsent;
-                    topPanel.add(newButton(building, Color.BLACK, Color.GRAY, buttonDimension), cons);
+                    topPanel.add(Components.newButton(building, Color.BLACK, Color.GRAY, buttonDimension), cons);
                     cons.insets = bottomInsent;
                     
                     Arrays.stream(rooms).forEach(room -> {
                         var isCurrentRoom = currentRoom != null && room.equals(currentRoom);
-                        var roomButton = newButton(room, isCurrentRoom ? Color.BLACK : Color.GRAY, isCurrentRoom ? Color.RED : Color.LIGHT_GRAY, buttonDimension);
+                        var roomButton = Components.newButton(room, isCurrentRoom ? Color.BLACK : Color.GRAY, isCurrentRoom ? Color.RED : Color.LIGHT_GRAY, buttonDimension);
                         
                         roomButton.addActionListener(e -> {
                             roomButtons.forEach(roomButts -> {
@@ -362,7 +378,7 @@ public final class PopupGuis extends AbstractAction{
                 });
                 
                 var bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-                var saveButton = newButton("Save", Color.BLACK, Color.GRAY, new Dimension(120, 40));
+                var saveButton = Components.newButton("Save", Color.BLACK, Color.GRAY, new Dimension(120, 40));
                 saveButton.addActionListener(e -> roomButtons.stream()
                                                              .filter(button -> button.getBackground() == Color.RED)
                                                              .findFirst()

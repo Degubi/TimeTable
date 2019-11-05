@@ -20,7 +20,7 @@ public final class Main {
     public static final String[] days = {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
     public static final JLabel dateLabel = new JLabel();
     public static final JPanel mainPanel = new JPanel(null);
-    public static final Image icon = getIcon("tray.png", 0).getImage();
+    public static final Image icon = Components.getIcon("tray.png", 0).getImage();
     public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
     public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
     
@@ -46,7 +46,7 @@ public final class Main {
         dateLabel.setFont(tableHeaderFont);
         mainPanel.add(dateLabel);
         
-        var screenshotItem = newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
+        var screenshotItem = Components.newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
         var frame = new JFrame("Órarend");
         frame.setBounds(0, 0, 950, 713);
         frame.setLocationRelativeTo(null);
@@ -58,17 +58,17 @@ public final class Main {
         frame.setVisible(true);
         
         //System tray menu
-        var sleepMode = new JCheckBoxMenuItem("Alvó Mód", getIcon("sleep.png", 24), false);
+        var sleepMode = new JCheckBoxMenuItem("Alvó Mód", Components.getIcon("sleep.png", 24), false);
         var popMenu = new JPopupMenu();
 
         popMenu.setPreferredSize(new Dimension(170, 200));
-        popMenu.add(newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
+        popMenu.add(Components.newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
         popMenu.add(screenshotItem);
-        popMenu.add(newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
+        popMenu.add(Components.newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
-        popMenu.add(newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
+        popMenu.add(Components.newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
         SwingUtilities.updateComponentTreeUI(popMenu);
         
         tray.addMouseListener(new SystemTrayListener(popMenu));
@@ -109,7 +109,7 @@ public final class Main {
                             }catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
                         }
                     }
-                    handleNightMode(dateLabel, now);
+                    Components.handleNightMode(dateLabel, now);
                 }
                 timer = 0;
             }
@@ -135,23 +135,6 @@ public final class Main {
         top.setExtendedState(JFrame.NORMAL);
     }
     
-    
-    private static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
-        var item = new JMenuItem(text, iconPath == null ? null : getIcon(iconPath, 24));
-        item.addActionListener(listener);
-        return item;
-    }
-    
-    public static void handleNightMode(Container container, LocalTime time) {
-        var isDarkMode = time.isAfter(Settings.dayTimeEnd) || time.isBefore(Settings.dayTimeStart);
-    
-        if(container instanceof JLabel || container instanceof JCheckBox) {
-            container.setForeground(isDarkMode ? Color.WHITE : Color.BLACK);
-        }else{
-            container.setBackground(isDarkMode ? Settings.nightTimeColor : Settings.dayTimeColor);
-        }
-    }
-    
     public static void updateClasses() {
         classButtons.forEach(k -> mainPanel.remove(k.button));
         classButtons.clear();
@@ -160,8 +143,8 @@ public final class Main {
         var today = days[LocalDateTime.now().getDayOfWeek().ordinal()];
         var now = LocalTime.now();
         
-        handleNightMode(mainPanel, now);
-        handleNightMode(dateLabel, now);
+        Components.handleNightMode(mainPanel, now);
+        Components.handleNightMode(dateLabel, now);
         
         Settings.classes
                 .forEach((day, rawClasses) -> {
@@ -195,13 +178,5 @@ public final class Main {
                     });
         
         mainPanel.repaint();
-    }
-    
-    public static ImageIcon getIcon(String path, int scale) {
-        var image = Toolkit.getDefaultToolkit().createImage(Main.class.getResource("/assets/" + path));
-        if(scale == 0 || image.getWidth(null) == scale) {
-            return new ImageIcon(image);
-        }
-        return new ImageIcon(image.getScaledInstance(scale, scale, Image.SCALE_SMOOTH));
     }
 }
