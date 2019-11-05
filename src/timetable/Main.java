@@ -26,22 +26,9 @@ public final class Main {
     
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
-        
-        IntStream.range(0, 5)
-                 .forEach(i -> {
-                     var currentDay = days[i];
-                     var topAdd = new JButton(currentDay);
-                     
-                     topAdd.setFocusable(false);
-                     topAdd.addMouseListener(new CreateClassListener(currentDay));
-                     topAdd.setBackground(Color.GRAY);
-                     topAdd.setForeground(Color.BLACK);
-                     topAdd.setFont(tableHeaderFont);
-                     topAdd.setBounds(20 + (i * 180), 80, 150, 40);
-                     mainPanel.add(topAdd);
-                  });
-        
+        IntStream.range(0, 5).forEach(Main::addDayButton);
         updateClasses();
+        
         dateLabel.setBounds(325, 5, 300, 40);
         dateLabel.setFont(tableHeaderFont);
         mainPanel.add(dateLabel);
@@ -91,13 +78,12 @@ public final class Main {
             if(++timer == Settings.updateInterval) {
                 if(!sleepMode.isSelected() && !frame.isVisible()) {
                     var now = LocalTime.now();
-                    var current = ClassButton.currentClassButton;
-
-                    if(Settings.enablePopups && current != null && now.isBefore(current.startTime)) {
-                        var timeBetween = Duration.between(now, current.startTime);
+                    
+                    if(Settings.enablePopups && currentClassButton != null && now.isBefore(currentClassButton.startTime)) {
+                        var timeBetween = Duration.between(now, currentClassButton.startTime);
 
                         if(timeBetween.toMinutes() < Settings.timeBeforeNotification) {
-                            tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + current.className + ' ' + current.startTime + '-' + current.endTime, MessageType.NONE);
+                            tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + currentClassButton.className + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
 
                             try(var stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
                                 var line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
@@ -119,6 +105,19 @@ public final class Main {
 
             Thread.sleep(1000);
         }
+    }
+    
+    private static void addDayButton(int dayIndex) {
+        var currentDay = days[dayIndex];
+        var topAdd = new JButton(currentDay);
+        
+        topAdd.setFocusable(false);
+        topAdd.addMouseListener(new CreateClassListener(currentDay));
+        topAdd.setBackground(Color.GRAY);
+        topAdd.setForeground(Color.BLACK);
+        topAdd.setFont(tableHeaderFont);
+        topAdd.setBounds(20 + (dayIndex * 180), 80, 150, 40);
+        mainPanel.add(topAdd);
     }
     
     private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
@@ -150,33 +149,33 @@ public final class Main {
         Components.handleNightMode(dateLabel, now);
         
         Settings.classes
-                .forEach((day, rawClasses) -> {
+                .forEach((day, classesPerDay) -> {
                     var yPosition = new int[] {20};
                     var xPosition = 20 + Settings.indexOf(day, days) * 180;
 
-                    rawClasses.stream()
-                              .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, days))
-                                                .thenComparing(button -> button.startTime)
-                                                .thenComparing(button -> button.className))
-                              .forEach(clazz -> {
-                                  clazz.button.setBounds(xPosition, yPosition[0] += 110, 150, 100);
+                    classesPerDay.stream()
+                                 .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, days))
+                                                   .thenComparing(button -> button.startTime)
+                                                   .thenComparing(button -> button.className))
+                                 .forEach(clazz -> {
+                                     clazz.button.setBounds(xPosition, yPosition[0] += 110, 150, 100);
                                   
-                                  var isToday = day.equalsIgnoreCase(today);
-                                  var isBefore = isToday && now.isBefore(clazz.startTime);
-                                  var isAfter = isToday && (now.isAfter(clazz.startTime) || now.equals(clazz.startTime));
-                                  var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && now.equals(clazz.startTime));
+                                     var isToday = day.equalsIgnoreCase(today);
+                                     var isBefore = isToday && now.isBefore(clazz.startTime);
+                                     var isAfter = isToday && (now.isAfter(clazz.startTime) || now.equals(clazz.startTime));
+                                     var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && now.equals(clazz.startTime));
                                     
-                                  if(isNext) {
-                                      currentClassButton = clazz;
+                                     if(isNext) {
+                                         currentClassButton = clazz;
                                         
-                                      var between = Duration.between(now, clazz.startTime);
-                                      Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdõpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
-                                  }
-                                  clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
-                                  clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
+                                         var between = Duration.between(now, clazz.startTime);
+                                         Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdõpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
+                                     }
+                                     clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
+                                     clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
                                   
-                                  mainPanel.add(clazz.button);
-                                  classButtons.add(clazz);
+                                     mainPanel.add(clazz.button);
+                                     classButtons.add(clazz);
                               });
                     });
         

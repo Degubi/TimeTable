@@ -10,8 +10,7 @@ import javax.json.*;
 import javax.swing.*;
 
 public final class ClassButton extends MouseAdapter {
-    public static ClassButton currentClassButton;
-    public static final Font importantFont = new Font("SansSerif", Font.BOLD, 12);
+    public static final Font importantClassFont = new Font("SansSerif", Font.BOLD, 12);
 
     public final String day;
     public final LocalTime startTime, endTime;
@@ -28,15 +27,16 @@ public final class ClassButton extends MouseAdapter {
         this.room = room;
         this.unImportant = unImportant;
         
-        button = new JButton("<html>Óra: " + className.replace('_', ' ') + 
-                "<br>Idõ: " + startTime + "-" + endTime + 
-                "<br>Típus: " + classType + 
-                "<br>Épület: " + getBuildingForRoom(room) +
-                "<br>Terem: " + room);
+        button = new JButton("<html>Óra: " + className.replace('_', ' ') +
+                             "<br>Idõ: " + startTime + "-" + endTime +
+                             "<br>Típus: " + classType +
+                             "<br>Épület: " + getBuildingForRoom(room) +
+                             "<br>Terem: " + room);
         
         if(classType.charAt(0) == 'G') {
-            button.setFont(importantFont);
+            button.setFont(importantClassFont);
         }
+        
         button.setFocusable(false);
         button.addMouseListener(this);
     }
@@ -53,17 +53,19 @@ public final class ClassButton extends MouseAdapter {
         if(event.getButton() == MouseEvent.BUTTON3) {
             var frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor());
             var panel = new JPanel(null);
+            var buttonLocation = button.getLocationOnScreen();
             
             frame.setContentPane(panel);
             frame.addWindowFocusListener(new EditClassButtonListener(frame));
             frame.setUndecorated(true);
             frame.setLocationRelativeTo(null);
-            frame.setBounds(button.getLocationOnScreen().x + 118, button.getLocationOnScreen().y, 32, 96);
+            frame.setBounds(buttonLocation.x + 118, buttonLocation.y, 32, 96);
+            
+            panel.add(newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorGui(day, false, this)));
             
             panel.add(newClassToolButton(32, PopupGuis.deleteIcon, e -> {
                 if(JOptionPane.showConfirmDialog(Main.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
-                    Settings.classes.get(day)
-                            .removeIf(this::equals);
+                    Settings.classes.get(day).removeIf(this::equals);
                     
                     Main.updateClasses();
                 }
@@ -79,8 +81,6 @@ public final class ClassButton extends MouseAdapter {
                             frame.dispose();
                         });
             }));
-            
-            panel.add(newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorGui(day, false, this)));
             
             frame.setVisible(true);
         }
