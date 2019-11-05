@@ -12,7 +12,8 @@ jlinkCommand = (r"jlink --module-path .;..\lib\app "
                  "--add-modules java.logging "
                  "--add-modules java.sql "
                  "--no-man-pages "
-                 "--no-header-files")
+                 "--no-header-files "
+				 "--compress=2")
 
 call(jlinkCommand)
 
