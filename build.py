@@ -40,7 +40,6 @@ rename("TimeTable.jar", "./TimeTable/TimeTable.jar")
 removefile("Manifest.txt")
 removedir("compile")
 
-copyfile("shortcut.py", "./TimeTable/shortcut.py")
 copyfile("icon.ico", "./TimeTable/icon.ico")
 
 print("Done")
