@@ -1,7 +1,8 @@
-package timetable;
+package timetable.listeners;
 
 import java.awt.event.*;
 import javax.swing.*;
+import timetable.*;
 
 public final class SystemTrayListener extends MouseAdapter{
     private final JPopupMenu popMenu;

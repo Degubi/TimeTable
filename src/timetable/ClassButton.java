@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.Map.*;
 import javax.json.*;
 import javax.swing.*;
+import timetable.listeners.*;
 
 public final class ClassButton extends MouseAdapter {
     public static final Font importantClassFont = new Font("SansSerif", Font.BOLD, 12);
@@ -41,6 +42,15 @@ public final class ClassButton extends MouseAdapter {
         button.addMouseListener(this);
     }
     
+    public ClassButton(JTable editorTable, boolean unImportant) {
+        this((String) editorTable.getValueAt(1, 1),
+             (String) editorTable.getValueAt(0, 1),
+             (String) editorTable.getValueAt(2, 1),
+             LocalTime.parse((String) editorTable.getValueAt(3, 1), DateTimeFormatter.ISO_LOCAL_TIME),
+             LocalTime.parse((String) editorTable.getValueAt(4, 1), DateTimeFormatter.ISO_LOCAL_TIME),
+             (String) editorTable.getValueAt(5, 1), unImportant);
+    }
+    
     public ClassButton(JsonObject object) {
         this(object.getString("day"), object.getString("className"), object.getString("classType"), 
                 LocalTime.parse(object.getString("startTime"), DateTimeFormatter.ISO_LOCAL_TIME),
@@ -56,14 +66,14 @@ public final class ClassButton extends MouseAdapter {
             var buttonLocation = button.getLocationOnScreen();
             
             frame.setContentPane(panel);
-            frame.addWindowFocusListener(new EditClassButtonListener(frame));
+            frame.addWindowFocusListener(new FocusLostListener(frame));
             frame.setUndecorated(true);
             frame.setLocationRelativeTo(null);
             frame.setBounds(buttonLocation.x + 118, buttonLocation.y, 32, 96);
             
-            panel.add(newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorGui(day, false, this)));
+            panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(day, this)));
             
-            panel.add(newClassToolButton(32, PopupGuis.deleteIcon, e -> {
+            panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> {
                 if(JOptionPane.showConfirmDialog(Main.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
                     Settings.classes.get(day).removeIf(this::equals);
                     
@@ -71,7 +81,7 @@ public final class ClassButton extends MouseAdapter {
                 }
             }));
             
-            panel.add(newClassToolButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
+            panel.add(Components.newClassToolButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
                 Settings.classes.get(day).stream()
                         .filter(this::equals)
                         .findFirst()
@@ -115,26 +125,5 @@ public final class ClassButton extends MouseAdapter {
                        .map(Entry::getKey)
                        .findFirst()
                        .orElse("Ismeretlen");
-    }
-    
-    private static JButton newClassToolButton(int yPos, ImageIcon icon, ActionListener listener) {
-        var butt = new JButton(icon);
-        butt.setBackground(Color.LIGHT_GRAY);
-        butt.setBounds(0, yPos, 32, 32);
-        butt.addActionListener(listener);
-        return butt;
-    }
-
-    private static final class EditClassButtonListener extends WindowAdapter{
-        private final JDialog passFrame;
-        
-        public EditClassButtonListener(JDialog frame) {
-            passFrame = frame;
-        }
-        
-        @Override
-        public void windowLostFocus(WindowEvent event) {
-            passFrame.dispose();
-        }
     }
 }

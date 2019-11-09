@@ -1,4 +1,4 @@
-package timetable;
+package timetable.listeners;
 
 import static timetable.Main.*;
 

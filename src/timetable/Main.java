@@ -12,17 +12,16 @@ import javax.imageio.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.*;
+import timetable.listeners.*;
 
 public final class Main {
     private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
     public static ClassButton currentClassButton;
 
-    public static final String[] days = {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek"};
+    public static final String[] days = {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
     public static final JLabel dateLabel = new JLabel();
     public static final JPanel mainPanel = new JPanel(null);
-    public static final Image icon = Components.getIcon("tray.png", 0).getImage();
-    public static final TrayIcon tray = new TrayIcon(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-    public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
+    public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
     
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
@@ -30,7 +29,7 @@ public final class Main {
         updateClasses();
         
         dateLabel.setBounds(325, 5, 300, 40);
-        dateLabel.setFont(tableHeaderFont);
+        dateLabel.setFont(Components.tableHeaderFont);
         mainPanel.add(dateLabel);
         
         var screenshotItem = Components.newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
@@ -40,7 +39,7 @@ public final class Main {
         frame.setContentPane(mainPanel);
         frame.addWindowListener(new ScreenshotWindowListener(screenshotItem));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setIconImage(icon);
+        frame.setIconImage(Components.trayIcon);
         frame.setResizable(false);
         
         if(args.length == 0 || !args[0].equals("-nowindow")) {
@@ -52,7 +51,7 @@ public final class Main {
         var popMenu = new JPopupMenu();
 
         popMenu.setPreferredSize(new Dimension(170, 200));
-        popMenu.add(Components.newMenuItem("Megnyitás", "open.png", Main::trayOpenGui));
+        popMenu.add(Components.newMenuItem("Megnyitás", "open.png", Main::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
         popMenu.add(screenshotItem);
@@ -66,7 +65,7 @@ public final class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
         
         
-        //Time label update
+        Thread.currentThread().setName("Time Label Updater");
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
         var timer = Settings.updateInterval - 100;
         
@@ -115,7 +114,7 @@ public final class Main {
         topAdd.addMouseListener(new CreateClassListener(currentDay));
         topAdd.setBackground(Color.GRAY);
         topAdd.setForeground(Color.BLACK);
-        topAdd.setFont(tableHeaderFont);
+        topAdd.setFont(Components.tableHeaderFont);
         topAdd.setBounds(20 + (dayIndex * 180), 80, 150, 40);
         mainPanel.add(topAdd);
     }
@@ -130,7 +129,7 @@ public final class Main {
         } catch (HeadlessException | AWTException | IOException e1) {}
     }
     
-    private static void trayOpenGui(@SuppressWarnings("unused") ActionEvent event) {
+    private static void openFromTray(@SuppressWarnings("unused") ActionEvent event) {
         updateClasses();
         var top = (JFrame) mainPanel.getTopLevelAncestor();
         top.setVisible(true);

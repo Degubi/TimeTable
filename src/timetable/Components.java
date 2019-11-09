@@ -5,8 +5,14 @@ import java.awt.event.*;
 import java.time.*;
 import java.util.function.*;
 import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.table.*;
+import timetable.listeners.*;
 
 public final class Components {
+    public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
+    public static final Image trayIcon = getIcon("tray.png", 0).getImage();
+
     private Components() {}
     
     public static JMenuItem newMenuItem(String text, String iconPath, ActionListener listener) {
@@ -21,7 +27,7 @@ public final class Components {
         endTimeBox.setEditable(true);
         endTimeBox.setSelectedItem(selectedItem);
         return endTimeBox;
-   }
+    }
 
     public static JButton newColorButton(int x, int y, Consumer<JButton> listener, Color startColor) {
         var butt = new JButton();
@@ -33,6 +39,14 @@ public final class Components {
         return butt;
     }
 
+    public static JButton newClassToolButton(int yPos, ImageIcon icon, ActionListener listener) {
+        var butt = new JButton(icon);
+        butt.setBackground(Color.LIGHT_GRAY);
+        butt.setBounds(0, yPos, 32, 32);
+        butt.addActionListener(listener);
+        return butt;
+    }
+    
     public static JButton newButton(String text, Color foreground, Color background, Dimension preferredSize) {
         var butt = new JButton(text);
         butt.setFocusPainted(false);
@@ -40,6 +54,54 @@ public final class Components {
         butt.setBackground(background);
         butt.setPreferredSize(preferredSize);
         return butt;
+    }
+    
+    public static void addSettingButton(JComponent component, int y, String labelText, JPanel mainPanel, LocalTime time) {
+        component.setLocation(400, y);
+        mainPanel.add(component);
+        
+        var label = new JLabel(labelText);
+        label.setFont(Components.tableHeaderFont);
+        Components.handleNightMode(label, time);
+        label.setBounds(100, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
+        mainPanel.add(label);
+    }
+    
+    public static JTable createClassEditorTable(ClassButton dataButton) {
+        var editorTable = new JTable(new ClassEditorTableModel());
+        editorTable.addMouseListener(new RoomSelectionListener(editorTable));
+        editorTable.setBackground(Color.LIGHT_GRAY);
+        editorTable.setRowHeight(20);
+        editorTable.setBorder(new LineBorder(Color.BLACK, 2, true));
+        
+        var inputMap = editorTable.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        var actionMap = editorTable.getActionMap();
+        
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "DOWN");
+        actionMap.put("DOWN", new ClassEditorTableKeyListener('D', editorTable));
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "LEFT");
+        actionMap.put("LEFT", new ClassEditorTableKeyListener('L', editorTable));
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "RIGHT");
+        actionMap.put("RIGHT", new ClassEditorTableKeyListener('R', editorTable));
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "UP");
+        actionMap.put("UP", new ClassEditorTableKeyListener('U', editorTable));
+        editorTable.setFont(new Font("Arial", Font.BOLD, 12));
+        editorTable.setBounds(20, 20, 340, 122);
+        
+        editorTable.setValueAt("Óra Neve", 0, 0);
+        editorTable.setValueAt(dataButton.className, 0, 1);
+        editorTable.setValueAt("Nap", 1, 0);
+        editorTable.setValueAt(dataButton.day, 1, 1);
+        editorTable.setValueAt("Óra Típusa", 2, 0);
+        editorTable.setValueAt(dataButton.classType, 2, 1);
+        editorTable.setValueAt("Kezdés Idõ", 3, 0);
+        editorTable.setValueAt(dataButton.startTime.toString(), 3, 1);
+        editorTable.setValueAt("Végzés Idõ", 4, 0);
+        editorTable.setValueAt(dataButton.endTime.toString(), 4, 1);
+        editorTable.setValueAt("Terem", 5, 0);
+        editorTable.setValueAt(dataButton.room, 5, 1);
+        
+        return editorTable;
     }
     
     
@@ -59,5 +121,12 @@ public final class Components {
         }else{
             container.setBackground(isDarkMode ? Settings.nightTimeColor : Settings.dayTimeColor);
         }
+    }
+    
+    
+    private static final class ClassEditorTableModel extends DefaultTableModel{
+        @Override public int getRowCount() { return 6; }
+        @Override public int getColumnCount() { return 2; }
+        @Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2 && rowIndex != 5; }
     }
 }

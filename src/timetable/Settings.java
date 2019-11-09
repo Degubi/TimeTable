@@ -1,7 +1,5 @@
 package timetable;
 
-import static java.nio.file.StandardOpenOption.*;
-
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
@@ -14,7 +12,6 @@ import javax.json.*;
 import javax.json.bind.*;
 
 public final class Settings {
-    public static final String userDir = Path.of(".").toAbsolutePath().normalize().getParent().toString();
     private static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
 
     public static boolean enablePopups;
@@ -108,9 +105,8 @@ public final class Settings {
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
                                  .add("classes", clazzez);
         
-        var filePath = Path.of("settings.json");
         try {
-            Files.writeString(filePath, json.toJson(settingsObject.build()), CREATE, WRITE, TRUNCATE_EXISTING);
+            Files.writeString(Path.of("settings.json"), json.toJson(settingsObject.build()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -155,40 +151,22 @@ public final class Settings {
         return settingsObject.getString(key);
     }
     
-    public static void createLink(String filePath, String toSavePath, String cmdArgs) {
-        var scriptPath = Path.of("iconScript.vbs");
+    public static void createStartupLink(String toSavePath) {
         var command = ("Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
                        "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
-                           "oLink.TargetPath = \"" + filePath + "\"\n" + 
-                           "oLink.Arguments = \"" + cmdArgs + "\"\n" +
-                           "oLink.IconLocation = \"" + getFullPath("./icon.ico") + "\"\n" +
-                           "oLink.WorkingDirectory = \"" + filePath.substring(0, filePath.lastIndexOf("\\")) + "\"\n" +
+                           "oLink.TargetPath = \"" + "C:\\Program Files\\TimeTable\\bin\\javaw.exe" + "\"\n" + 
+                           "oLink.Arguments = \"" + "-jar C:\\Program Files\\TimeTable\\TimeTable.jar -window" + "\"\n" +
+                           "oLink.IconLocation = \"" + "C:\\Program Files\\TimeTable\\icon.ico" + "\"\n" +
+                           "oLink.WorkingDirectory = \"" + "C:\\Program Files\\TimeTable" + "\"\n" +
                            "oLink.Save\n");
         try {
+            var scriptPath = Path.of("iconScript.vbs");
+
             Files.writeString(scriptPath, command);
-            var proc = Runtime.getRuntime().exec("wscript.exe iconScript.vbs");
-            
-            proc.waitFor();
+            Runtime.getRuntime().exec("wscript.exe iconScript.vbs").waitFor();
             Files.delete(scriptPath);
         } catch (IOException | InterruptedException e1) {
             e1.printStackTrace();
-        }
-    }
-    
-    public static void deleteIfExists(Path path) {
-        if(Files.exists(path))
-            try {
-                Files.delete(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-    }
-    
-    public static Path getFullPath(String strPath) {
-        try {
-            return Path.of(strPath).toRealPath();
-        } catch (IOException e) {
-            return null;
         }
     }
 }
