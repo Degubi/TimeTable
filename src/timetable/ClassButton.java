@@ -12,7 +12,9 @@ import timetable.listeners.*;
 
 public final class ClassButton extends MouseAdapter {
     public static final Font importantClassFont = new Font("SansSerif", Font.BOLD, 12);
-
+    public static final Comparator<ClassButton> timeBasedOrder = Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, Main.days))
+                                                                           .thenComparing(button -> button.startTime)
+                                                                           .thenComparing(button -> button.className);
     public final String day;
     public final LocalTime startTime, endTime;
     public final String className, classType, room;

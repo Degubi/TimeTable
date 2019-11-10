@@ -21,7 +21,7 @@ public final class Main {
     public static final String[] days = {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
     public static final JLabel dateLabel = new JLabel();
     public static final JPanel mainPanel = new JPanel(null);
-    public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
+    public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
     
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
@@ -153,9 +153,7 @@ public final class Main {
                     var xPosition = 20 + Settings.indexOf(day, days) * 180;
 
                     classesPerDay.stream()
-                                 .sorted(Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, days))
-                                                   .thenComparing(button -> button.startTime)
-                                                   .thenComparing(button -> button.className))
+                                 .sorted(ClassButton.timeBasedOrder)
                                  .forEach(clazz -> {
                                      clazz.button.setBounds(xPosition, yPosition[0] += 110, 150, 100);
                                   
@@ -175,8 +173,8 @@ public final class Main {
                                   
                                      mainPanel.add(clazz.button);
                                      classButtons.add(clazz);
-                              });
-                    });
+                                 });
+                });
         
         mainPanel.repaint();
     }
