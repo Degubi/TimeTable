@@ -149,13 +149,13 @@ public final class Main {
         
         Settings.classes
                 .forEach((day, classesPerDay) -> {
-                    var yPosition = new int[] {20};
+                    var yPosition = new int[] {50};
                     var xPosition = 20 + Settings.indexOf(day, days) * 180;
 
                     classesPerDay.stream()
                                  .sorted(ClassButton.timeBasedOrder)
                                  .forEach(clazz -> {
-                                     clazz.button.setBounds(xPosition, yPosition[0] += 110, 150, 100);
+                                     clazz.button.setBounds(xPosition, yPosition[0] += 95, 150, 85);
                                   
                                      var isToday = day.equalsIgnoreCase(today);
                                      var isBefore = isToday && now.isBefore(clazz.startTime);

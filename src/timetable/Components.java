@@ -69,7 +69,6 @@ public final class Components {
     
     public static JTable createClassEditorTable(ClassButton dataButton) {
         var editorTable = new JTable(new ClassEditorTableModel());
-        editorTable.addMouseListener(new RoomSelectionListener(editorTable));
         editorTable.setBackground(Color.LIGHT_GRAY);
         editorTable.setRowHeight(20);
         editorTable.setBorder(new LineBorder(Color.BLACK, 2, true));
@@ -127,6 +126,6 @@ public final class Components {
     private static final class ClassEditorTableModel extends DefaultTableModel{
         @Override public int getRowCount() { return 6; }
         @Override public int getColumnCount() { return 2; }
-        @Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2 && rowIndex != 5; }
+        @Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2; }
     }
 }

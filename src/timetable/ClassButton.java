@@ -5,7 +5,6 @@ import java.awt.event.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.Map.*;
 import javax.json.*;
 import javax.swing.*;
 import timetable.listeners.*;
@@ -33,7 +32,6 @@ public final class ClassButton extends MouseAdapter {
         button = new JButton("<html>Óra: " + className.replace('_', ' ') +
                              "<br>Idõ: " + startTime + "-" + endTime +
                              "<br>Típus: " + classType +
-                             "<br>Épület: " + getBuildingForRoom(room) +
                              "<br>Terem: " + room);
         
         if(classType.charAt(0) == 'G') {
@@ -113,19 +111,5 @@ public final class ClassButton extends MouseAdapter {
     @Override
     public String toString() {
         return day + ' ' + className + ' ' + classType + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
-    }
-    
-    public static final Map<String, String[]> roomData = Map.of(
-                    "TIK", new String[] {"Kongresszusi", "Alagsor"},
-                    "Irinyi", new String[] {"214", "217", "218", "219", "222", "224", "225"},
-                    "Bolyai", new String[] {"Kerékjártó", "Farkas", "Kiss Árpád"},
-                    "Külvilág", new String[] {"Teniszpálya"});
-
-    private static String getBuildingForRoom(String room) {
-        return roomData.entrySet().stream()
-                       .filter(entry -> Arrays.stream(entry.getValue()).anyMatch(checkRoom -> checkRoom.equals(room)))
-                       .map(Entry::getKey)
-                       .findFirst()
-                       .orElse("Ismeretlen");
     }
 }
