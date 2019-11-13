@@ -1,5 +1,7 @@
 package timetable;
 
+import static java.nio.file.StandardOpenOption.*;
+
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
@@ -33,7 +35,7 @@ public final class Settings {
         
         if(!Files.exists(filePath)) {
             try {
-                Files.writeString(filePath, "{}");
+                Files.writeString(filePath, "{}", WRITE, CREATE);
             } catch (IOException e) {}
         }
         
