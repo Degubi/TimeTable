@@ -1,4 +1,4 @@
-from subprocess import call
+from subprocess import call, DEVNULL
 from distutils.dir_util import copy_tree as copydir
 from urllib.request import urlretrieve as download
 from inspect import cleandoc as format
@@ -7,26 +7,27 @@ from os import mkdir, rename, remove as removefile
 
 print("Generating runtime")
 jlinkCommand = (r"jlink --module-path .;..\lib\app "
-                 "--output ./TimeTable/ "
-                 "--add-modules java.desktop "
-                 "--add-modules java.logging "
-                 "--add-modules java.sql "
-                 "--no-man-pages "
-                 "--no-header-files "
-				 "--compress=2")
+                       "--output ./TimeTable/ "
+                       "--add-modules java.desktop "
+                       "--add-modules java.logging "
+                       "--add-modules java.sql "
+                       "--no-man-pages "
+                       "--no-header-files "
+        			   "--compress=2")
 
 call(jlinkCommand)
 
+libdir = "./TimeTable/lib/app"
+mkdir(libdir)
 print("Downloading libraries")
-mkdir("./TimeTable/lib/app")
 
-download("https://repo1.maven.org/maven2/org/eclipse/yasson/1.0.5/yasson-1.0.5.jar", "./TimeTable/lib/app/yasson-1.0.5.jar")
-download("https://repo1.maven.org/maven2/jakarta/json/jakarta.json-api/1.1.5/jakarta.json-api-1.1.5.jar", "./TimeTable/lib/app/jakarta.json-api-1.1.5.jar")
-download("https://repo1.maven.org/maven2/org/glassfish/jakarta.json/1.1.5/jakarta.json-1.1.5-module.jar", "./TimeTable/lib/app/jakarta.json-1.1.5-module.jar")
-download("https://repo1.maven.org/maven2/jakarta/json/bind/jakarta.json.bind-api/1.0.1/jakarta.json.bind-api-1.0.1.jar", "./TimeTable/lib/app/jakarta.json.bind-api-1.0.1.jar")
+download("https://repo1.maven.org/maven2/org/eclipse/yasson/1.0.5/yasson-1.0.5.jar", f"{libdir}/yasson-1.0.5.jar")
+download("https://repo1.maven.org/maven2/jakarta/json/jakarta.json-api/1.1.5/jakarta.json-api-1.1.5.jar", f"{libdir}/jakarta.json-api-1.1.5.jar")
+download("https://repo1.maven.org/maven2/org/glassfish/jakarta.json/1.1.5/jakarta.json-1.1.5-module.jar", f"{libdir}/jakarta.json-1.1.5-module.jar")
+download("https://repo1.maven.org/maven2/jakarta/json/bind/jakarta.json.bind-api/1.0.1/jakarta.json.bind-api-1.0.1.jar", f"{libdir}/jakarta.json.bind-api-1.0.1.jar")
 
 print("Creating jar file")
-call("javac -d compile --module-path ./TimeTable/lib/app/yasson-1.0.5.jar;./TimeTable/lib/app/jakarta.json-1.1.5-module.jar;./TimeTable/lib/app/jakarta.json.bind-api-1.0.1.jar;./TimeTable/lib/app/jakarta.json-api-1.1.5.jar src/timetable/*.java src/module-info.java")
+call(f"javac -d compile --module-path {libdir}/yasson-1.0.5.jar;{libdir}/jakarta.json-1.1.5-module.jar;{libdir}/jakarta.json.bind-api-1.0.1.jar;{libdir}/jakarta.json-api-1.1.5.jar src/timetable/*.java src/timetable/listeners/*.java src/module-info.java")
 copydir("src/assets", "compile/assets")
 
 manifest = """Main-Class: timetable.Main
@@ -41,5 +42,12 @@ removefile("Manifest.txt")
 removedir("compile")
 
 copyfile("icon.ico", "./TimeTable/icon.ico")
+
+print("Creating Shortcut Creator")
+call("pyinstaller shortcut.py --onefile", stderr = DEVNULL, stdin = DEVNULL)
+rename("./dist/shortcut.exe", "./TimeTable/CreateShortcut.exe")
+removefile("shortcut.spec")
+removedir("build")
+removedir("dist")
 
 print("Done")
