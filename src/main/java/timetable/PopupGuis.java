@@ -52,7 +52,7 @@ public final class PopupGuis{
     @SuppressWarnings("boxing")
     public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
         var startupLinkPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
-        var settingsFrame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), "Beállítások", true);
+        var settingsFrame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor(), "Beállítások", true);
         var timeValues = IntStream.range(0, 24)
                                   .mapToObj(k -> String.format("%02d:00", k))
                                   .toArray(String[]::new);
@@ -186,14 +186,14 @@ public final class PopupGuis{
         
         frame.setContentPane(panel);
         frame.setUndecorated(true);
-        frame.setLocationRelativeTo(Main.mainPanel);
+        frame.setLocationRelativeTo(Main.classesPanel);
         frame.addWindowFocusListener(new FocusLostListener(frame));
         frame.setBounds(mouse.x, mouse.y, 192, 192);
         frame.setVisible(true);
     }
     
     private static void showClassEditorDialog(Consumer<JDialog> saveListener, JComponent... components) {
-        var frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor(), "Óra szerkesztõ", true);
+        var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor(), "Óra szerkesztõ", true);
         var panel = new JPanel(null);
         
         frame.setIconImage(Components.trayIcon);
@@ -201,7 +201,7 @@ public final class PopupGuis{
         frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         frame.setResizable(false);
         frame.setBounds(0, 0, 400, 300);
-        frame.setLocationRelativeTo(Main.mainPanel);
+        frame.setLocationRelativeTo(Main.classesPanel);
         
         if(saveListener != null) {
             JButton saveButton = new JButton("Mentés");

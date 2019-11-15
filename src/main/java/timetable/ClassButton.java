@@ -69,7 +69,7 @@ public final class ClassButton extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent event) {
         if(event.getButton() == MouseEvent.BUTTON3) {
-            var frame = new JDialog((JFrame)Main.mainPanel.getTopLevelAncestor());
+            var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor());
             var panel = new JPanel(null);
             var buttonLocation = button.getLocationOnScreen();
             
@@ -82,7 +82,7 @@ public final class ClassButton extends MouseAdapter {
             panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(day, this)));
             
             panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> {
-                if(JOptionPane.showConfirmDialog(Main.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
+                if(JOptionPane.showConfirmDialog(Main.classesPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
                     Settings.classes.get(day).removeIf(this::equals);
                     
                     Main.updateClassesGui();

@@ -16,6 +16,7 @@ import javax.imageio.*;
 import javax.json.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import javax.swing.border.*;
 import javax.swing.filechooser.*;
 import javax.swing.plaf.nimbus.*;
 import org.apache.poi.*;
@@ -24,28 +25,33 @@ import timetable.listeners.*;
 
 public final class Main {
     private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
+    private static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static ClassButton currentClassButton;
 
     public static final String[] days = {"Hétfõ", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
-    public static final JLabel dateLabel = new JLabel();
-    public static final JPanel mainPanel = new JPanel(null);
+    public static final JLabel dateLabel = new JLabel("\0");
+    public static final JPanel classesPanel = new JPanel(null);
     public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
     
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
-        IntStream.range(0, 5).forEach(Main::addDayButton);
+        IntStream.range(0, 5).mapToObj(Main::newDayButton).forEach(classesPanel::add);
         updateClassesGui();
         
         dateLabel.setBounds(350, 5, 300, 40);
         dateLabel.setFont(Components.tableHeaderFont);
-        mainPanel.add(dateLabel);
+        dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        dateLabel.setBorder(new EmptyBorder(15, 0, 20, 0));
+        mainPanel.add(dateLabel, BorderLayout.PAGE_START);
+        mainPanel.add(classesPanel, BorderLayout.CENTER);
         
         var screenshotItem = Components.newMenuItem("Kép", "screencap.png", Main::exportToImage);
         var frame = new JFrame("Órarend");
+        
         frame.setBounds(0, 0, 1024, 768);
         frame.setLocationRelativeTo(null);
         frame.setContentPane(mainPanel);
-        frame.addWindowListener(new ScreenshotWindowListener(screenshotItem));
+        frame.addWindowListener(new WindowMinimizedListener(screenshotItem));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setIconImage(Components.trayIcon);
         frame.setResizable(false);
@@ -54,12 +60,11 @@ public final class Main {
             frame.setVisible(true);
         }
         
-        //System tray menu
         var sleepMode = new JCheckBoxMenuItem("Alvó Mód", Components.getIcon("sleep.png", 24), false);
         var popMenu = new JPopupMenu();
 
         popMenu.setPreferredSize(new Dimension(170, 200));
-        popMenu.add(Components.newMenuItem("Megnyitás", "open.png", Main::openFromTray));
+        popMenu.add(Components.newMenuItem("Megnyitás", "open.png", SystemTrayListener::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
         popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Json", "json.png", Main::importFromJson), Components.newMenuItem("Excel", "excel.png", Main::importFromExcel)));
@@ -72,11 +77,10 @@ public final class Main {
         tray.addMouseListener(new SystemTrayListener(popMenu));
         SystemTray.getSystemTray().add(tray);
         Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
-        
-        
         Thread.currentThread().setName("Time Label Updater");
-        var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
+        
         var timer = Settings.updateInterval - 100;
+        var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
         
         while(true) {
             if(frame.isVisible()) {
@@ -115,7 +119,7 @@ public final class Main {
         }
     }
     
-    private static void addDayButton(int dayIndex) {
+    private static JButton newDayButton(int dayIndex) {
         var currentDay = days[dayIndex];
         var topAdd = new JButton(currentDay);
         
@@ -124,12 +128,12 @@ public final class Main {
         topAdd.setBackground(Color.GRAY);
         topAdd.setForeground(Color.BLACK);
         topAdd.setFont(Components.tableHeaderFont);
-        topAdd.setBounds(20 + (dayIndex * 200), 80, 175, 40);
-        mainPanel.add(topAdd);
+        topAdd.setBounds(20 + (dayIndex * 200), 0, 175, 40);
+        return topAdd;
     }
     
     private static void exportToImage(@SuppressWarnings("unused") ActionEvent event) {
-        var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
+        var window = classesPanel.getTopLevelAncestor().getLocationOnScreen();
         var fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".png";
         var exportFile = new File(fileName);
         
@@ -192,15 +196,8 @@ public final class Main {
         }
     }
     
-    private static void openFromTray(@SuppressWarnings("unused") ActionEvent event) {
-        updateClassesGui();
-        var top = (JFrame) mainPanel.getTopLevelAncestor();
-        top.setVisible(true);
-        top.setExtendedState(JFrame.NORMAL);
-    }
-    
     public static void updateClassesGui() {
-        classButtons.forEach(k -> mainPanel.remove(k.button));
+        classButtons.forEach(k -> classesPanel.remove(k.button));
         classButtons.clear();
         currentClassButton = null;
         
@@ -208,11 +205,12 @@ public final class Main {
         var now = LocalTime.now();
         
         Components.handleNightMode(mainPanel, now);
+        Components.handleNightMode(classesPanel, now);
         Components.handleNightMode(dateLabel, now);
         
         Settings.classes
                 .forEach((day, classesPerDay) -> {
-                    var yPosition = new int[] {50};
+                    var yPosition = new int[] {-40};
                     var xPosition = 20 + Settings.indexOf(day, days) * 200;
 
                     classesPerDay.stream()
@@ -234,11 +232,11 @@ public final class Main {
                                      clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
                                      clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
                                   
-                                     mainPanel.add(clazz.button);
+                                     classesPanel.add(clazz.button);
                                      classButtons.add(clazz);
                                  });
                 });
         
-        mainPanel.repaint();
+        classesPanel.repaint();
     }
 }

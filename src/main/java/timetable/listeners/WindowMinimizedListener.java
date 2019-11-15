@@ -5,10 +5,10 @@ import static timetable.Main.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public final class ScreenshotWindowListener extends WindowAdapter{
+public final class WindowMinimizedListener extends WindowAdapter{
     private final JMenuItem screenshotItem;
     
-    public ScreenshotWindowListener(JMenuItem screenshotItem) {
+    public WindowMinimizedListener(JMenuItem screenshotItem) {
         this.screenshotItem = screenshotItem;
     }
 
@@ -20,7 +20,7 @@ public final class ScreenshotWindowListener extends WindowAdapter{
     
     @Override
     public void windowIconified(WindowEvent e) {
-        mainPanel.getTopLevelAncestor().setVisible(false);
+        classesPanel.getTopLevelAncestor().setVisible(false);
         screenshotItem.setEnabled(false);
         screenshotItem.setToolTipText("Nem lehet fényképet készíteni ha nem látszik az órarend");
     }
