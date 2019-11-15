@@ -23,7 +23,7 @@ public final class SystemTrayListener extends MouseAdapter{
     @Override
     public void mousePressed(MouseEvent event) {
         if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-            Main.updateClasses();
+            Main.updateClassesGui();
             var top = (JFrame) Main.mainPanel.getTopLevelAncestor();
             top.setVisible(true);
             top.setExtendedState(JFrame.NORMAL);

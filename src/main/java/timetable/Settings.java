@@ -14,7 +14,7 @@ import javax.json.*;
 import javax.json.bind.*;
 
 public final class Settings {
-    private static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
+    public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
 
     public static boolean enablePopups;
     public static LocalTime dayTimeStart;
@@ -55,12 +55,10 @@ public final class Settings {
             otherDayClassColor = getOrDefaultColor("otherDayClassColor", 84, 113, 142, settingsObject);
             pastClassColor = getOrDefaultColor("pastClassColor", 247, 238, 90, settingsObject);
             unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
-            classes = getArraySetting("classes", settingsObject).stream()
-                                                                .map(JsonValue::asJsonObject)
-                                                                .collect(Collectors.groupingBy(k -> k.getString("day"), 
-                                                                         Collectors.mapping(ClassButton::new, Collectors.toList())));
-            Arrays.stream(Main.days, 0, 5)
-                  .forEach(day -> classes.computeIfAbsent(day, ignore -> new ArrayList<>()));
+            updateClassesData(getArraySetting("classes", settingsObject).stream()
+                                                                        .map(JsonValue::asJsonObject)
+                                                                        .map(ClassButton::new)
+                                                                        .collect(Collectors.groupingBy(k -> k.day)));
         } catch (JsonbException | IOException e) {
             throw new IllegalStateException("Something is fucked with settings brah");
         }
@@ -77,21 +75,28 @@ public final class Settings {
     
     private Settings() {}
     
+    public static JsonArray createClassesArray() {
+        return classes.values().stream()
+                       .flatMap(List::stream)
+                       .map(k -> Json.createObjectBuilder()
+                                     .add("day", k.day)
+                                     .add("className", k.className)
+                                     .add("classType", k.classType)
+                                     .add("startTime", k.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+                                     .add("endTime", k.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+                                     .add("room", k.room)
+                                     .add("unImportant", k.unImportant)
+                                     .build())
+                       .reduce(Json.createArrayBuilder(), JsonArrayBuilder::add, JsonArrayBuilder::addAll)
+                       .build();
+    }
+    
+    public static void updateClassesData(Map<String, List<ClassButton>> newClasses) {
+        classes = newClasses;
+        Arrays.stream(Main.days, 0, 5).forEach(day -> classes.computeIfAbsent(day, ignore -> new ArrayList<>()));
+    }
+    
     public static void saveSettings() {
-        var clazzez = classes.values().stream()
-                              .flatMap(List::stream)
-                              .map(k -> Json.createObjectBuilder()
-                                            .add("day", k.day)
-                                            .add("className", k.className)
-                                            .add("classType", k.classType)
-                                            .add("startTime", k.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                            .add("endTime", k.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                            .add("room", k.room)
-                                            .add("unImportant", k.unImportant)
-                                            .build())
-                              .reduce(Json.createArrayBuilder(), JsonArrayBuilder::add, JsonArrayBuilder::addAll)
-                              .build();
-        
         var settingsObject = Json.createObjectBuilder()
                                  .add("enablePopups", enablePopups)
                                  .add("timeBeforeNotification", timeBeforeNotification)
@@ -105,7 +110,7 @@ public final class Settings {
                                  .add("otherDayClassColor", colorToString(otherDayClassColor))
                                  .add("pastClassColor", colorToString(pastClassColor))
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
-                                 .add("classes", clazzez);
+                                 .add("classes", createClassesArray());
         
         try {
             Files.writeString(Path.of("settings.json"), json.toJson(settingsObject.build()));
@@ -138,7 +143,7 @@ public final class Settings {
         return settingsObject.getBoolean(key);
     }
     
-    private static JsonArray getArraySetting(String key, JsonObject settingsObject){
+    public static JsonArray getArraySetting(String key, JsonObject settingsObject){
         if(!settingsObject.containsKey(key)) {
             return Json.createArrayBuilder().build();
         }

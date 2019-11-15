@@ -10,6 +10,11 @@
 		    <version>4.1.1</version>
 		</dependency>
 		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml</artifactId>
+		    <version>4.1.1</version>
+		</dependency>
+		<dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>yasson</artifactId>
             <version>1.0.5</version>

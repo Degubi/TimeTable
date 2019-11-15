@@ -21,6 +21,17 @@ public final class Components {
         return item;
     }
     
+    public static JMenu newSideMenu(String text, String iconPath, JMenuItem... menuItems) {
+        var importMenu = new JMenu(text);
+        importMenu.setIcon(Components.getIcon(iconPath, 24));
+        importMenu.setHorizontalTextPosition(SwingConstants.RIGHT);
+        importMenu.setHorizontalAlignment(SwingConstants.LEFT);
+        importMenu.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        importMenu.setMargin(new Insets(2, 25, 2, 0));
+        for(var item : menuItems) importMenu.add(item);
+        return importMenu;
+    }
+    
     public static JComboBox<String> newComboBox(String selectedItem, int y, String... data){
         var endTimeBox = new JComboBox<>(data);
         endTimeBox.setBounds(100, y, 75, 30);
@@ -121,7 +132,6 @@ public final class Components {
             container.setBackground(isDarkMode ? Settings.nightTimeColor : Settings.dayTimeColor);
         }
     }
-    
     
     private static final class ClassEditorTableModel extends DefaultTableModel{
         @Override public int getRowCount() { return 6; }

@@ -4,4 +4,5 @@ module degubi.timetable {
     
     requires java.json.bind;
     requires java.json;
+    requires poi;
 }

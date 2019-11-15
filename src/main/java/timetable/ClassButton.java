@@ -1,12 +1,13 @@
 package timetable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.awt.event.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
 import javax.json.*;
 import javax.swing.*;
+import org.apache.poi.ss.usermodel.*;
 import timetable.listeners.*;
 
 public final class ClassButton extends MouseAdapter {
@@ -28,18 +29,25 @@ public final class ClassButton extends MouseAdapter {
         this.endTime = endTime;
         this.room = room;
         this.unImportant = unImportant;
+        this.button = initButton();
+    }
+    
+    public ClassButton(Row classRow, DateTimeFormatter format) {
+        var beginDate = LocalDateTime.parse(classRow.getCell(0).getStringCellValue(), format);
+        var endDate = LocalDateTime.parse(classRow.getCell(1).getStringCellValue(), format);
+        var summary = classRow.getCell(2).getStringCellValue();
+        var codeBeginParamIndex = summary.indexOf('(');
+        var code = summary.substring(codeBeginParamIndex + 1, summary.indexOf(')', codeBeginParamIndex));
+        var lastCodeChar = Character.toUpperCase(code.charAt(code.length() - 1));
         
-        button = new JButton("<html>Óra: " + className.replace('_', ' ') +
-                             "<br>Idõ: " + startTime + "-" + endTime +
-                             "<br>Típus: " + classType +
-                             "<br>Terem: " + room);
-        
-        if(classType.charAt(0) == 'G') {
-            button.setFont(importantClassFont);
-        }
-        
-        button.setFocusable(false);
-        button.addMouseListener(this);
+        this.day = Main.days[beginDate.getDayOfWeek().ordinal()];
+        this.className = summary.substring(0, codeBeginParamIndex - 1);
+        this.classType = lastCodeChar == 'G' || lastCodeChar == 'L' ? "Gyakorlat" : "Elõadás";
+        this.startTime = beginDate.toLocalTime();
+        this.endTime = endDate.toLocalTime();
+        this.room = classRow.getCell(3).getStringCellValue();
+        this.unImportant = false;
+        this.button = initButton();
     }
     
     public ClassButton(JTable editorTable, boolean unImportant) {
@@ -53,9 +61,9 @@ public final class ClassButton extends MouseAdapter {
     
     public ClassButton(JsonObject object) {
         this(object.getString("day"), object.getString("className"), object.getString("classType"), 
-                LocalTime.parse(object.getString("startTime"), DateTimeFormatter.ISO_LOCAL_TIME),
-                LocalTime.parse(object.getString("endTime"), DateTimeFormatter.ISO_LOCAL_TIME),
-                object.getString("room"), object.getBoolean("unImportant"));
+             LocalTime.parse(object.getString("startTime"), DateTimeFormatter.ISO_LOCAL_TIME),
+             LocalTime.parse(object.getString("endTime"), DateTimeFormatter.ISO_LOCAL_TIME),
+             object.getString("room"), object.getBoolean("unImportant"));
     }
     
     @Override
@@ -77,7 +85,7 @@ public final class ClassButton extends MouseAdapter {
                 if(JOptionPane.showConfirmDialog(Main.mainPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
                     Settings.classes.get(day).removeIf(this::equals);
                     
-                    Main.updateClasses();
+                    Main.updateClassesGui();
                 }
             }));
             
@@ -87,13 +95,29 @@ public final class ClassButton extends MouseAdapter {
                         .findFirst()
                         .ifPresent(butt -> {
                             butt.unImportant = !butt.unImportant;
-                            Main.updateClasses();
+                            Main.updateClassesGui();
                             frame.dispose();
                         });
             }));
             
             frame.setVisible(true);
         }
+    }
+    
+    private JButton initButton() {
+        var button = new JButton("<html>Óra: " + className.replace('_', ' ') +
+                                 "<br>Idõ: " + startTime + "-" + endTime +
+                                 "<br>Típus: " + classType +
+                                 "<br>Terem: " + room);
+
+        if(classType.charAt(0) == 'G') {
+            button.setFont(importantClassFont);
+        }
+        
+        button.setFocusable(false);
+        button.addMouseListener(this);
+        
+        return button;
     }
     
     @Override

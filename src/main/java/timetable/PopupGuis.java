@@ -29,7 +29,7 @@ public final class PopupGuis{
             Settings.classes.get(editorTable.getValueAt(1, 1))
                     .add(new ClassButton(editorTable, dataButton.unImportant));
             
-            Main.updateClasses();
+            Main.updateClassesGui();
             frame.dispose();
         }, editorTable);
     }
@@ -44,7 +44,7 @@ public final class PopupGuis{
             Settings.classes.get(editorTable.getValueAt(1, 1))
                     .add(new ClassButton(editorTable, dataButton.unImportant));
             
-            Main.updateClasses();
+            Main.updateClassesGui();
             frame.dispose();
         }, editorTable);
     }
@@ -133,7 +133,7 @@ public final class PopupGuis{
                 Settings.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60;
                 Settings.saveSettings();
                 
-                Main.updateClasses();
+                Main.updateClassesGui();
                 settingsFrame.dispose();
             }catch (NumberFormatException | DateTimeParseException e) {
                 JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);

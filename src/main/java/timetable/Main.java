@@ -1,17 +1,25 @@
 package timetable;
 
+import static java.nio.file.StandardOpenOption.*;
+
 import java.awt.*;
+import java.awt.Color;
 import java.awt.TrayIcon.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
 import java.util.stream.*;
 import javax.imageio.*;
+import javax.json.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import javax.swing.filechooser.*;
 import javax.swing.plaf.nimbus.*;
+import org.apache.poi.*;
+import org.apache.poi.ss.usermodel.*;
 import timetable.listeners.*;
 
 public final class Main {
@@ -26,15 +34,15 @@ public final class Main {
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
         IntStream.range(0, 5).forEach(Main::addDayButton);
-        updateClasses();
+        updateClassesGui();
         
-        dateLabel.setBounds(325, 5, 300, 40);
+        dateLabel.setBounds(350, 5, 300, 40);
         dateLabel.setFont(Components.tableHeaderFont);
         mainPanel.add(dateLabel);
         
-        var screenshotItem = Components.newMenuItem("Órarend Fénykép", "screencap.png", Main::createScreenshot);
+        var screenshotItem = Components.newMenuItem("Kép", "screencap.png", Main::exportToImage);
         var frame = new JFrame("Órarend");
-        frame.setBounds(0, 0, 950, 713);
+        frame.setBounds(0, 0, 1024, 768);
         frame.setLocationRelativeTo(null);
         frame.setContentPane(mainPanel);
         frame.addWindowListener(new ScreenshotWindowListener(screenshotItem));
@@ -54,7 +62,8 @@ public final class Main {
         popMenu.add(Components.newMenuItem("Megnyitás", "open.png", Main::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
-        popMenu.add(screenshotItem);
+        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Json", "json.png", Main::importFromJson), Components.newMenuItem("Excel", "excel.png", Main::importFromExcel)));
+        popMenu.add(Components.newSideMenu("Exportálás", "export.png", Components.newMenuItem("Json", "json.png", Main::exportToJson), screenshotItem));
         popMenu.add(Components.newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
         popMenu.add(Components.newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
@@ -115,28 +124,82 @@ public final class Main {
         topAdd.setBackground(Color.GRAY);
         topAdd.setForeground(Color.BLACK);
         topAdd.setFont(Components.tableHeaderFont);
-        topAdd.setBounds(20 + (dayIndex * 180), 80, 150, 40);
+        topAdd.setBounds(20 + (dayIndex * 200), 80, 175, 40);
         mainPanel.add(topAdd);
     }
     
-    private static void createScreenshot(@SuppressWarnings("unused") ActionEvent event) {
+    private static void exportToImage(@SuppressWarnings("unused") ActionEvent event) {
         var window = mainPanel.getTopLevelAncestor().getLocationOnScreen();
         var fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".png";
+        var exportFile = new File(fileName);
         
         try {
-            ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 20, window.y + 90, 890, 600)), "PNG", new File(fileName));
-            JOptionPane.showMessageDialog(mainPanel.getTopLevelAncestor(), "TimeTable saved as: " + fileName);
+            ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 20, window.y + 100, 990, 650)), "PNG", exportFile);
+            Runtime.getRuntime().exec("explorer.exe /select," + exportFile);
         } catch (HeadlessException | AWTException | IOException e1) {}
     }
     
+    private static void exportToJson(@SuppressWarnings("unused") ActionEvent event) {
+        var exportFile = Path.of(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".json");
+        var classesArray = Settings.createClassesArray();
+        var classesObject = Json.createObjectBuilder().add("classes", classesArray).build();
+        
+        try {
+            Files.writeString(exportFile, Settings.json.toJson(classesObject), WRITE, CREATE);
+            Runtime.getRuntime().exec("explorer.exe /select," + exportFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private static void importFromJson(@SuppressWarnings("unused") ActionEvent event) {
+        var chooser = new JFileChooser("./");
+        chooser.setFileFilter(new FileNameExtensionFilter("Json Files", "json"));
+
+        if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            try {
+                var file = Files.readString(chooser.getSelectedFile().toPath());
+                var parsedJson = Settings.json.fromJson(file, JsonObject.class);
+                
+                Settings.updateClassesData(Settings.getArraySetting("classes", parsedJson).stream()
+                                                   .map(JsonValue::asJsonObject)
+                                                   .map(ClassButton::new)
+                                                   .collect(Collectors.groupingBy(k -> k.day)));
+                updateClassesGui();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private static void importFromExcel(@SuppressWarnings("unused") ActionEvent event) {
+        var chooser = new JFileChooser("./");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xls", "xlsx"));
+
+        if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            try(var book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
+                var classesSheet = book.getSheetAt(0);
+                var format = DateTimeFormatter.ofPattern("uuuu.MM.dd. [HH:][H:]mm:ss");
+                
+                Settings.updateClassesData(StreamSupport.stream(classesSheet.spliterator(), false)
+                                                        .skip(1)
+                                                        .map(row -> new ClassButton(row, format))
+                                                        .collect(Collectors.groupingBy(k -> k.day)));
+                updateClassesGui();
+            } catch (EncryptedDocumentException | IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
     private static void openFromTray(@SuppressWarnings("unused") ActionEvent event) {
-        updateClasses();
+        updateClassesGui();
         var top = (JFrame) mainPanel.getTopLevelAncestor();
         top.setVisible(true);
         top.setExtendedState(JFrame.NORMAL);
     }
     
-    public static void updateClasses() {
+    public static void updateClassesGui() {
         classButtons.forEach(k -> mainPanel.remove(k.button));
         classButtons.clear();
         currentClassButton = null;
@@ -150,12 +213,12 @@ public final class Main {
         Settings.classes
                 .forEach((day, classesPerDay) -> {
                     var yPosition = new int[] {50};
-                    var xPosition = 20 + Settings.indexOf(day, days) * 180;
+                    var xPosition = 20 + Settings.indexOf(day, days) * 200;
 
                     classesPerDay.stream()
                                  .sorted(ClassButton.timeBasedOrder)
                                  .forEach(clazz -> {
-                                     clazz.button.setBounds(xPosition, yPosition[0] += 95, 150, 85);
+                                     clazz.button.setBounds(xPosition, yPosition[0] += 95, 175, 85);
                                   
                                      var isToday = day.equalsIgnoreCase(today);
                                      var isBefore = isToday && now.isBefore(clazz.startTime);
