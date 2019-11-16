@@ -83,16 +83,18 @@ public final class Main {
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
         
         while(true) {
+            var nowDate = LocalDateTime.now();
+            
             if(frame.isVisible()) {
-                dateLabel.setText(LocalDateTime.now().format(displayTimeFormat));
+                dateLabel.setText(nowDate.format(displayTimeFormat));
             }
 
             if(++timer == Settings.updateInterval) {
                 if(!sleepMode.isSelected() && !frame.isVisible()) {
-                    var now = LocalTime.now();
+                    var nowTime = nowDate.toLocalTime();
                     
-                    if(Settings.enablePopups && currentClassButton != null && now.isBefore(currentClassButton.startTime)) {
-                        var timeBetween = Duration.between(now, currentClassButton.startTime);
+                    if(Settings.enablePopups && currentClassButton != null && nowTime.isBefore(currentClassButton.startTime)) {
+                        var timeBetween = Duration.between(nowTime, currentClassButton.startTime);
 
                         if(timeBetween.toMinutes() < Settings.timeBeforeNotification) {
                             tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + currentClassButton.className + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
@@ -110,7 +112,7 @@ public final class Main {
                             }catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
                         }
                     }
-                    Components.handleNightMode(dateLabel, now);
+                    Components.handleNightMode(dateLabel, nowTime);
                 }
                 timer = 0;
             }
@@ -201,12 +203,13 @@ public final class Main {
         classButtons.clear();
         currentClassButton = null;
         
-        var today = days[LocalDateTime.now().getDayOfWeek().ordinal()];
-        var now = LocalTime.now();
+        var nowDate = LocalDateTime.now();
+        var today = days[nowDate.getDayOfWeek().ordinal()];
+        var nowTime = nowDate.toLocalTime();
         
-        Components.handleNightMode(mainPanel, now);
-        Components.handleNightMode(classesPanel, now);
-        Components.handleNightMode(dateLabel, now);
+        Components.handleNightMode(mainPanel, nowTime);
+        Components.handleNightMode(classesPanel, nowTime);
+        Components.handleNightMode(dateLabel, nowTime);
         
         Settings.classes
                 .forEach((day, classesPerDay) -> {
@@ -219,14 +222,14 @@ public final class Main {
                                      clazz.button.setBounds(xPosition, yPosition[0] += 95, 175, 85);
                                   
                                      var isToday = day.equalsIgnoreCase(today);
-                                     var isBefore = isToday && now.isBefore(clazz.startTime);
-                                     var isAfter = isToday && (now.isAfter(clazz.startTime) || now.equals(clazz.startTime));
-                                     var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && now.equals(clazz.startTime));
+                                     var isBefore = isToday && nowTime.isBefore(clazz.startTime);
+                                     var isAfter = isToday && (nowTime.isAfter(clazz.startTime) || nowTime.equals(clazz.startTime));
+                                     var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && nowTime.equals(clazz.startTime));
                                     
                                      if(isNext) {
                                          currentClassButton = clazz;
                                         
-                                         var between = Duration.between(now, clazz.startTime);
+                                         var between = Duration.between(nowTime, clazz.startTime);
                                          Main.tray.setToolTip("Következõ óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdõpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
                                      }
                                      clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);

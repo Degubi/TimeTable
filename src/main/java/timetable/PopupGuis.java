@@ -181,14 +181,14 @@ public final class PopupGuis{
         
         Components.handleNightMode(panel, LocalTime.now());
         
-        var mouse = MouseInfo.getPointerInfo().getLocation();
         var frame = new JDialog(settingsFrame, null, false);
+        var buttonPosition = button.getLocationOnScreen();
         
         frame.setContentPane(panel);
         frame.setUndecorated(true);
         frame.setLocationRelativeTo(Main.classesPanel);
         frame.addWindowFocusListener(new FocusLostListener(frame));
-        frame.setBounds(mouse.x, mouse.y, 192, 192);
+        frame.setBounds(buttonPosition.x + 48, buttonPosition.y, 192, 192);
         frame.setVisible(true);
     }
     

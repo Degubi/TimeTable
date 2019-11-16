@@ -1,5 +1,6 @@
 package timetable;
 
+import java.awt.*;
 import java.awt.Font;
 import java.awt.event.*;
 import java.time.*;
@@ -69,22 +70,12 @@ public final class ClassButton extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent event) {
         if(event.getButton() == MouseEvent.BUTTON3) {
-            var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor());
             var panel = new JPanel(null);
-            var buttonLocation = button.getLocationOnScreen();
-            
-            frame.setContentPane(panel);
-            frame.addWindowFocusListener(new FocusLostListener(frame));
-            frame.setUndecorated(true);
-            frame.setLocationRelativeTo(null);
-            frame.setBounds(buttonLocation.x + 118, buttonLocation.y, 32, 96);
-            
             panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(day, this)));
             
             panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> {
                 if(JOptionPane.showConfirmDialog(Main.classesPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
                     Settings.classes.get(day).removeIf(this::equals);
-                    
                     Main.updateClassesGui();
                 }
             }));
@@ -96,10 +87,18 @@ public final class ClassButton extends MouseAdapter {
                         .ifPresent(butt -> {
                             butt.unImportant = !butt.unImportant;
                             Main.updateClassesGui();
-                            frame.dispose();
+                            ((JDialog)panel.getTopLevelAncestor()).dispose();
                         });
             }));
             
+            var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor());
+            var mouse = MouseInfo.getPointerInfo().getLocation();
+            
+            frame.setContentPane(panel);
+            frame.addWindowFocusListener(new FocusLostListener(frame));
+            frame.setUndecorated(true);
+            frame.setLocationRelativeTo(null);
+            frame.setBounds(mouse.x, mouse.y - 48, 32, 96);
             frame.setVisible(true);
         }
     }

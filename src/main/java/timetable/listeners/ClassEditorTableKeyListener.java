@@ -26,7 +26,10 @@ public final class ClassEditorTableKeyListener extends AbstractAction{
             }
         }else if(row == 2) {
             if(key == 'R' || key == 'L') {
-                dataTable.setValueAt(dataTable.getValueAt(2, 1).toString().charAt(0) == 'E' ? "Gyakorlat" : "Elõadás", 2, 1);
+                var current = dataTable.getValueAt(2, 1).toString().charAt(0);
+                var next = current == 'E' ? "Gyakorlat" : current == 'G' ? "Szabvál" : "Elõadás";
+                
+                dataTable.setValueAt(next, 2, 1);
             }
         }else if(row == 3 || row == 4) {
             var split = dataTable.getValueAt(row, 1).toString().split(":");
