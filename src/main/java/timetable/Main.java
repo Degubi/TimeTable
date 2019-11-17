@@ -7,6 +7,10 @@ import java.awt.Color;
 import java.awt.TrayIcon.*;
 import java.awt.event.*;
 import java.io.*;
+import java.net.*;
+import java.net.http.*;
+import java.net.http.HttpResponse.*;
+import java.nio.charset.*;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
@@ -81,12 +85,16 @@ public final class Main {
         
         var timer = Settings.updateInterval - 100;
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
-        
+        var todayNames = HttpClient.newHttpClient()
+                                   .send(newRequest("https://api.abalin.net/get/today?country=hu"), ofJsonObject())
+                                   .body()
+                                   .getJsonObject("data")
+                                   .getString("name_hu");
         while(true) {
             var nowDate = LocalDateTime.now();
             
             if(frame.isVisible()) {
-                dateLabel.setText(nowDate.format(displayTimeFormat));
+                dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
             }
 
             if(++timer == Settings.updateInterval) {
@@ -196,6 +204,14 @@ public final class Main {
                 e.printStackTrace();
             }
         }
+    }
+    
+    private static HttpRequest newRequest(String url) {
+        return HttpRequest.newBuilder(URI.create(url)).build();
+    }
+    
+    private static BodyHandler<JsonObject> ofJsonObject(){
+        return info -> BodySubscribers.mapping(BodySubscribers.ofString(StandardCharsets.ISO_8859_1), data -> Settings.json.fromJson(data, JsonObject.class));
     }
     
     public static void updateClassesGui() {
