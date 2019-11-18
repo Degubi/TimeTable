@@ -159,21 +159,22 @@ public final class Settings {
     }
     
     public static void createStartupLink(String toSavePath) {
-        var command = ("Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
-                       "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
-                           "oLink.TargetPath = \"" + "C:\\Program Files\\TimeTable\\bin\\javaw.exe" + "\"\n" + 
-                           "oLink.Arguments = \"" + "-jar C:\\Program Files\\TimeTable\\TimeTable.jar -window" + "\"\n" +
-                           "oLink.IconLocation = \"" + "C:\\Program Files\\TimeTable\\icon.ico" + "\"\n" +
-                           "oLink.WorkingDirectory = \"" + "C:\\Program Files\\TimeTable" + "\"\n" +
-                           "oLink.Save\n");
+        var sourceDir = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath().substring(1)).getParent().toString().replace("%20", " ");
+        var command = "Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
+                      "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
+                          "oLink.TargetPath = \"" + sourceDir + "\\bin\\javaw.exe" + "\"\n" + 
+                          "oLink.Arguments = \"-jar \"\"" + sourceDir + "\\TimeTable.jar\"\" -nowindow" + "\"\n" +
+                          "oLink.IconLocation = \"" + sourceDir + "\\icon.ico" + "\"\n" +
+                          "oLink.WorkingDirectory = \"" + sourceDir + "\"\n" +
+                          "oLink.Save\n";
         try {
             var scriptPath = Path.of("iconScript.vbs");
 
             Files.writeString(scriptPath, command);
             Runtime.getRuntime().exec("wscript.exe iconScript.vbs").waitFor();
             Files.delete(scriptPath);
-        } catch (IOException | InterruptedException e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

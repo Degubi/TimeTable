@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.stream.*;
 import javax.imageio.*;
 import javax.json.*;
-import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.filechooser.*;
@@ -52,7 +51,7 @@ public final class Main {
         var screenshotItem = Components.newMenuItem("Kép", "screencap.png", Main::exportToImage);
         var frame = new JFrame("Órarend");
         
-        frame.setBounds(0, 0, 1024, 768);
+        frame.setBounds(0, 0, 1024, Math.min(768, Toolkit.getDefaultToolkit().getScreenSize().height - 50));
         frame.setLocationRelativeTo(null);
         frame.setContentPane(mainPanel);
         frame.addWindowListener(new WindowMinimizedListener(screenshotItem));
@@ -106,18 +105,6 @@ public final class Main {
 
                         if(timeBetween.toMinutes() < Settings.timeBeforeNotification) {
                             tray.displayMessage("Órarend", "Figyelem! Következõ óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + currentClassButton.className + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
-
-                            try(var stream = AudioSystem.getAudioInputStream(Main.class.getClassLoader().getResource("assets/beep.wav"));
-                                var line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, stream.getFormat(), 8900))){
-
-                                line.open();
-                                ((FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-20);
-                                line.start();
-                                var buf = new byte[8900];
-                                stream.read(buf);
-                                line.write(buf, 0, 8900);
-                                line.drain();
-                            }catch(IOException | UnsupportedAudioFileException | LineUnavailableException e1) {}
                         }
                     }
                     Components.handleNightMode(dateLabel, nowTime);
