@@ -90,7 +90,7 @@ public final class PopupGuis{
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
         
-        Components.addSettingsSection("Színek", 10, scrollPanel);
+        Components.addSettingsSection("Színek", 10, now, scrollPanel);
         Components.addSettingButton(currentClass, 50, "Jelenlegi Óra Színe", scrollPanel, now);
         Components.addSettingButton(beforeClass, 100, "Következõ Órák Színe", scrollPanel, now);
         Components.addSettingButton(otherClass, 150, "Más Napok Óráinak Színe", scrollPanel, now);
@@ -99,17 +99,17 @@ public final class PopupGuis{
         Components.addSettingButton(dayTimeColor, 300, "Nappali Mód Háttérszíne", scrollPanel, now);
         Components.addSettingButton(nightTimeColor, 350, "Éjszakai Mód Háttérszíne", scrollPanel, now);
         
-        Components.addSettingsSection("Idõ", 410, scrollPanel);
+        Components.addSettingsSection("Idõ", 410, now, scrollPanel);
         Components.addSettingButton(startTimeBox, 450, "Nappali Idõszak Kezdete", scrollPanel, now);
         Components.addSettingButton(endTimeBox, 500, "Nappali Idõszak Vége", scrollPanel, now);
         Components.addSettingButton(timeBeforeNoteBox, 550, "Értesítések Frissítési Idõzítései", scrollPanel, now);
         Components.addSettingButton(updateIntervalBox, 600, "Óra Elõtti Értesítések Percben", scrollPanel, now);
         
-        Components.addSettingsSection("Egyéb", 660, scrollPanel);
+        Components.addSettingsSection("Egyéb", 660, now, scrollPanel);
         Components.addSettingButton(popupCheckBox, 710, "Üzenetek Bekapcsolva", scrollPanel, now);
         Components.addSettingButton(startupBox, 760, "Indítás PC Indításakor", scrollPanel, now);
         
-        Components.addSettingsSection("Veszély Zóna", 810, scrollPanel);
+        Components.addSettingsSection("Veszély Zóna", 810, now, scrollPanel);
         var deleteClassesButton = new JButton("Órarend Törlése");
         deleteClassesButton.setBounds(100, 860, 120, 40);
         deleteClassesButton.setBackground(Color.GRAY);
@@ -168,7 +168,7 @@ public final class PopupGuis{
     }
 
     private static void handleClassReset(JPanel scrollPanel) {
-        if(JOptionPane.showConfirmDialog(scrollPanel, "Biztos törlöd az összes órát?") == JOptionPane.OK_OPTION) {
+        if(JOptionPane.showConfirmDialog(scrollPanel, "Biztos törlöd az összes órát?", "Órarend", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             Settings.classes.values().forEach(List::clear);
             Main.updateClassesGui();
         }

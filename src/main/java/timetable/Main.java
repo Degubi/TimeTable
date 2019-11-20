@@ -251,11 +251,15 @@ public final class Main {
             Consumer<JDialog> importFunction = dialog -> {
                 try(var book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
                     var classesSheet = book.getSheetAt(0);
+                    var columnCount = classesSheet.getRow(0).getPhysicalNumberOfCells();
                     var format = DateTimeFormatter.ofPattern("uuuu.MM.dd. [HH:][H:]mm:ss");
-                        
+                    
+                    Function<Row, ClassButton> creatorFunction = columnCount == 5 ? row -> ClassButton.fromTimetableExcelExport(row, format)
+                                                                                  : ClassButton::fromCourseExcelExport;
+                    
                     Settings.updateClassesData(StreamSupport.stream(classesSheet.spliterator(), false)
                                                             .skip(1)
-                                                            .map(row -> new ClassButton(row, format))
+                                                            .map(creatorFunction)
                                                             .collect(Collectors.groupingBy(k -> k.day)));
                     updateClassesGui();
                     dialog.setVisible(false);

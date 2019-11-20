@@ -10,7 +10,7 @@
 
 ### Tálca menü:
   - Alvó mód: Óra előtti értesítések kikapcsolása
-  - Importálás: Excelből (Neptun órarend 1 hét exportja) vagy Json
+  - Importálás: Excelből (Neptun órarend 1 hét exportja vagy kurzus exportja) vagy Json
   - Exportálás: Képbe, Excelbe (Neptun órarend formátumban) vagy Json-ba  
    <img src="images/menu.jpg" width="250" />
 

@@ -80,10 +80,11 @@ public final class Components {
         mainPanel.add(label);
     }
     
-    public static void addSettingsSection(String text, int y, JPanel mainPanel) {
+    public static void addSettingsSection(String text, int y, LocalTime time, JPanel mainPanel) {
         var label = new JLabel(text);
         label.setBounds(100, y, text.length() * 12, 30);
         label.setFont(bigBaldFont);
+        Components.handleNightMode(label, time);
         mainPanel.add(label);
         
         var separatorBottom = new JSeparator(SwingConstants.HORIZONTAL);
