@@ -10,7 +10,9 @@ import javax.swing.table.*;
 import timetable.listeners.*;
 
 public final class Components {
-    public static final Font tableHeaderFont = new Font("SansSerif", Font.PLAIN, 20);
+    public static final Font bigFont = new Font("SansSerif", Font.PLAIN, 20);
+    public static final Font bigBaldFont = new Font("SansSerif", Font.BOLD, 20);
+    public static final Font smallFont = new Font("SansSerif", Font.PLAIN, 16);
     public static final Image trayIcon = getIcon("tray.png", 0).getImage();
 
     private Components() {}
@@ -72,10 +74,21 @@ public final class Components {
         mainPanel.add(component);
         
         var label = new JLabel(labelText);
-        label.setFont(Components.tableHeaderFont);
+        label.setFont(smallFont);
         Components.handleNightMode(label, time);
         label.setBounds(100, y + (component instanceof JCheckBox ? -5 : component instanceof JButton ? 5 : 0), 400, 30);
         mainPanel.add(label);
+    }
+    
+    public static void addSettingsSection(String text, int y, JPanel mainPanel) {
+        var label = new JLabel(text);
+        label.setBounds(100, y, text.length() * 12, 30);
+        label.setFont(bigBaldFont);
+        mainPanel.add(label);
+        
+        var separatorBottom = new JSeparator(SwingConstants.HORIZONTAL);
+        separatorBottom.setBounds(0, y + 30, 800, 2);
+        mainPanel.add(separatorBottom);
     }
     
     public static JTable createClassEditorTable(ClassButton dataButton) {

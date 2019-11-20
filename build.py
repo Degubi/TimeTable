@@ -17,7 +17,6 @@ jlinkCommand = (r"jlink --module-path .;..\lib\app "
                        "--no-man-pages "
                        "--no-header-files "
                        "--compress=2")
- 
 call(jlinkCommand)
 
 print("Downloading libraries")

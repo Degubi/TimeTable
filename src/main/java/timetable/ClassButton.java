@@ -43,7 +43,7 @@ public final class ClassButton extends MouseAdapter {
         
         this.day = Main.days[beginDate.getDayOfWeek().ordinal()];
         this.className = summary.substring(0, codeBeginParamIndex - 1);
-        this.classType = lastCodeChar == 'G' || lastCodeChar == 'L' ? "Gyakorlat" : "Elõadás";
+        this.classType = code.contains("SZV") ? "Szabvál" : lastCodeChar == 'G' || lastCodeChar == 'L' ? "Gyakorlat" : "Elõadás";
         this.startTime = beginDate.toLocalTime();
         this.endTime = endDate.toLocalTime();
         this.room = classRow.getCell(3).getStringCellValue();

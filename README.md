@@ -3,7 +3,7 @@
   - Óra módosítás/törlés/nem fontossá jelölés: Jobb kattintás az órára
   - Következő óra: piros, elmúlt: sárga, következendő: zöld, más nap: kék, nem fontos: fehér
   - Gyakorlat: Vastag betű, Előadás: Normál betű
-  - Óra előtti tálca üzenet és hang alapú értesítések
+  - Óra előtti tálca értesítés
   - Névnapok a főképernyőn
   - Idő alapú éjszakai mód  
     <img src="images/base.jpg" width="1000" />
@@ -11,7 +11,7 @@
 ### Tálca menü:
   - Alvó mód: Óra előtti értesítések kikapcsolása
   - Importálás: Excelből (Neptun órarend 1 hét exportja) vagy Json
-  - Exportálás: Képbe vagy Json-ba  
+  - Exportálás: Képbe, Excelbe (Neptun órarend formátumban) vagy Json-ba  
    <img src="images/menu.jpg" width="250" />
 
 ### Beállítások menü:

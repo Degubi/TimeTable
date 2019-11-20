@@ -6,6 +6,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
+import java.util.List;
 import java.util.function.*;
 import java.util.stream.*;
 import javax.swing.*;
@@ -76,46 +77,53 @@ public final class PopupGuis{
         var popupCheckBox = new JCheckBox((String)null, Settings.enablePopups);
         popupCheckBox.setOpaque(false);
         Components.handleNightMode(popupCheckBox, now);
-        popupCheckBox.setBounds(150, 660, 200, 20);
+        popupCheckBox.setSize(200, 20);
         var startupBox = new JCheckBox((String)null, Files.exists(Path.of(startupLinkPath)));
         startupBox.setOpaque(false);
         Components.handleNightMode(startupBox, now);
-        startupBox.setBounds(150, 700, 200, 20);
+        startupBox.setSize(200, 20);
 
         var scrollPanel = new JPanel(null);
         Components.handleNightMode(scrollPanel, now);
-        scrollPanel.setPreferredSize(new Dimension(500, 800));
+        scrollPanel.setPreferredSize(new Dimension(500, 950));
         var scrollPane = new JScrollPane(scrollPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
         
-        settingsFrame.setResizable(false);
-        settingsFrame.setBounds(0, 0, 800, 600);
-        settingsFrame.setIconImage(Components.trayIcon);
-        settingsFrame.setLocationRelativeTo(null);
-        settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        settingsFrame.setContentPane(scrollPane);
+        Components.addSettingsSection("Színek", 10, scrollPanel);
+        Components.addSettingButton(currentClass, 50, "Jelenlegi Óra Színe", scrollPanel, now);
+        Components.addSettingButton(beforeClass, 100, "Következõ Órák Színe", scrollPanel, now);
+        Components.addSettingButton(otherClass, 150, "Más Napok Óráinak Színe", scrollPanel, now);
+        Components.addSettingButton(pastClass, 200, "Elmúlt Órák Színe", scrollPanel, now);
+        Components.addSettingButton(unimportantClass, 250, "Nem Fontos Órák Színe", scrollPanel, now);
+        Components.addSettingButton(dayTimeColor, 300, "Nappali Mód Háttérszíne", scrollPanel, now);
+        Components.addSettingButton(nightTimeColor, 350, "Éjszakai Mód Háttérszíne", scrollPanel, now);
         
-        Components.addSettingButton(currentClass, 30, "Jelenlegi Óra Színe", scrollPanel, now);
-        Components.addSettingButton(beforeClass, 80, "Következõ Órák Színe", scrollPanel, now);
-        Components.addSettingButton(otherClass, 130, "Más Napok Óráinak Színe", scrollPanel, now);
-        Components.addSettingButton(pastClass, 180, "Elmúlt Órák Színe", scrollPanel, now);
-        Components.addSettingButton(unimportantClass, 230, "Nem Fontos Órák Színe", scrollPanel, now);
-        Components.addSettingButton(dayTimeColor, 280, "Nappali Mód Háttérszíne", scrollPanel, now);
-        Components.addSettingButton(nightTimeColor, 330, "Éjszakai Mód Háttérszíne", scrollPanel, now);
+        Components.addSettingsSection("Idõ", 410, scrollPanel);
+        Components.addSettingButton(startTimeBox, 450, "Nappali Idõszak Kezdete", scrollPanel, now);
+        Components.addSettingButton(endTimeBox, 500, "Nappali Idõszak Vége", scrollPanel, now);
+        Components.addSettingButton(timeBeforeNoteBox, 550, "Értesítések Frissítési Idõzítései", scrollPanel, now);
+        Components.addSettingButton(updateIntervalBox, 600, "Óra Elõtti Értesítések Percben", scrollPanel, now);
         
-        Components.addSettingButton(startTimeBox, 430, "Nappali Idõszak Kezdete", scrollPanel, now);
-        Components.addSettingButton(endTimeBox, 480, "Nappali Idõszak Vége", scrollPanel, now);
-        Components.addSettingButton(timeBeforeNoteBox, 530, "Értesítések Frissítési Idõzítései", scrollPanel, now);
-        Components.addSettingButton(updateIntervalBox, 580, "Óra Elõtti Értesítések Percben", scrollPanel, now);
+        Components.addSettingsSection("Egyéb", 660, scrollPanel);
+        Components.addSettingButton(popupCheckBox, 710, "Üzenetek Bekapcsolva", scrollPanel, now);
+        Components.addSettingButton(startupBox, 760, "Indítás PC Indításakor", scrollPanel, now);
         
-        Components.addSettingButton(popupCheckBox, 680, "Üzenetek Bekapcsolva", scrollPanel, now);
-        Components.addSettingButton(startupBox, 730, "Indítás PC Indításakor", scrollPanel, now);
+        Components.addSettingsSection("Veszély Zóna", 810, scrollPanel);
+        var deleteClassesButton = new JButton("Órarend Törlése");
+        deleteClassesButton.setBounds(100, 860, 120, 40);
+        deleteClassesButton.setBackground(Color.GRAY);
+        deleteClassesButton.setForeground(Color.RED);
+        deleteClassesButton.addActionListener(e -> handleClassReset(scrollPanel));
         
         var saveButton = new JButton("Mentés");
-        saveButton.setBounds(600, 720, 120, 40);
+        saveButton.setBounds(600, 900, 120, 40);
         saveButton.setBackground(Color.GRAY);
         saveButton.setForeground(Color.BLACK);
+        
+        scrollPanel.add(saveButton);
+        scrollPanel.add(deleteClassesButton);
+        
         saveButton.addActionListener(ev -> {
             try {
                 Settings.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
@@ -142,15 +150,28 @@ public final class PopupGuis{
             if(startupBox.isSelected()) {
                 Settings.createStartupLink(startupLinkPath);
             }else{
-                try {
-                    Files.delete(Path.of(startupLinkPath));
-                } catch (IOException e) {
-                    e.printStackTrace();
+                var maybeExistingFilePath = Path.of(startupLinkPath);
+                    if(Files.exists(maybeExistingFilePath)) {
+                    try {
+                        Files.delete(maybeExistingFilePath);
+                    } catch (IOException e) {}
                 }
             }
         });
-        scrollPanel.add(saveButton);
+        
+        settingsFrame.setBounds(0, 0, 800, 600);
+        settingsFrame.setIconImage(Components.trayIcon);
+        settingsFrame.setLocationRelativeTo(null);
+        settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        settingsFrame.setContentPane(scrollPane);
         settingsFrame.setVisible(true);
+    }
+
+    private static void handleClassReset(JPanel scrollPanel) {
+        if(JOptionPane.showConfirmDialog(scrollPanel, "Biztos törlöd az összes órát?") == JOptionPane.OK_OPTION) {
+            Settings.classes.values().forEach(List::clear);
+            Main.updateClassesGui();
+        }
     }
 
     private static void handleColorSettingButtonPress(JDialog settingsFrame, JButton button) {
