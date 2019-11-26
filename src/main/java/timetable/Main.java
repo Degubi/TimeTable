@@ -219,10 +219,11 @@ public final class Main {
     }
     
     private static void importFromJson(@SuppressWarnings("unused") ActionEvent event) {
-        var chooser = new JFileChooser("./");
+        var chooser = new JFileChooser(System.getProperty("user.home") + "/Desktop");
+        chooser.setDialogTitle("Órarend Importálás Választó");
         chooser.setFileFilter(new FileNameExtensionFilter("Json Files", "json"));
 
-        if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+        if(chooser.showOpenDialog(classesPanel) == JFileChooser.APPROVE_OPTION) {
             Consumer<JDialog> importFunction = dialog -> {
                 try {
                     var file = Files.readString(chooser.getSelectedFile().toPath());
@@ -244,10 +245,11 @@ public final class Main {
     }
     
     private static void importFromExcel(@SuppressWarnings("unused") ActionEvent event) {
-        var chooser = new JFileChooser("./");
+        var chooser = new JFileChooser(System.getProperty("user.home") + "/Desktop");
+        chooser.setDialogTitle("Órarend Importálás Választó");
         chooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xls", "xlsx"));
 
-        if(chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+        if(chooser.showOpenDialog(classesPanel) == JFileChooser.APPROVE_OPTION) {
             Consumer<JDialog> importFunction = dialog -> {
                 try(var book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
                     var classesSheet = book.getSheetAt(0);
