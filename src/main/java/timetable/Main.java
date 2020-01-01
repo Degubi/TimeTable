@@ -96,8 +96,7 @@ public final class Main {
                                    .getJsonObject("namedays")
                                    .getString("hu");
         while(true) {
-            //var nowDate = LocalDateTime.now();
-            var nowDate = LocalDateTime.of(2020, Month.JANUARY, 6, 20, 00);
+            var nowDate = LocalDateTime.now();
             
             if(frame.isVisible()) {
                 dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
@@ -302,9 +301,7 @@ public final class Main {
         classButtons.clear();
         currentClassButton = null;
         
-        var nowDate = LocalDateTime.of(2020, Month.JANUARY, 6, 20, 00);
-
-        //var nowDate = LocalDateTime.now();
+        var nowDate = LocalDateTime.now();
         var today = days[nowDate.getDayOfWeek().ordinal()];
         var nowTime = nowDate.toLocalTime();
         
