@@ -89,18 +89,21 @@ public final class Main {
         var timer = Settings.updateInterval - 100;
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
         var todayNames = HttpClient.newHttpClient()
-                                   .send(newRequest("https://api.abalin.net/get/today?country=hu"), ofJsonObject())
+                                   .send(newRequest("https://api.abalin.net/today?country=hu"), ofJsonObject())
                                    .body()
-                                   .getJsonObject("data")
-                                   .getString("name_hu");
+                                   .getJsonArray("data")
+                                   .getJsonObject(0)
+                                   .getJsonObject("namedays")
+                                   .getString("hu");
         while(true) {
-            var nowDate = LocalDateTime.now();
+            //var nowDate = LocalDateTime.now();
+            var nowDate = LocalDateTime.of(2020, Month.JANUARY, 6, 20, 00);
             
             if(frame.isVisible()) {
                 dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
             }
 
-            if(++timer == Settings.updateInterval) {
+            if(++timer >= Settings.updateInterval) {
                 if(!sleepMode.isSelected() && !frame.isVisible()) {
                     var nowTime = nowDate.toLocalTime();
                     
@@ -299,7 +302,9 @@ public final class Main {
         classButtons.clear();
         currentClassButton = null;
         
-        var nowDate = LocalDateTime.now();
+        var nowDate = LocalDateTime.of(2020, Month.JANUARY, 6, 20, 00);
+
+        //var nowDate = LocalDateTime.now();
         var today = days[nowDate.getDayOfWeek().ordinal()];
         var nowTime = nowDate.toLocalTime();
         
