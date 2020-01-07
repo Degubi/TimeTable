@@ -59,7 +59,7 @@ public final class ClassButton extends MouseAdapter {
         
         var day = Main.days[beginDate.getDayOfWeek().ordinal()];
         var className = summary.substring(0, codeBeginParamIndex - 1);
-        var classType = code.contains("SZV") ? "Szabvál" : lastCodeChar == 'G' || lastCodeChar == 'L' ? "Gyakorlat" : "Elõadás";
+        var classType = code.contains("SZV") ? "SzabvÃ¡l" : lastCodeChar == 'G' || lastCodeChar == 'L' ? "Gyakorlat" : "ElÅ‘adÃ¡s";
         var room = classRow.getCell(3).getStringCellValue();
         
         return new ClassButton(day, className, classType, beginDate.toLocalTime(), endDate.toLocalTime(), room, false);
@@ -101,7 +101,7 @@ public final class ClassButton extends MouseAdapter {
             panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(day, this)));
             
             panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> {
-                if(JOptionPane.showConfirmDialog(Main.classesPanel, "Tényleg Törlöd?", "Törlés Megerõsítés", JOptionPane.YES_NO_OPTION) == 0) {
+                if(JOptionPane.showConfirmDialog(Main.classesPanel, "TÃ©nyleg TÃ¶rlÃ¶d?", "TÃ¶rlÃ©s MegerÅ‘sÃ­tÃ©s", JOptionPane.YES_NO_OPTION) == 0) {
                     Settings.classes.get(day).removeIf(this::equals);
                     Main.updateClassesGui();
                 }
@@ -131,9 +131,9 @@ public final class ClassButton extends MouseAdapter {
     }
     
     private JButton initButton() {
-        var button = new JButton("<html>Óra: " + className.replace('_', ' ') +
-                                 "<br>Idõ: " + startTime + "-" + endTime +
-                                 "<br>Típus: " + classType +
+        var button = new JButton("<html>Ã“ra: " + className.replace('_', ' ') +
+                                 "<br>IdÅ‘: " + startTime + "-" + endTime +
+                                 "<br>TÃ­pus: " + classType +
                                  "<br>Terem: " + room);
 
         if(classType.charAt(0) == 'G') {

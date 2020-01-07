@@ -35,10 +35,10 @@ public final class Main {
     private static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static ClassButton currentClassButton;
 
-    public static final String[] days = {"HÈtfı", "Kedd", "Szerda", "Cs¸tˆrtˆk", "PÈntek", "Szombat", "Vas·rnap"};
+    public static final String[] days = {"H√©tf≈ë", "Kedd", "Szerda", "Cs√ºt√∂rt√∂k", "P√©ntek", "Szombat", "Vas√°rnap"};
     public static final JLabel dateLabel = new JLabel("\0");
     public static final JPanel classesPanel = new JPanel(null);
-    public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "”rarend");
+    public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "√ìrarend");
     
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
@@ -52,8 +52,8 @@ public final class Main {
         mainPanel.add(dateLabel, BorderLayout.PAGE_START);
         mainPanel.add(classesPanel, BorderLayout.CENTER);
         
-        var screenshotItem = Components.newMenuItem("KÈp", "screencap.png", Main::exportToImage);
-        var frame = new JFrame("”rarend");
+        var screenshotItem = Components.newMenuItem("K√©p", "screencap.png", Main::exportToImage);
+        var frame = new JFrame("√ìrarend");
         
         frame.setBounds(0, 0, 1024, Math.min(768, Toolkit.getDefaultToolkit().getScreenSize().height - 50));
         frame.setLocationRelativeTo(null);
@@ -67,18 +67,18 @@ public final class Main {
             frame.setVisible(true);
         }
         
-        var sleepMode = new JCheckBoxMenuItem("AlvÛ MÛd", Components.getIcon("sleep.png", 24), false);
+        var sleepMode = new JCheckBoxMenuItem("Alv√≥ M√≥d", Components.getIcon("sleep.png", 24), false);
         var popMenu = new JPopupMenu();
 
         popMenu.setPreferredSize(new Dimension(170, 200));
-        popMenu.add(Components.newMenuItem("Megnyit·s", "open.png", SystemTrayListener::openFromTray));
+        popMenu.add(Components.newMenuItem("Megnyit√°s", "open.png", SystemTrayListener::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
-        popMenu.add(Components.newSideMenu("Import·l·s", "import.png", Components.newMenuItem("Json", "json.png", Main::importFromJson), Components.newMenuItem("Excel", "excel.png", Main::importFromExcel)));
-        popMenu.add(Components.newSideMenu("Export·l·s", "export.png", Components.newMenuItem("Json", "json.png", Main::exportToJson), Components.newMenuItem("Excel", "excel.png", Main::exportToExcel), screenshotItem));
-        popMenu.add(Components.newMenuItem("Be·llÌt·sok", "settings.png", PopupGuis::showSettingsGui));
+        popMenu.add(Components.newSideMenu("Import√°l√°s", "import.png", Components.newMenuItem("Json", "json.png", Main::importFromJson), Components.newMenuItem("Excel", "excel.png", Main::importFromExcel)));
+        popMenu.add(Components.newSideMenu("Export√°l√°s", "export.png", Components.newMenuItem("Json", "json.png", Main::exportToJson), Components.newMenuItem("Excel", "excel.png", Main::exportToExcel), screenshotItem));
+        popMenu.add(Components.newMenuItem("Be√°ll√≠t√°sok", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
-        popMenu.add(Components.newMenuItem("Bez·r·s", "exit.png", e -> System.exit(0)));
+        popMenu.add(Components.newMenuItem("Bez√°r√°s", "exit.png", e -> System.exit(0)));
         SwingUtilities.updateComponentTreeUI(popMenu);
         
         tray.addMouseListener(new SystemTrayListener(popMenu));
@@ -110,7 +110,7 @@ public final class Main {
                         var timeBetween = Duration.between(nowTime, currentClassButton.startTime);
 
                         if(timeBetween.toMinutes() < Settings.timeBeforeNotification) {
-                            tray.displayMessage("”rarend", "Figyelem! Kˆvetkezı Ûra: " + timeBetween.toHoursPart() + " Ûra " +  timeBetween.toMinutesPart() + " perc m˙lva!\n”ra: " + currentClassButton.className + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
+                            tray.displayMessage("√ìrarend", "Figyelem! K√∂vetkez≈ë √≥ra: " + timeBetween.toHoursPart() + " √≥ra " +  timeBetween.toMinutesPart() + " perc m√∫lva!\n√ìra: " + currentClassButton.className + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
                         }
                     }
                     Components.handleNightMode(dateLabel, nowTime);
@@ -148,7 +148,7 @@ public final class Main {
             } catch (HeadlessException | AWTException | IOException e1) {}
         };
         
-        showTransferDialog("Export·l·s folyamatban...", exportFunction);
+        showTransferDialog("Export√°l√°s folyamatban...", exportFunction);
     }
     
     private static void exportToJson(@SuppressWarnings("unused") ActionEvent event) {
@@ -166,7 +166,7 @@ public final class Main {
             }
         };
         
-        showTransferDialog("Export·l·s folyamatban...", exportFunction);
+        showTransferDialog("Export√°l√°s folyamatban...", exportFunction);
     }
     
     private static void exportToExcel(@SuppressWarnings("unused") ActionEvent event) {
@@ -176,9 +176,9 @@ public final class Main {
             try(var workbook = new XSSFWorkbook();
                 var output = Files.newOutputStream(exportFile, WRITE, CREATE)){
                 
-                var sheet = workbook.createSheet("”r·k");
+                var sheet = workbook.createSheet("√ìr√°k");
                 var headerRow = sheet.createRow(0);
-                var headerText = new String[] {"KezdÈs", "BefejezÈs", "÷sszefoglal·s", "HelyszÌn"};
+                var headerText = new String[] {"Kezd√©s", "Befejez√©s", "√ñsszefoglal√°s", "Helysz√≠n"};
                 
                 IntStream.range(0, 4).forEach(i -> headerRow.createCell(i).setCellValue(headerText[i]));
                 
@@ -198,7 +198,7 @@ public final class Main {
                                                              .toString()
                                                              .replace('-', '.');
                             
-                            var classType = clazz.classType.equals("Szabv·l") ? " (_SZV_" 
+                            var classType = clazz.classType.equals("Szabv√°l") ? " (_SZV_" 
                                                                               : (" (_" + clazz.classType.charAt(0));
                             
                             row.createCell(0).setCellValue(classDayFormatted + ". " + clazz.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
@@ -217,12 +217,12 @@ public final class Main {
             }
         };
         
-        showTransferDialog("Export·l·s folyamatban...", exportFunction);
+        showTransferDialog("Export√°l√°s folyamatban...", exportFunction);
     }
     
     private static void importFromJson(@SuppressWarnings("unused") ActionEvent event) {
         var chooser = new JFileChooser(System.getProperty("user.home") + "/Desktop");
-        chooser.setDialogTitle("”rarend Import·l·s V·lasztÛ");
+        chooser.setDialogTitle("√ìrarend Import√°l√°s V√°laszt√≥");
         chooser.setFileFilter(new FileNameExtensionFilter("Json Files", "json"));
 
         if(chooser.showOpenDialog(classesPanel) == JFileChooser.APPROVE_OPTION) {
@@ -242,13 +242,13 @@ public final class Main {
                 }
             };
             
-            showTransferDialog("Import·l·s folyamatban...", importFunction);
+            showTransferDialog("Import√°l√°s folyamatban...", importFunction);
         }
     }
     
     private static void importFromExcel(@SuppressWarnings("unused") ActionEvent event) {
         var chooser = new JFileChooser(System.getProperty("user.home") + "/Desktop");
-        chooser.setDialogTitle("”rarend Import·l·s V·lasztÛ");
+        chooser.setDialogTitle("√ìrarend Import√°l√°s V√°laszt√≥");
         chooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xls", "xlsx"));
 
         if(chooser.showOpenDialog(classesPanel) == JFileChooser.APPROVE_OPTION) {
@@ -269,20 +269,20 @@ public final class Main {
                     dialog.setVisible(false);
                 }catch (FileNotFoundException e) {
                     dialog.setVisible(false);
-                    JOptionPane.showMessageDialog(mainPanel, "Az excel f·jl haszn·latban van!", "Hiba", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(mainPanel, "Az excel f√°jl haszn√°latban van!", "Hiba", JOptionPane.ERROR_MESSAGE);
                 } catch (EncryptedDocumentException | IOException e) {
                     e.printStackTrace();
                 }
             };
             
-            showTransferDialog("Import·l·s folyamatban...", importFunction);
+            showTransferDialog("Import√°l√°s folyamatban...", importFunction);
         }
     }
     
     
     private static void showTransferDialog(String text, Consumer<JDialog> fun) {
         var jop = new JOptionPane(text, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[0]);
-        var dialog = jop.createDialog(mainPanel, "”rarend");
+        var dialog = jop.createDialog(mainPanel, "√ìrarend");
         
         new Thread(() -> fun.accept(dialog)).start();
         dialog.setVisible(true);
@@ -328,7 +328,7 @@ public final class Main {
                                          currentClassButton = clazz;
                                         
                                          var between = Duration.between(nowTime, clazz.startTime);
-                                         Main.tray.setToolTip("Kˆvetkezı Ûra " + between.toHoursPart() + " Ûra " + between.toMinutesPart() + " perc m˙lva: " + clazz.className + ' ' + clazz.classType + "\nIdıpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
+                                         Main.tray.setToolTip("K√∂vetkez≈ë √≥ra " + between.toHoursPart() + " √≥ra " + between.toMinutesPart() + " perc m√∫lva: " + clazz.className + ' ' + clazz.classType + "\nId≈ëpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
                                      }
                                      clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
                                      clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);

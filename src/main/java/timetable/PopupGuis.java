@@ -53,7 +53,7 @@ public final class PopupGuis{
     @SuppressWarnings("boxing")
     public static void showSettingsGui(@SuppressWarnings("unused") ActionEvent event) {
         var startupLinkPath = System.getenv("APPDATA") + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TimeTable.lnk";
-        var settingsFrame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor(), "Beállítások", true);
+        var settingsFrame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor(), "BeÃ¡llÃ­tÃ¡sok", true);
         var timeValues = IntStream.range(0, 24)
                                   .mapToObj(k -> String.format("%02d:00", k))
                                   .toArray(String[]::new);
@@ -90,33 +90,33 @@ public final class PopupGuis{
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
         
-        Components.addSettingsSection("Színek", 10, now, scrollPanel);
-        Components.addSettingButton(currentClass, 50, "Jelenlegi Óra Színe", scrollPanel, now);
-        Components.addSettingButton(beforeClass, 100, "Következõ Órák Színe", scrollPanel, now);
-        Components.addSettingButton(otherClass, 150, "Más Napok Óráinak Színe", scrollPanel, now);
-        Components.addSettingButton(pastClass, 200, "Elmúlt Órák Színe", scrollPanel, now);
-        Components.addSettingButton(unimportantClass, 250, "Nem Fontos Órák Színe", scrollPanel, now);
-        Components.addSettingButton(dayTimeColor, 300, "Nappali Mód Háttérszíne", scrollPanel, now);
-        Components.addSettingButton(nightTimeColor, 350, "Éjszakai Mód Háttérszíne", scrollPanel, now);
+        Components.addSettingsSection("SzÃ­nek", 10, now, scrollPanel);
+        Components.addSettingButton(currentClass, 50, "Jelenlegi Ã“ra SzÃ­ne", scrollPanel, now);
+        Components.addSettingButton(beforeClass, 100, "KÃ¶vetkezÅ‘ Ã“rÃ¡k SzÃ­ne", scrollPanel, now);
+        Components.addSettingButton(otherClass, 150, "MÃ¡s Napok Ã“rÃ¡inak SzÃ­ne", scrollPanel, now);
+        Components.addSettingButton(pastClass, 200, "ElmÃºlt Ã“rÃ¡k SzÃ­ne", scrollPanel, now);
+        Components.addSettingButton(unimportantClass, 250, "Nem Fontos Ã“rÃ¡k SzÃ­ne", scrollPanel, now);
+        Components.addSettingButton(dayTimeColor, 300, "Nappali MÃ³d HÃ¡ttÃ©rszÃ­ne", scrollPanel, now);
+        Components.addSettingButton(nightTimeColor, 350, "Ã‰jszakai MÃ³d HÃ¡ttÃ©rszÃ­ne", scrollPanel, now);
         
-        Components.addSettingsSection("Idõ", 410, now, scrollPanel);
-        Components.addSettingButton(startTimeBox, 450, "Nappali Idõszak Kezdete", scrollPanel, now);
-        Components.addSettingButton(endTimeBox, 500, "Nappali Idõszak Vége", scrollPanel, now);
-        Components.addSettingButton(timeBeforeNoteBox, 550, "Értesítések Frissítési Idõzítései", scrollPanel, now);
-        Components.addSettingButton(updateIntervalBox, 600, "Óra Elõtti Értesítések Percben", scrollPanel, now);
+        Components.addSettingsSection("IdÅ‘", 410, now, scrollPanel);
+        Components.addSettingButton(startTimeBox, 450, "Nappali IdÅ‘szak Kezdete", scrollPanel, now);
+        Components.addSettingButton(endTimeBox, 500, "Nappali IdÅ‘szak VÃ©ge", scrollPanel, now);
+        Components.addSettingButton(timeBeforeNoteBox, 550, "Ã‰rtesÃ­tÃ©sek FrissÃ­tÃ©si IdÅ‘zÃ­tÃ©sei", scrollPanel, now);
+        Components.addSettingButton(updateIntervalBox, 600, "Ã“ra ElÅ‘tti Ã‰rtesÃ­tÃ©sek Percben", scrollPanel, now);
         
-        Components.addSettingsSection("Egyéb", 660, now, scrollPanel);
-        Components.addSettingButton(popupCheckBox, 710, "Üzenetek Bekapcsolva", scrollPanel, now);
-        Components.addSettingButton(startupBox, 760, "Indítás PC Indításakor", scrollPanel, now);
+        Components.addSettingsSection("EgyÃ©b", 660, now, scrollPanel);
+        Components.addSettingButton(popupCheckBox, 710, "Ãœzenetek Bekapcsolva", scrollPanel, now);
+        Components.addSettingButton(startupBox, 760, "IndÃ­tÃ¡s PC IndÃ­tÃ¡sakor", scrollPanel, now);
         
-        Components.addSettingsSection("Veszély Zóna", 810, now, scrollPanel);
-        var deleteClassesButton = new JButton("Órarend Törlése");
+        Components.addSettingsSection("VeszÃ©ly ZÃ³na", 810, now, scrollPanel);
+        var deleteClassesButton = new JButton("Ã“rarend TÃ¶rlÃ©se");
         deleteClassesButton.setBounds(100, 860, 120, 40);
         deleteClassesButton.setBackground(Color.GRAY);
         deleteClassesButton.setForeground(Color.RED);
         deleteClassesButton.addActionListener(e -> handleClassReset(scrollPanel));
         
-        var saveButton = new JButton("Mentés");
+        var saveButton = new JButton("MentÃ©s");
         saveButton.setBounds(600, 900, 120, 40);
         saveButton.setBackground(Color.GRAY);
         saveButton.setForeground(Color.BLACK);
@@ -144,7 +144,7 @@ public final class PopupGuis{
                 Main.updateClassesGui();
                 settingsFrame.dispose();
             }catch (NumberFormatException | DateTimeParseException e) {
-                JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelõ formátumú!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(settingsFrame, "Valamelyik adat nem megfelelÅ‘ formÃ¡tumÃº!", "Rossz adat", JOptionPane.INFORMATION_MESSAGE);
             }
             
             if(startupBox.isSelected()) {
@@ -168,7 +168,7 @@ public final class PopupGuis{
     }
 
     private static void handleClassReset(JPanel scrollPanel) {
-        if(JOptionPane.showConfirmDialog(scrollPanel, "Biztos törlöd az összes órát?", "Órarend", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+        if(JOptionPane.showConfirmDialog(scrollPanel, "Biztos tÃ¶rlÃ¶d az Ã¶sszes Ã³rÃ¡t?", "Ã“rarend", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             Settings.classes.values().forEach(List::clear);
             Main.updateClassesGui();
         }
@@ -214,7 +214,7 @@ public final class PopupGuis{
     }
     
     private static void showClassEditorDialog(Consumer<JDialog> saveListener, JComponent... components) {
-        var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor(), "Óra szerkesztõ", true);
+        var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor(), "Ã“ra szerkesztÅ‘", true);
         var panel = new JPanel(null);
         
         frame.setIconImage(Components.trayIcon);
@@ -225,7 +225,7 @@ public final class PopupGuis{
         frame.setLocationRelativeTo(Main.classesPanel);
         
         if(saveListener != null) {
-            JButton saveButton = new JButton("Mentés");
+            JButton saveButton = new JButton("MentÃ©s");
             saveButton.setFocusable(false);
             saveButton.setBounds(400 / 2 - 70, 300 - 90, 120, 40);
             saveButton.setBackground(Color.GRAY);

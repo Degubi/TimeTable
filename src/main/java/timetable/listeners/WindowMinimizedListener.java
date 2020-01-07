@@ -22,6 +22,6 @@ public final class WindowMinimizedListener extends WindowAdapter{
     public void windowIconified(WindowEvent e) {
         classesPanel.getTopLevelAncestor().setVisible(false);
         screenshotItem.setEnabled(false);
-        screenshotItem.setToolTipText("Nem lehet fÈnykÈpet kÈszÌteni ha nem l·tszik az Ûrarend");
+        screenshotItem.setToolTipText("Nem lehet f√©nyk√©pet k√©sz√≠teni ha nem l√°tszik az √≥rarend");
     }
 }

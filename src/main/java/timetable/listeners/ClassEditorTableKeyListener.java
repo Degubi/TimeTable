@@ -27,7 +27,7 @@ public final class ClassEditorTableKeyListener extends AbstractAction{
         }else if(row == 2) {
             if(key == 'R' || key == 'L') {
                 var current = dataTable.getValueAt(2, 1).toString().charAt(0);
-                var next = current == 'E' ? "Gyakorlat" : current == 'G' ? "Szabv·l" : "Elıad·s";
+                var next = current == 'E' ? "Gyakorlat" : current == 'G' ? "Szabv√°l" : "El≈ëad√°s";
                 
                 dataTable.setValueAt(next, 2, 1);
             }

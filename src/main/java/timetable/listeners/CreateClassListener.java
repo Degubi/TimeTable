@@ -14,7 +14,7 @@ public final class CreateClassListener extends MouseAdapter{
     @Override
     public void mousePressed(MouseEvent event) {
         if(event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
-            PopupGuis.showEditorForNewClass(new ClassButton(dayStr, "”ra", "Elıad·s", LocalTime.of(8, 0), LocalTime.of(10, 0), "Terem", false));
+            PopupGuis.showEditorForNewClass(new ClassButton(dayStr, "√ìra", "El≈ëad√°s", LocalTime.of(8, 0), LocalTime.of(10, 0), "Terem", false));
         }
     }
 }
