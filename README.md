@@ -21,7 +21,7 @@
    <img src="images/settings.jpg" width="350"/>
 
 ### Letöltés, futtatás:
-  - https://drive.google.com/uc?id=1oIVd7ITG6z5dTI27mlJz7o5Tki5wVFsR&export=download
+  - 'Releases' Github menüfülből le kell szedni a legújabb zip-et
   - Unzipelni (érdemes pl. Program Files-ba)
   - Lekell futtatni a createShortcut.vbs-t
   - Az Asztalon levő parancsikonnal kell futtatni a programot
