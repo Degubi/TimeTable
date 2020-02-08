@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Main-Class: timetable.Main
+Class-Path: lib/app/yasson-1.0.5.jar lib/app/jakarta.json-api-1.1.5.jar 
+ lib/app/jakarta.json-1.1.5-module.jar lib/app/jakarta.json.bind-api-1.0
+ .1.jar lib/app/poi-4.1.1.jar lib/app/commons-codec-1.13.jar lib/app/com
+ mons-collections4-4.4.jar lib/app/commons-math3-3.6.1.jar lib/app/poi-o
+ oxml-4.1.1.jar lib/app/poi-ooxml-schemas-4.1.1.jar lib/app/xmlbeans-3.1
+ .0.jar lib/app/commons-compress-1.19.jar lib/app/curvesapi-1.06.jar
+Created-By: 13 (Oracle Corporation)
+

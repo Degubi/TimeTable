@@ -23,10 +23,12 @@
 ### Letöltés, futtatás:
   - https://drive.google.com/uc?id=1oIVd7ITG6z5dTI27mlJz7o5Tki5wVFsR&export=download
   - Unzipelni (érdemes pl. Program Files-ba)
-  - Lekell futtatni a CreateShortcut.exe-t
+  - Lekell futtatni a createShortcut.vbs-t
   - Az Asztalon levő parancsikonnal kell futtatni a programot
 
 ### Buildeléshez:
-  - Kell lennie Pythonnak telepítve és JDK-nak PATH-on, illetve a ShortcutCreator-hoz kell VisualStudio 2019 telepítés
-  - Lekell futtatni a build.py-t
+  - Kell lennie Pythonnak telepítve és JDK-nak PATH-on, illetve Eclipse-nek vagy Maven-nek telepítve
+  - Vagy Eclipse-ből le kell futtatni a ExportLibraries.launch
+  - Vagy cmd-ből ha van maven telepítve: 'mvn dependency:copy-dependencies -DoutputDirectory=${project.build.directory}/lib'
+  - Le kell futtatni a build.py-t
   - A TimeTable mappába kialakul a Google Drive-on található zip struktúrája

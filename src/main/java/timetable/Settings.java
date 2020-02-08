@@ -31,16 +31,17 @@ public final class Settings {
     public static Map<String, List<ClassButton>> classes;
     
     static {
-        var filePath = Path.of("settings.json");
+        var sourceDir = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath().substring(1)).getParent().toString().replace("%20", " ");
+        var settingsPath = Path.of(sourceDir + "/settings.json");
         
-        if(!Files.exists(filePath)) {
+        if(!Files.exists(settingsPath)) {
             try {
-                Files.writeString(filePath, "{}", WRITE, CREATE);
+                Files.writeString(settingsPath, "{}", WRITE, CREATE);
             } catch (IOException e) {}
         }
         
         try {
-            var settingsObject = json.fromJson(Files.readString(filePath), JsonObject.class);
+            var settingsObject = json.fromJson(Files.readString(settingsPath), JsonObject.class);
             
             enablePopups = getOrDefaultBoolean("enablePopups", true, settingsObject);
             timeBeforeNotification = getOrDefaultInt("timeBeforeNotification", 60, settingsObject);
@@ -112,8 +113,11 @@ public final class Settings {
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
                                  .add("classes", createClassesArray());
         
+        var sourceDir = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath().substring(1)).getParent().toString().replace("%20", " ");
+        var settingsPath = Path.of(sourceDir + "/settings.json");
+        
         try {
-            Files.writeString(Path.of("settings.json"), json.toJson(settingsObject.build()));
+            Files.writeString(settingsPath, json.toJson(settingsObject.build()));
         } catch (IOException e) {
             e.printStackTrace();
         }
