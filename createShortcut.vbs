@@ -4,4 +4,5 @@ Set link = Shell.CreateShortcut(Shell.SpecialFolders("Desktop") & "\TimeTable.ln
 link.Arguments = "-jar " & """" & scriptPath & "\TimeTable.jar" & """"
 link.TargetPath = scriptPath & "\bin\javaw.exe"
 link.IconLocation = scriptPath & "\icon.ico"
+link.WorkingDirectory = scriptPath
 link.Save

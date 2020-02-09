@@ -31,8 +31,7 @@ public final class Settings {
     public static Map<String, List<ClassButton>> classes;
     
     static {
-        var sourceDir = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath().substring(1)).getParent().toString().replace("%20", " ");
-        var settingsPath = Path.of(sourceDir + "/settings.json");
+        var settingsPath = Path.of("settings.json");
         
         if(!Files.exists(settingsPath)) {
             try {
