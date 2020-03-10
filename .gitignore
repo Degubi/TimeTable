@@ -2,7 +2,7 @@
 /.settings/
 settings.json
 .classpath
-.propject
+.project
 .pydevproject
 /lib/
 /target/
