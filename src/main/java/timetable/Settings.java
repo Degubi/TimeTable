@@ -42,11 +42,11 @@ public final class Settings {
         try {
             var settingsObject = json.fromJson(Files.readString(settingsPath), JsonObject.class);
             
-            enablePopups = getOrDefaultBoolean("enablePopups", true, settingsObject);
-            timeBeforeNotification = getOrDefaultInt("timeBeforeNotification", 60, settingsObject);
-            updateInterval = getOrDefaultInt("updateInterval", 600, settingsObject);
-            dayTimeStart = LocalTime.parse(getOrDefaultString("dayTimeStart", "07:00", settingsObject), DateTimeFormatter.ISO_LOCAL_TIME);
-            dayTimeEnd = LocalTime.parse(getOrDefaultString("dayTimeEnd", "19:00", settingsObject), DateTimeFormatter.ISO_LOCAL_TIME);
+            enablePopups = settingsObject.getBoolean("enablePopups", true);
+            timeBeforeNotification = settingsObject.getInt("timeBeforeNotification", 60);
+            updateInterval = settingsObject.getInt("updateInterval", 600);
+            dayTimeStart = LocalTime.parse(settingsObject.getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
+            dayTimeEnd = LocalTime.parse(settingsObject.getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
             
             dayTimeColor = getOrDefaultColor("dayTimeColor", 235, 235, 235, settingsObject);
             nightTimeColor = getOrDefaultColor("nightTimeColor", 64, 64, 64, settingsObject);
@@ -126,24 +126,9 @@ public final class Settings {
         return color.getRed() + " " + color.getGreen() + " " + color.getBlue();
     }
     
-    private static int getOrDefaultInt(String key, int defaultValue, JsonObject settingsObject) {
-        if(!settingsObject.containsKey(key)) {
-            return defaultValue;
-        }
-        return settingsObject.getInt(key);
-    }
-    
     private static Color getOrDefaultColor(String key, int r, int g, int b, JsonObject settingsObject) {
-        var color = getOrDefaultString(key, r + " " + g + " " + b, settingsObject).split(" ", 3);
+        var color = settingsObject.getString(key, r + " " + g + " " + b).split(" ", 3);
         return new Color(Integer.parseInt(color[0]), Integer.parseInt(color[1]), Integer.parseInt(color[2]));
-    }
-    
-    private static boolean getOrDefaultBoolean(String key, boolean defaultValue, JsonObject settingsObject) {
-        if(!settingsObject.containsKey(key)) {
-            return defaultValue;
-        }
-        
-        return settingsObject.getBoolean(key);
     }
     
     public static JsonArray getArraySetting(String key, JsonObject settingsObject){
@@ -152,13 +137,6 @@ public final class Settings {
         }
         
         return settingsObject.getJsonArray(key);
-    }
-    
-    private static String getOrDefaultString(String key, String defaultValue, JsonObject settingsObject) {
-        if(!settingsObject.containsKey(key)) {
-            return defaultValue;
-        }
-        return settingsObject.getString(key);
     }
     
     public static void createStartupLink(String toSavePath) {

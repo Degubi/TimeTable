@@ -16,7 +16,6 @@ import java.time.*;
 import java.time.format.*;
 import java.util.*;
 import java.util.List;
-import java.util.Map.*;
 import java.util.function.*;
 import java.util.stream.*;
 import javax.imageio.*;
@@ -91,8 +90,7 @@ public final class Main {
         var todayNames = HttpClient.newHttpClient()
                                    .send(newRequest("https://api.abalin.net/today?country=hu"), ofJsonObject())
                                    .body()
-                                   .getJsonArray("data")
-                                   .getJsonObject(0)
+                                   .getJsonObject("data")
                                    .getJsonObject("namedays")
                                    .getString("hu");
         while(true) {
@@ -186,26 +184,9 @@ public final class Main {
                 var today = LocalDateTime.now();
                 var todayDayOffset = today.getDayOfWeek().ordinal();
                 
-                Settings.classes.entrySet().stream()
-                        .map(Entry::getValue)
+                Settings.classes.values().stream()
                         .flatMap(List::stream)
-                        .forEach(clazz -> {
-                            var row = sheet.createRow(rowIndex[0]++);
-                            var indexOfDay = Settings.indexOf(clazz.day, days);
-                            var dateOffset = indexOfDay - todayDayOffset;
-                            var classDayFormatted = LocalDate.now()
-                                                             .plusDays(dateOffset)
-                                                             .toString()
-                                                             .replace('-', '.');
-                            
-                            var classType = clazz.classType.equals("Szabvál") ? " (_SZV_" 
-                                                                              : (" (_" + clazz.classType.charAt(0));
-                            
-                            row.createCell(0).setCellValue(classDayFormatted + ". " + clazz.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
-                            row.createCell(1).setCellValue(classDayFormatted + ". " + clazz.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
-                            row.createCell(2).setCellValue(clazz.className + classType + ")");
-                            row.createCell(3).setCellValue(clazz.room);
-                        });
+                        .forEach(clazz -> writeClassToWorkBook(sheet, rowIndex, todayDayOffset, clazz));
                 
                 IntStream.range(0, 4).forEach(sheet::autoSizeColumn);
                 
@@ -218,6 +199,24 @@ public final class Main {
         };
         
         showTransferDialog("Exportálás folyamatban...", exportFunction);
+    }
+
+    private static void writeClassToWorkBook(XSSFSheet sheet, int[] rowIndex, int todayDayOffset, ClassButton clazz) {
+        var row = sheet.createRow(rowIndex[0]++);
+        var indexOfDay = Settings.indexOf(clazz.day, days);
+        var dateOffset = indexOfDay - todayDayOffset;
+        var classDayFormatted = LocalDate.now()
+                                         .plusDays(dateOffset)
+                                         .toString()
+                                         .replace('-', '.');
+        
+        var classType = clazz.classType.equals("Szabvál") ? " (_SZV_" 
+                                                          : (" (_" + clazz.classType.charAt(0));
+        
+        row.createCell(0).setCellValue(classDayFormatted + ". " + clazz.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
+        row.createCell(1).setCellValue(classDayFormatted + ". " + clazz.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
+        row.createCell(2).setCellValue(clazz.className + classType + ")");
+        row.createCell(3).setCellValue(clazz.room);
     }
     
     private static void importFromJson(@SuppressWarnings("unused") ActionEvent event) {
@@ -317,27 +316,29 @@ public final class Main {
                     
                     classesPerDay.stream()
                                  .sorted(ClassButton.timeBasedOrder)
-                                 .forEach(clazz -> {
-                                     clazz.button.setBounds(xPosition, yPosition[0] += 95, 175, 85);
-                                  
-                                     var isBefore = isToday && nowTime.isBefore(clazz.startTime);
-                                     var isAfter = isToday && (nowTime.isAfter(clazz.startTime) || nowTime.equals(clazz.startTime));
-                                     var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && nowTime.equals(clazz.startTime));
-                                    
-                                     if(isNext) {
-                                         currentClassButton = clazz;
-                                        
-                                         var between = Duration.between(nowTime, clazz.startTime);
-                                         Main.tray.setToolTip("Következő óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdőpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
-                                     }
-                                     clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
-                                     clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
-                                  
-                                     classesPanel.add(clazz.button);
-                                     classButtons.add(clazz);
-                                 });
+                                 .forEach(clazz -> positionAndAddButtonToPanel(nowTime, yPosition, xPosition, isToday, clazz));
                 });
         
         classesPanel.repaint();
+    }
+
+    private static void positionAndAddButtonToPanel(LocalTime nowTime, int[] yPosition, int xPosition, boolean isToday, ClassButton clazz) {
+        clazz.button.setBounds(xPosition, yPosition[0] += 95, 175, 85);
+                          
+        var isBefore = isToday && nowTime.isBefore(clazz.startTime);
+        var isAfter = isToday && (nowTime.isAfter(clazz.startTime) || nowTime.equals(clazz.startTime));
+        var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && nowTime.equals(clazz.startTime));
+        
+        if(isNext) {
+            currentClassButton = clazz;
+            
+            var between = Duration.between(nowTime, clazz.startTime);
+            Main.tray.setToolTip("Következő óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.className + ' ' + clazz.classType + "\nIdőpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
+        }
+        clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
+        clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
+        
+        classesPanel.add(clazz.button);
+        classButtons.add(clazz);
     }
 }

@@ -225,7 +225,7 @@ public final class PopupGuis{
         frame.setLocationRelativeTo(Main.classesPanel);
         
         if(saveListener != null) {
-            JButton saveButton = new JButton("Mentés");
+            var saveButton = new JButton("Mentés");
             saveButton.setFocusable(false);
             saveButton.setBounds(400 / 2 - 70, 300 - 90, 120, 40);
             saveButton.setBackground(Color.GRAY);
