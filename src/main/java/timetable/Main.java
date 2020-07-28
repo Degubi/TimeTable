@@ -151,7 +151,7 @@ public final class Main {
     
     private static void exportToJson(@SuppressWarnings("unused") ActionEvent event) {
         Consumer<JDialog> exportFunction = dialog -> {
-            var exportFile = Path.of(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".json");
+            var exportFile = Path.of("app/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".json");
             var classesArray = Settings.createClassesArray();
             var classesObject = Json.createObjectBuilder().add("classes", classesArray).build();
             
@@ -169,7 +169,7 @@ public final class Main {
     
     private static void exportToExcel(@SuppressWarnings("unused") ActionEvent event) {
         Consumer<JDialog> exportFunction = dialog -> {
-            var exportFile = Path.of(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".xlsx");
+            var exportFile = Path.of("app/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".xlsx");
             
             try(var workbook = new XSSFWorkbook();
                 var output = Files.newOutputStream(exportFile, WRITE, CREATE)){

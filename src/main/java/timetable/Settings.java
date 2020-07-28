@@ -31,7 +31,7 @@ public final class Settings {
     public static Map<String, List<ClassButton>> classes;
     
     static {
-        var settingsPath = Path.of("settings.json");
+        var settingsPath = Path.of("app/settings.json");
         
         if(!Files.exists(settingsPath)) {
             try {
@@ -112,11 +112,8 @@ public final class Settings {
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
                                  .add("classes", createClassesArray());
         
-        var sourceDir = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath().substring(1)).getParent().toString().replace("%20", " ");
-        var settingsPath = Path.of(sourceDir + "/settings.json");
-        
         try {
-            Files.writeString(settingsPath, json.toJson(settingsObject.build()));
+            Files.writeString(Path.of("app/settings.json"), json.toJson(settingsObject.build()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -140,13 +137,12 @@ public final class Settings {
     }
     
     public static void createStartupLink(String toSavePath) {
-        var sourceDir = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath().substring(1)).getParent().toString().replace("%20", " ");
-        var command = "Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" + 
-                      "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" + 
-                          "oLink.TargetPath = \"" + sourceDir + "\\bin\\javaw.exe" + "\"\n" + 
-                          "oLink.Arguments = \"-jar \"\"" + sourceDir + "\\TimeTable.jar\"\" -nowindow" + "\"\n" +
-                          "oLink.IconLocation = \"" + sourceDir + "\\icon.ico" + "\"\n" +
-                          "oLink.WorkingDirectory = \"" + sourceDir + "\"\n" +
+        var currentPath = Path.of("").toAbsolutePath();
+        var command = "Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" +
+                      "Set oLink = oWS.CreateShortcut(\"" + toSavePath + "\")\n" +
+                          "oLink.TargetPath = \"" + currentPath + "/TimeTable.exe\"\n" +
+                          "oLink.WorkingDirectory = \"" + currentPath + "\"\n" +
+                          "oLink.Arguments = \"-nowindow\"\n" +
                           "oLink.Save\n";
         try {
             var scriptPath = Path.of("iconScript.vbs");

@@ -1,28 +1,32 @@
 from subprocess import call
-from shutil import copyfile, copytree
+from shutil import rmtree
 from os import rename
 
-print("Generating runtime")
-jlinkCommand = (r"jlink --module-path .;..\lib\app "
-                       "--output ./TimeTable/ "
-                       "--add-modules jdk.charsets "
-                       "--add-modules jdk.crypto.ec "
-                       "--add-modules java.desktop "
-                       "--add-modules java.logging "
-                       "--add-modules java.net.http "
-                       "--add-modules java.sql "
-                       "--no-man-pages "
-                       "--no-header-files "
-                       "--compress=2")
+# We need to generate a runtime by hand because some of the libraries are not modularized
+jlinkCommand = (r'jlink --output ./runtime/ '
+                 '--no-man-pages '
+                 '--no-header-files '
+                 '--add-modules java.base,java.desktop,java.sql,jdk.charsets,java.net.http,jdk.crypto.ec,java.logging '
+                 '--compress=2')
+
+print('Generating runtime')
 call(jlinkCommand)
 
-copytree("./target/lib", "./TimeTable/lib/app")
-copyfile("icon.ico", "./TimeTable/icon.ico")
-copyfile("createShortcut.vbs", "./TimeTable/createShortcut.vbs")
+print('Copying libraries')
+call('mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=lib', shell = True)
 
-print("Creating jar file")
+print('Creating TimeTable.jar')
+call('mvn package', shell = True)
+rename('target/TimeTable-1.0.jar', 'lib/TimeTable.jar')
 
-call("jar cfm TimeTable.jar MANIFEST.MF -C target/classes module-info.class -C target/classes timetable -C target/classes assets")
-rename("TimeTable.jar", "./TimeTable/TimeTable.jar")
+print('Creating installer file')
+call((r'"C:\Program Files\Java\jdk-14.0.2\bin\jpackage" --runtime-image runtime -i lib --main-class timetable.Main --main-jar TimeTable.jar '
+      r'--name TimeTable --vendor Degubi --description TimeTable --icon icon.ico '
+      r'--win-per-user-install --win-dir-chooser --win-shortcut'))
 
-print("Done")
+print('Cleaning up')
+rename('TimeTable-1.0.exe', 'TimeTableInstaller.exe')
+rmtree('lib')
+rmtree('runtime')
+
+print('\nDone!')

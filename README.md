@@ -21,14 +21,12 @@
    <img src="images/settings.jpg" width="350"/>
 
 ### Letöltés, futtatás:
-  - 'Releases' Github menüfülből le kell szedni a legújabb zip-et
-  - Unzipelni (érdemes pl. Program Files-ba)
-  - Lekell futtatni a createShortcut.vbs-t
+  - 'Releases' Github menüfülből le kell szedni a legújabb telepítő exe-t
+  - Telepíteni kell (Ne a program files mappába)
   - Az Asztalon levő parancsikonnal kell futtatni a programot
 
 ### Buildeléshez:
-  - Kell lennie Pythonnak telepítve és JDK-nak PATH-on, illetve Eclipse-nek vagy Maven-nek telepítve
-  - Vagy Eclipse-ből le kell futtatni a ExportLibraries.launch
-  - Vagy cmd-ből ha van maven telepítve: 'mvn dependency:copy-dependencies -DoutputDirectory=${project.build.directory}/lib'
-  - Le kell futtatni a build.py-t
-  - A TimeTable mappába kialakul a Google Drive-on található zip struktúrája
+  - Kell lennie Pythonnak telepítve
+  - Kell lennie Maven-nek telepítve
+  - Kell lennie jdk14-nek telepítve (egyenlőre hardcodeolva van az elérési út, jdk15 után javítva lesz)
+  - Lekell futtatni a build.py-t

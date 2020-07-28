@@ -1,8 +1,5 @@
-/bin/
 /.settings/
-settings.json
+/app/
+/target/
 .classpath
 .project
-.pydevproject
-/lib/
-/target/
