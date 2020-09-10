@@ -6,7 +6,7 @@ import timetable.*;
 
 public final class SystemTrayListener extends MouseAdapter{
     private final JPopupMenu popMenu;
-    
+
     public SystemTrayListener(JPopupMenu popMenu) {
         this.popMenu = popMenu;
     }
@@ -26,7 +26,7 @@ public final class SystemTrayListener extends MouseAdapter{
             openFromTray(null);
         }
     }
-    
+
     public static void openFromTray(@SuppressWarnings("unused") ActionEvent event) {
         Main.updateClassesGui();
         var top = (JFrame) Main.classesPanel.getTopLevelAncestor();

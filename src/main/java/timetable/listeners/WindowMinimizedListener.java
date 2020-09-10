@@ -7,7 +7,7 @@ import javax.swing.*;
 
 public final class WindowMinimizedListener extends WindowAdapter{
     private final JMenuItem screenshotItem;
-    
+
     public WindowMinimizedListener(JMenuItem screenshotItem) {
         this.screenshotItem = screenshotItem;
     }
@@ -17,7 +17,7 @@ public final class WindowMinimizedListener extends WindowAdapter{
         screenshotItem.setEnabled(true);
         screenshotItem.setToolTipText(null);
     }
-    
+
     @Override
     public void windowIconified(WindowEvent e) {
         classesPanel.getTopLevelAncestor().setVisible(false);

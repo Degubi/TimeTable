@@ -2,6 +2,8 @@ package timetable;
 
 import static java.nio.file.StandardOpenOption.*;
 
+import jakarta.json.*;
+import jakarta.json.bind.*;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
@@ -10,8 +12,6 @@ import java.time.format.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.*;
-import javax.json.*;
-import javax.json.bind.*;
 
 public final class Settings {
     public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
@@ -29,25 +29,25 @@ public final class Settings {
     public static int timeBeforeNotification;
     public static int updateInterval;
     public static Map<String, List<ClassButton>> classes;
-    
+
     static {
         var settingsPath = Path.of("app/settings.json");
-        
+
         if(!Files.exists(settingsPath)) {
             try {
                 Files.writeString(settingsPath, "{}", WRITE, CREATE);
             } catch (IOException e) {}
         }
-        
+
         try {
             var settingsObject = json.fromJson(Files.readString(settingsPath), JsonObject.class);
-            
+
             enablePopups = settingsObject.getBoolean("enablePopups", true);
             timeBeforeNotification = settingsObject.getInt("timeBeforeNotification", 60);
             updateInterval = settingsObject.getInt("updateInterval", 600);
             dayTimeStart = LocalTime.parse(settingsObject.getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
             dayTimeEnd = LocalTime.parse(settingsObject.getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-            
+
             dayTimeColor = getOrDefaultColor("dayTimeColor", 235, 235, 235, settingsObject);
             nightTimeColor = getOrDefaultColor("nightTimeColor", 64, 64, 64, settingsObject);
             currentClassColor = getOrDefaultColor("currentClassColor", 255, 69, 69, settingsObject);
@@ -57,13 +57,13 @@ public final class Settings {
             unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
             updateClassesData(getArraySetting("classes", settingsObject).stream()
                                                                         .map(JsonValue::asJsonObject)
-                                                                        .map(ClassButton::new)
+                                                                        .map(ClassButton::fromJson)
                                                                         .collect(Collectors.groupingBy(k -> k.day)));
         } catch (JsonbException | IOException e) {
             throw new IllegalStateException("Something is fucked with settings brah");
         }
     }
-    
+
     public static<T> int indexOf(T find, T[] array) {
         for(var k = 0; k < array.length; ++k) {
             if(array[k].equals(find)) {
@@ -72,30 +72,30 @@ public final class Settings {
         }
         return -1;
     }
-    
+
     private Settings() {}
-    
+
     public static JsonArray createClassesArray() {
         return classes.values().stream()
-                       .flatMap(List::stream)
-                       .map(k -> Json.createObjectBuilder()
-                                     .add("day", k.day)
-                                     .add("className", k.className)
-                                     .add("classType", k.classType)
-                                     .add("startTime", k.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                     .add("endTime", k.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                     .add("room", k.room)
-                                     .add("unImportant", k.unImportant)
-                                     .build())
-                       .reduce(Json.createArrayBuilder(), JsonArrayBuilder::add, JsonArrayBuilder::addAll)
-                       .build();
+                      .flatMap(List::stream)
+                      .map(k -> Json.createObjectBuilder()
+                                    .add("day", k.day)
+                                    .add("className", k.name)
+                                    .add("classType", k.type)
+                                    .add("startTime", k.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+                                    .add("endTime", k.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+                                    .add("room", k.room)
+                                    .add("unImportant", k.unImportant)
+                                    .build())
+                      .reduce(Json.createArrayBuilder(), JsonArrayBuilder::add, JsonArrayBuilder::addAll)
+                      .build();
     }
-    
+
     public static void updateClassesData(Map<String, List<ClassButton>> newClasses) {
         classes = newClasses;
         Arrays.stream(Main.days, 0, 5).forEach(day -> classes.computeIfAbsent(day, ignore -> new ArrayList<>()));
     }
-    
+
     public static void saveSettings() {
         var settingsObject = Json.createObjectBuilder()
                                  .add("enablePopups", enablePopups)
@@ -111,31 +111,31 @@ public final class Settings {
                                  .add("pastClassColor", colorToString(pastClassColor))
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
                                  .add("classes", createClassesArray());
-        
+
         try {
             Files.writeString(Path.of("app/settings.json"), json.toJson(settingsObject.build()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
     private static String colorToString(Color color) {
         return color.getRed() + " " + color.getGreen() + " " + color.getBlue();
     }
-    
+
     private static Color getOrDefaultColor(String key, int r, int g, int b, JsonObject settingsObject) {
         var color = settingsObject.getString(key, r + " " + g + " " + b).split(" ", 3);
         return new Color(Integer.parseInt(color[0]), Integer.parseInt(color[1]), Integer.parseInt(color[2]));
     }
-    
+
     public static JsonArray getArraySetting(String key, JsonObject settingsObject){
         if(!settingsObject.containsKey(key)) {
             return Json.createArrayBuilder().build();
         }
-        
+
         return settingsObject.getJsonArray(key);
     }
-    
+
     public static void createStartupLink(String toSavePath) {
         var currentPath = Path.of("").toAbsolutePath();
         var command = "Set oWS = WScript.CreateObject(\"WScript.Shell\")\n" +

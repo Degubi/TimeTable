@@ -9,7 +9,7 @@ public final class FocusLostListener extends WindowAdapter {
     public FocusLostListener(JDialog frame) {
         this.frame = frame;
     }
-    
+
     @Override
     public void windowLostFocus(WindowEvent event) {
         frame.dispose();

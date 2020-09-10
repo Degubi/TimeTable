@@ -113,11 +113,11 @@ public final class Components {
         editorTable.setBounds(20, 20, 340, 122);
         
         editorTable.setValueAt("Óra Neve", 0, 0);
-        editorTable.setValueAt(dataButton.className, 0, 1);
+        editorTable.setValueAt(dataButton.name, 0, 1);
         editorTable.setValueAt("Nap", 1, 0);
         editorTable.setValueAt(dataButton.day, 1, 1);
         editorTable.setValueAt("Óra Típusa", 2, 0);
-        editorTable.setValueAt(dataButton.classType, 2, 1);
+        editorTable.setValueAt(dataButton.type, 2, 1);
         editorTable.setValueAt("Kezdés Idő", 3, 0);
         editorTable.setValueAt(dataButton.startTime.toString(), 3, 1);
         editorTable.setValueAt("Végzés Idő", 4, 0);
