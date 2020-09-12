@@ -17,8 +17,11 @@ public final class ClassButton extends MouseAdapter {
                                                                            .thenComparing(button -> button.startTime)
                                                                            .thenComparing(button -> button.name);
     public final String day;
-    public final LocalTime startTime, endTime;
-    public final String name, type, room;
+    public final LocalTime startTime;
+    public final LocalTime endTime;
+    public final String name;
+    public final String type;
+    public final String room;
     public boolean unImportant;
     public final JButton button;
 
@@ -63,35 +66,6 @@ public final class ClassButton extends MouseAdapter {
         var room = classRow.getCell(3).getStringCellValue();
 
         return new ClassButton(day, className, classType, beginDate.toLocalTime(), endDate.toLocalTime(), room, false);
-    }
-
-    public static ClassButton fromCoursesExcel(Row classRow) {
-        var info = classRow.getCell(5).getStringCellValue();
-        var daySeparatorIndex = info.indexOf(':');
-        var timeSeparatorIndex = info.indexOf('-');
-        var roomSeparatorIndex = info.indexOf('(');
-        var roomBegin = info.lastIndexOf('(');
-        var roomEnd = info.indexOf(')', roomBegin);
-
-        var className = classRow.getCell(1).getStringCellValue();
-        var classType = classRow.getCell(3).getStringCellValue();
-        var day = Main.days[indexOfDayLetter(info.substring(0, daySeparatorIndex))];
-        var startTime = LocalTime.parse(info.substring(daySeparatorIndex + 1, timeSeparatorIndex));
-        var endTime = LocalTime.parse(info.substring(timeSeparatorIndex + 1, roomSeparatorIndex));
-        var room = roomEnd == -1 ? "Ismeretlen" : info.substring(roomBegin + 1, roomEnd);
-
-        return new ClassButton(day, className, classType, startTime, endTime, room, false);
-    }
-
-    private static int indexOfDayLetter(String dayLetter) {
-        switch(dayLetter) {
-            case "H": return 0;
-            case "K": return 1;
-            case "SZE": return 2;
-            case "CS": return 3;
-            case "P": return 4;
-            default: throw new IllegalArgumentException("Invalid day letter: " + dayLetter);
-        }
     }
 
     @Override

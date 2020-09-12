@@ -26,8 +26,9 @@ public final class Settings {
     public static Color otherDayClassColor;
     public static Color pastClassColor;
     public static Color unimportantClassColor;
-    public static int timeBeforeNotification;
-    public static int updateInterval;
+    public static int minutesBeforeFirstNotification;
+    public static int updateIntervalSeconds;
+    public static String dbDataID;
     public static Map<String, List<ClassButton>> classes;
 
     static {
@@ -43,8 +44,8 @@ public final class Settings {
             var settingsObject = json.fromJson(Files.readString(settingsPath), JsonObject.class);
 
             enablePopups = settingsObject.getBoolean("enablePopups", true);
-            timeBeforeNotification = settingsObject.getInt("timeBeforeNotification", 60);
-            updateInterval = settingsObject.getInt("updateInterval", 600);
+            minutesBeforeFirstNotification = settingsObject.getInt("minutesBeforeFirstNotification", 60);
+            updateIntervalSeconds = settingsObject.getInt("updateIntervalSeconds", 600);
             dayTimeStart = LocalTime.parse(settingsObject.getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
             dayTimeEnd = LocalTime.parse(settingsObject.getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 
@@ -55,6 +56,7 @@ public final class Settings {
             otherDayClassColor = getOrDefaultColor("otherDayClassColor", 84, 113, 142, settingsObject);
             pastClassColor = getOrDefaultColor("pastClassColor", 247, 238, 90, settingsObject);
             unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
+            dbDataID = settingsObject.getString("dbDataID", "null");
             updateClassesData(getArraySetting("classes", settingsObject).stream()
                                                                         .map(JsonValue::asJsonObject)
                                                                         .map(ClassButton::fromJson)
@@ -99,8 +101,8 @@ public final class Settings {
     public static void saveSettings() {
         var settingsObject = Json.createObjectBuilder()
                                  .add("enablePopups", enablePopups)
-                                 .add("timeBeforeNotification", timeBeforeNotification)
-                                 .add("updateInterval", updateInterval)
+                                 .add("minutesBeforeFirstNotification", minutesBeforeFirstNotification)
+                                 .add("updateIntervalSeconds", updateIntervalSeconds)
                                  .add("dayTimeEnd", dayTimeEnd.format(DateTimeFormatter.ISO_LOCAL_TIME))
                                  .add("dayTimeStart", dayTimeStart.format(DateTimeFormatter.ISO_LOCAL_TIME))
                                  .add("dayTimeColor", colorToString(dayTimeColor))
@@ -110,6 +112,7 @@ public final class Settings {
                                  .add("otherDayClassColor", colorToString(otherDayClassColor))
                                  .add("pastClassColor", colorToString(pastClassColor))
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
+                                 .add("dbDataID", dbDataID)
                                  .add("classes", createClassesArray());
 
         try {

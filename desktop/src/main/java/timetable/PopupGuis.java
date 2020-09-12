@@ -70,8 +70,8 @@ public final class PopupGuis{
 
         var startTimeBox = Components.newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
         var endTimeBox = Components.newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
-        var timeBeforeNoteBox = Components.newComboBox(Integer.toString(Settings.timeBeforeNotification), 270, "30", "40", "50", "60", "70", "80", "90");
-        var updateIntervalBox = Components.newComboBox(Integer.toString(Settings.updateInterval / 60), 340, "5", "10", "15", "20");
+        var timeBeforeNoteBox = Components.newComboBox(Integer.toString(Settings.minutesBeforeFirstNotification), 270, "30", "40", "50", "60", "70", "80", "90");
+        var updateIntervalBox = Components.newComboBox(Integer.toString(Settings.updateIntervalSeconds / 60), 340, "5", "10", "15", "20");
 
         var now = LocalTime.now();
         var popupCheckBox = new JCheckBox((String)null, Settings.enablePopups);
@@ -85,7 +85,7 @@ public final class PopupGuis{
 
         var scrollPanel = new JPanel(null);
         Components.handleNightMode(scrollPanel, now);
-        scrollPanel.setPreferredSize(new Dimension(500, 950));
+        scrollPanel.setPreferredSize(new Dimension(500, 1000));
         var scrollPane = new JScrollPane(scrollPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
@@ -102,22 +102,23 @@ public final class PopupGuis{
         Components.addSettingsSection("Idő", 410, now, scrollPanel);
         Components.addSettingButton(startTimeBox, 450, "Nappali Időszak Kezdete", scrollPanel, now);
         Components.addSettingButton(endTimeBox, 500, "Nappali Időszak Vége", scrollPanel, now);
-        Components.addSettingButton(timeBeforeNoteBox, 550, "Értesítések Frissítési Időzítései", scrollPanel, now);
+        Components.addSettingButton(timeBeforeNoteBox, 550, "Első értesítés előtti idő Percben", scrollPanel, now);
         Components.addSettingButton(updateIntervalBox, 600, "Óra Előtti Értesítések Percben", scrollPanel, now);
 
         Components.addSettingsSection("Egyéb", 660, now, scrollPanel);
         Components.addSettingButton(popupCheckBox, 710, "Üzenetek Bekapcsolva", scrollPanel, now);
         Components.addSettingButton(startupBox, 760, "Indítás PC Indításakor", scrollPanel, now);
+        Components.addSettingInfoLabel(810, "Online adat ID: " + (Settings.dbDataID.equals("null") ? "nincs" : Settings.dbDataID), scrollPanel, now);
 
-        Components.addSettingsSection("Veszély Zóna", 810, now, scrollPanel);
+        Components.addSettingsSection("Veszély Zóna", 860, now, scrollPanel);
         var deleteClassesButton = new JButton("Órarend Törlése");
-        deleteClassesButton.setBounds(100, 860, 120, 40);
+        deleteClassesButton.setBounds(100, 910, 120, 40);
         deleteClassesButton.setBackground(Color.GRAY);
         deleteClassesButton.setForeground(Color.RED);
         deleteClassesButton.addActionListener(e -> handleClassReset(scrollPanel));
 
         var saveButton = new JButton("Mentés");
-        saveButton.setBounds(600, 900, 120, 40);
+        saveButton.setBounds(600, 810, 120, 40);
         saveButton.setBackground(Color.GRAY);
         saveButton.setForeground(Color.BLACK);
 
@@ -137,8 +138,8 @@ public final class PopupGuis{
                 Settings.unimportantClassColor = unimportantClass.getBackground();
                 Settings.dayTimeColor = dayTimeColor.getBackground();
                 Settings.nightTimeColor = nightTimeColor.getBackground();
-                Settings.timeBeforeNotification = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem());
-                Settings.updateInterval = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60;
+                Settings.minutesBeforeFirstNotification = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem());
+                Settings.updateIntervalSeconds = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60;
                 Settings.saveSettings();
 
                 Main.updateClassesGui();

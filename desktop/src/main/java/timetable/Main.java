@@ -1,22 +1,20 @@
 package timetable;
 
-import static java.nio.file.StandardOpenOption.*;
-
 import jakarta.json.*;
 import java.awt.*;
 import java.awt.Color;
 import java.awt.TrayIcon.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.net.http.*;
+import java.net.http.HttpRequest.*;
 import java.net.http.HttpResponse.*;
 import java.nio.charset.*;
-import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.List;
 import java.util.function.*;
 import java.util.stream.*;
 import javax.imageio.*;
@@ -26,12 +24,13 @@ import javax.swing.filechooser.*;
 import javax.swing.plaf.nimbus.*;
 import org.apache.poi.*;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.*;
 import timetable.listeners.*;
 
 public final class Main {
     private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
     private static final JPanel mainPanel = new JPanel(new BorderLayout());
+    private static final String BACKEND_URL = "http://localhost:8080/timetable";
+    private static final HttpClient client = HttpClient.newHttpClient();
     public static ClassButton currentClassButton;
 
     public static final String[] days = {"Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
@@ -73,8 +72,8 @@ public final class Main {
         popMenu.add(Components.newMenuItem("Megnyitás", "open.png", SystemTrayListener::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
-        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Json", "json.png", Main::importFromJson), Components.newMenuItem("Excel", "excel.png", Main::importFromExcel)));
-        popMenu.add(Components.newSideMenu("Exportálás", "export.png", Components.newMenuItem("Json", "json.png", Main::exportToJson), Components.newMenuItem("Excel", "excel.png", Main::exportToExcel), screenshotItem));
+        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Neptun Órarend Excel", "excel.png", Main::importFromExcel), Components.newMenuItem("Online", "db.png", Main::importFromDB)));
+        popMenu.add(Components.newSideMenu("Mentés", "export.png", screenshotItem, Components.newMenuItem("Online", "db.png", Main::exportToDB)));
         popMenu.add(Components.newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
         popMenu.add(Components.newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
@@ -85,14 +84,13 @@ public final class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
         Thread.currentThread().setName("Time Label Updater");
 
-        var timer = Settings.updateInterval - 100;
+        var timer = Settings.updateIntervalSeconds - 100;
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
-        var todayNames = HttpClient.newHttpClient()
-                                   .send(newRequest("https://api.abalin.net/today?country=hu"), ofJsonObject())
-                                   .body()
-                                   .getJsonObject("data")
-                                   .getJsonObject("namedays")
-                                   .getString("hu");
+        var todayNames = sendRequest(HttpRequest.newBuilder(URI.create("https://api.abalin.net/today?country=hu")), ofObject())
+                               .body()
+                               .getJsonObject("data")
+                               .getJsonObject("namedays")
+                               .getString("hu");
         while(true) {
             var nowDate = LocalDateTime.now();
 
@@ -100,14 +98,14 @@ public final class Main {
                 dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
             }
 
-            if(++timer >= Settings.updateInterval) {
+            if(++timer >= Settings.updateIntervalSeconds) {
                 if(!sleepMode.isSelected() && !frame.isVisible()) {
                     var nowTime = nowDate.toLocalTime();
 
                     if(Settings.enablePopups && currentClassButton != null && nowTime.isBefore(currentClassButton.startTime)) {
                         var timeBetween = Duration.between(nowTime, currentClassButton.startTime);
 
-                        if(timeBetween.toMinutes() < Settings.timeBeforeNotification) {
+                        if(timeBetween.toMinutes() < Settings.minutesBeforeFirstNotification) {
                             tray.displayMessage("Órarend", "Figyelem! Következő óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + currentClassButton.name + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
                         }
                     }
@@ -140,109 +138,46 @@ public final class Main {
             var exportFile = new File(fileName);
 
             try {
-                ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 20, window.y + 100, 990, 650)), "PNG", exportFile);
+                ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 20, window.y + 80, 990, 650)), "PNG", exportFile);
                 Runtime.getRuntime().exec("explorer.exe /select," + exportFile);
                 dialog.setVisible(false);
             } catch (HeadlessException | AWTException | IOException e1) {}
         };
 
-        showTransferDialog("Exportálás folyamatban...", exportFunction);
+        showTransferDialog("Mentés folyamatban...", exportFunction);
     }
 
-    private static void exportToJson(@SuppressWarnings("unused") ActionEvent event) {
+    private static void exportToDB(@SuppressWarnings("unused") ActionEvent event) {
         Consumer<JDialog> exportFunction = dialog -> {
-            var exportFile = Path.of("app/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".json");
             var classesArray = Settings.createClassesArray();
-            var classesObject = Json.createObjectBuilder().add("classes", classesArray).build();
+            var objectToSend = Json.createObjectBuilder()
+                                   .add("classes", classesArray)
+                                   .build();
 
-            try {
-                Files.writeString(exportFile, Settings.json.toJson(classesObject), WRITE, CREATE);
-                Runtime.getRuntime().exec("explorer.exe /select," + exportFile);
+            var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.dbDataID))
+                                     .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
+
+            var response = sendRequest(request, BodyHandlers.ofString());
+            var body = response.body();
+
+            if(!body.isBlank()) {
                 dialog.setVisible(false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        };
-
-        showTransferDialog("Exportálás folyamatban...", exportFunction);
-    }
-
-    private static void exportToExcel(@SuppressWarnings("unused") ActionEvent event) {
-        Consumer<JDialog> exportFunction = dialog -> {
-            var exportFile = Path.of("app/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".xlsx");
-
-            try(var workbook = new XSSFWorkbook();
-                var output = Files.newOutputStream(exportFile, WRITE, CREATE)){
-
-                var sheet = workbook.createSheet("Órák");
-                var headerRow = sheet.createRow(0);
-                var headerText = new String[] {"Kezdés", "Befejezés", "Összefoglalás", "Helyszín"};
-
-                IntStream.range(0, 4).forEach(i -> headerRow.createCell(i).setCellValue(headerText[i]));
-
-                var rowIndex = new int[] {1};
-                var today = LocalDateTime.now();
-                var todayDayOffset = today.getDayOfWeek().ordinal();
-
-                Settings.classes.values().stream()
-                        .flatMap(List::stream)
-                        .forEach(clazz -> writeClassToWorkBook(sheet, rowIndex, todayDayOffset, clazz));
-
-                IntStream.range(0, 4).forEach(sheet::autoSizeColumn);
-
-                workbook.write(output);
-                Runtime.getRuntime().exec("explorer.exe /select," + exportFile);
-                dialog.setVisible(false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        };
-
-        showTransferDialog("Exportálás folyamatban...", exportFunction);
-    }
-
-    private static void writeClassToWorkBook(XSSFSheet sheet, int[] rowIndex, int todayDayOffset, ClassButton clazz) {
-        var row = sheet.createRow(rowIndex[0]++);
-        var indexOfDay = Settings.indexOf(clazz.day, days);
-        var dateOffset = indexOfDay - todayDayOffset;
-        var classDayFormatted = LocalDate.now()
-                                         .plusDays(dateOffset)
-                                         .toString()
-                                         .replace('-', '.');
-
-        var classType = clazz.type.equals("Szabvál") ? " (_SZV_"
-                                                          : (" (_" + clazz.type.charAt(0));
-
-        row.createCell(0).setCellValue(classDayFormatted + ". " + clazz.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
-        row.createCell(1).setCellValue(classDayFormatted + ". " + clazz.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
-        row.createCell(2).setCellValue(clazz.name + classType + ")");
-        row.createCell(3).setCellValue(clazz.room);
-    }
-
-    private static void importFromJson(@SuppressWarnings("unused") ActionEvent event) {
-        var chooser = new JFileChooser(System.getProperty("user.home") + "/Desktop");
-        chooser.setDialogTitle("Órarend Importálás Választó");
-        chooser.setFileFilter(new FileNameExtensionFilter("Json Files", "json"));
-
-        if(chooser.showOpenDialog(classesPanel) == JFileChooser.APPROVE_OPTION) {
-            Consumer<JDialog> importFunction = dialog -> {
-                try {
-                    var file = Files.readString(chooser.getSelectedFile().toPath());
-                    var parsedJson = Settings.json.fromJson(file, JsonObject.class);
-
-                    Settings.updateClassesData(Settings.getArraySetting("classes", parsedJson).stream()
-                                                       .map(JsonValue::asJsonObject)
-                                                       .map(ClassButton::fromJson)
-                                                       .collect(Collectors.groupingBy(k -> k.day)));
-                    updateClassesGui();
+                Settings.dbDataID = body;
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(body), null);
+                JOptionPane.showMessageDialog(mainPanel, "Új bejegyzés létrehozva, azonosító: " + body + " (másolva vágólapra)");
+            }else {
+                if(response.statusCode() == 200) {
                     dialog.setVisible(false);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
+                }else{
+                    dialog.setVisible(false);
+                    Settings.dbDataID = "null";
+                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Az eddigi online azonosító törlésre került!");
                 }
-            };
+            }
+        };
 
-            showTransferDialog("Importálás folyamatban...", importFunction);
-        }
+        showTransferDialog("Mentés folyamatban...", exportFunction);
     }
 
     private static void importFromExcel(@SuppressWarnings("unused") ActionEvent event) {
@@ -254,15 +189,11 @@ public final class Main {
             Consumer<JDialog> importFunction = dialog -> {
                 try(var book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
                     var classesSheet = book.getSheetAt(0);
-                    var columnCount = classesSheet.getRow(0).getPhysicalNumberOfCells();
                     var format = DateTimeFormatter.ofPattern("uuuu.MM.dd. [HH:][H:]mm:ss");
 
-                    Function<Row, ClassButton> creatorFunction = columnCount == 5 ? row -> ClassButton.fromTimetableExcel(row, format)
-                                                                                  : ClassButton::fromCoursesExcel;
-
                     Settings.updateClassesData(StreamSupport.stream(classesSheet.spliterator(), false)
-                                                            .skip(1)
-                                                            .map(creatorFunction)
+                                                            .skip(1)  // Header
+                                                            .map(row -> ClassButton.fromTimetableExcel(row, format))
                                                             .collect(Collectors.groupingBy(k -> k.day)));
                     updateClassesGui();
                     dialog.setVisible(false);
@@ -278,6 +209,46 @@ public final class Main {
         }
     }
 
+    private static void importFromDB(@SuppressWarnings("unused") ActionEvent event) {
+        var userIDInput = JOptionPane.showInputDialog(mainPanel, "Írd be az órarend azonosítót!");
+
+        if(userIDInput != null && !userIDInput.isBlank()) {
+            Consumer<JDialog> importFunction = dialog -> {
+                JsonObject response = sendRequest(HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + userIDInput)), ofObject()).body();
+
+                if(response != null) {
+                    Settings.updateClassesData(Settings.getArraySetting("classes", response).stream()
+                            .map(JsonValue::asJsonObject)
+                            .map(ClassButton::fromJson)
+                            .collect(Collectors.groupingBy(k -> k.day)));
+
+                    dialog.setVisible(false);
+                    Settings.dbDataID = userIDInput;
+                    updateClassesGui();
+                }else{
+                    dialog.setVisible(false);
+                    JOptionPane.showMessageDialog(mainPanel, "Nem található ilyen azonsítójú órarend! :(", "Hiba", JOptionPane.ERROR_MESSAGE);
+                }
+            };
+
+            showTransferDialog("Importálás folyamatban...", importFunction);
+        }
+    }
+
+    private static<T> HttpResponse<T> sendRequest(HttpRequest.Builder request, BodyHandler<T> bodyHandler) {
+        try {
+            return client.send(request.header("Content-Type", "application/json").build(), bodyHandler);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Huh?");
+        }
+    }
+
+    private static BodyHandler<JsonObject> ofObject() {
+        return info -> BodySubscribers.mapping(BodySubscribers.ofString(StandardCharsets.UTF_8),
+               data -> info.statusCode() != 200 ? null : Settings.json.fromJson(data, JsonObject.class));
+    }
+
 
     private static void showTransferDialog(String text, Consumer<JDialog> fun) {
         var jop = new JOptionPane(text, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[0]);
@@ -285,14 +256,6 @@ public final class Main {
 
         new Thread(() -> fun.accept(dialog)).start();
         dialog.setVisible(true);
-    }
-
-    private static HttpRequest newRequest(String url) {
-        return HttpRequest.newBuilder(URI.create(url)).build();
-    }
-
-    private static BodyHandler<JsonObject> ofJsonObject(){
-        return info -> BodySubscribers.mapping(BodySubscribers.ofString(StandardCharsets.ISO_8859_1), data -> Settings.json.fromJson(data, JsonObject.class));
     }
 
     public static void updateClassesGui() {
