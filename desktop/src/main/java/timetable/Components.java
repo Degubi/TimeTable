@@ -83,7 +83,7 @@ public final class Components {
     public static void addSettingInfoLabel(int y, String labelText, JPanel mainPanel, LocalTime time) {
         var fake = new JTextField(labelText);
         fake.setFont(smallFont);
-        fake.setBounds(100, y, 400, 30);
+        fake.setBounds(100, y, 350, 30);
         fake.setForeground(Color.WHITE);
         fake.setEditable(false);
         fake.setBackground(null);

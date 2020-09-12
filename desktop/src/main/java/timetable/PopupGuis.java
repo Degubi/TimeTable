@@ -83,9 +83,9 @@ public final class PopupGuis{
         Components.handleNightMode(startupBox, now);
         startupBox.setSize(200, 20);
 
-        var scrollPanel = new JPanel(null);
+        var scrollPanel = new SettingsPanel();
         Components.handleNightMode(scrollPanel, now);
-        scrollPanel.setPreferredSize(new Dimension(500, 1000));
+        scrollPanel.setPreferredSize(new java.awt.Dimension(500, 1050));
         var scrollPane = new JScrollPane(scrollPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
         scrollPane.setBorder(null);
@@ -105,27 +105,23 @@ public final class PopupGuis{
         Components.addSettingButton(timeBeforeNoteBox, 550, "Első értesítés előtti idő Percben", scrollPanel, now);
         Components.addSettingButton(updateIntervalBox, 600, "Óra Előtti Értesítések Percben", scrollPanel, now);
 
-        Components.addSettingsSection("Egyéb", 660, now, scrollPanel);
-        Components.addSettingButton(popupCheckBox, 710, "Üzenetek Bekapcsolva", scrollPanel, now);
-        Components.addSettingButton(startupBox, 760, "Indítás PC Indításakor", scrollPanel, now);
-        Components.addSettingInfoLabel(810, "Online adat ID: " + (Settings.dbDataID.equals("null") ? "nincs" : Settings.dbDataID), scrollPanel, now);
+        Components.addSettingsSection("Online", 660, now, scrollPanel);
+        Components.addSettingInfoLabel(710, "Online adat ID: " + (Settings.dbDataID.equals("null") ? "nincs" : Settings.dbDataID), scrollPanel, now);
 
-        Components.addSettingsSection("Veszély Zóna", 860, now, scrollPanel);
+        Components.addSettingsSection("Egyéb", 770, now, scrollPanel);
+        Components.addSettingButton(popupCheckBox, 820, "Üzenetek Bekapcsolva", scrollPanel, now);
+        Components.addSettingButton(startupBox, 870, "Indítás PC Indításakor", scrollPanel, now);
+
+        Components.addSettingsSection("Veszély Zóna", 930, now, scrollPanel);
         var deleteClassesButton = new JButton("Órarend Törlése");
-        deleteClassesButton.setBounds(100, 910, 120, 40);
+        deleteClassesButton.setBounds(100, 980, 120, 40);
         deleteClassesButton.setBackground(Color.GRAY);
         deleteClassesButton.setForeground(Color.RED);
         deleteClassesButton.addActionListener(e -> handleClassReset(scrollPanel));
 
-        var saveButton = new JButton("Mentés");
-        saveButton.setBounds(600, 810, 120, 40);
-        saveButton.setBackground(Color.GRAY);
-        saveButton.setForeground(Color.BLACK);
-
-        scrollPanel.add(saveButton);
         scrollPanel.add(deleteClassesButton);
 
-        saveButton.addActionListener(ev -> {
+        Runnable saveAction = () -> {
             try {
                 Settings.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
                 Settings.dayTimeEnd = LocalTime.parse((CharSequence) endTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
@@ -158,8 +154,9 @@ public final class PopupGuis{
                     } catch (IOException e) {}
                 }
             }
-        });
+        };
 
+        settingsFrame.addWindowListener(new WindowClosedListener(saveAction));
         settingsFrame.setBounds(0, 0, 800, 600);
         settingsFrame.setIconImage(Components.trayIcon);
         settingsFrame.setLocationRelativeTo(null);

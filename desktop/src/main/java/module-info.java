@@ -7,4 +7,6 @@ module degubi.timetable {
     requires jakarta.json.bind;
     requires poi;
     requires poi.ooxml;
+    requires com.google.zxing;
+    requires com.google.zxing.javase;
 }
