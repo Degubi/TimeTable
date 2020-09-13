@@ -29,7 +29,7 @@ import timetable.listeners.*;
 public final class Main {
     private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
     private static final JPanel mainPanel = new JPanel(new BorderLayout());
-    private static final String BACKEND_URL = "http://localhost:8080/timetable";
+    private static final String BACKEND_URL = "https://timetable-backend.herokuapp.com/timetable";
     private static final HttpClient client = HttpClient.newHttpClient();
     public static ClassButton currentClassButton;
 
@@ -72,8 +72,8 @@ public final class Main {
         popMenu.add(Components.newMenuItem("Megnyitás", "open.png", SystemTrayListener::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
-        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Neptun Órarend Excel", "excel.png", Main::importFromExcel), Components.newMenuItem("Online", "db.png", Main::importFromDB)));
-        popMenu.add(Components.newSideMenu("Mentés", "export.png", screenshotItem, Components.newMenuItem("Online", "db.png", Main::exportToDB)));
+        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Neptun Órarend Excel", "excel.png", Main::importFromExcel), Components.newMenuItem("Felhő", "db.png", Main::importFromCloud)));
+        popMenu.add(Components.newSideMenu("Mentés", "export.png", screenshotItem, Components.newMenuItem("Felhő", "db.png", Main::exportToCloud)));
         popMenu.add(Components.newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
         popMenu.add(Components.newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
@@ -147,14 +147,14 @@ public final class Main {
         showTransferDialog("Mentés folyamatban...", exportFunction);
     }
 
-    private static void exportToDB(@SuppressWarnings("unused") ActionEvent event) {
+    private static void exportToCloud(@SuppressWarnings("unused") ActionEvent event) {
         Consumer<JDialog> exportFunction = dialog -> {
             var classesArray = Settings.createClassesArray();
             var objectToSend = Json.createObjectBuilder()
                                    .add("classes", classesArray)
                                    .build();
 
-            var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.dbDataID))
+            var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.cloudID))
                                      .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
 
             var response = sendRequest(request, BodyHandlers.ofString());
@@ -162,7 +162,7 @@ public final class Main {
 
             if(!body.isBlank()) {
                 dialog.setVisible(false);
-                Settings.dbDataID = body;
+                Settings.cloudID = body;
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(body), null);
                 JOptionPane.showMessageDialog(mainPanel, "Új bejegyzés létrehozva, azonosító: " + body + " (másolva vágólapra)");
             }else {
@@ -171,8 +171,8 @@ public final class Main {
                     JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
                 }else{
                     dialog.setVisible(false);
-                    Settings.dbDataID = "null";
-                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Az eddigi online azonosító törlésre került!");
+                    Settings.cloudID = "null";
+                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Az eddigi felhő azonosító törlésre került!");
                 }
             }
         };
@@ -209,7 +209,7 @@ public final class Main {
         }
     }
 
-    private static void importFromDB(@SuppressWarnings("unused") ActionEvent event) {
+    private static void importFromCloud(@SuppressWarnings("unused") ActionEvent event) {
         var userIDInput = JOptionPane.showInputDialog(mainPanel, "Írd be az órarend azonosítót!");
 
         if(userIDInput != null && !userIDInput.isBlank()) {
@@ -223,7 +223,7 @@ public final class Main {
                             .collect(Collectors.groupingBy(k -> k.day)));
 
                     dialog.setVisible(false);
-                    Settings.dbDataID = userIDInput;
+                    Settings.cloudID = userIDInput;
                     updateClassesGui();
                 }else{
                     dialog.setVisible(false);

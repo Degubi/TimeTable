@@ -10,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const backendURL = 'http://192.168.0.107:8080/timetable';
+const backendURL = 'https://timetable-backend.herokuapp.com/timetable';
 const dayList = [ 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap' ];
 
 void main() {
@@ -115,7 +115,7 @@ class ClassTableState extends State<ClassTable> {
         if(this.settingsFile.existsSync()) {
             final localSettingsObject = jsonDecode(this.settingsFile.readAsStringSync()) as Map<String, dynamic>;
 
-            this.hasLocalID = localSettingsObject.containsKey('dbDataID');
+            this.hasLocalID = localSettingsObject.containsKey('cloudID');
             initializeClasses(localSettingsObject);
         }else{
             this.settingsFile.createSync();
@@ -166,7 +166,7 @@ class ClassTableState extends State<ClassTable> {
         }else if(option == 3) {
             final localSettingsObject = jsonDecode(this.settingsFile.readAsStringSync()) as Map<String, dynamic>;
 
-            updateClassListFromBackend(localSettingsObject['dbDataID']);
+            updateClassListFromBackend(localSettingsObject['cloudID']);
         }else if(option == 4) {
             defaultInitializeSettings();
         }
@@ -192,7 +192,7 @@ class ClassTableState extends State<ClassTable> {
             final responseSettingsObject = jsonDecode(backendResponse.body) as Map<String, dynamic>;
             final classesObject = initializeClasses(responseSettingsObject);
             final fileContent = {
-                'dbDataID': id,
+                'cloudID': id,
                 'classes': classesObject
             };
 

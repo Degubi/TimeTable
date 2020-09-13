@@ -3,6 +3,7 @@ package timetable.controller;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import timetable.*;
 import timetable.dao.*;
 import timetable.model.*;
 
@@ -12,7 +13,7 @@ public final class TimetableController {
 
     private final TimetableDao timetableDao;
 
-    public TimetableController(@Qualifier("db") TimetableDao dao) {
+    public TimetableController(@Qualifier(Main.ENVIRONMENT) TimetableDao dao) {
         this.timetableDao = dao;
     }
 

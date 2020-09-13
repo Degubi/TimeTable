@@ -28,7 +28,7 @@ public final class Settings {
     public static Color unimportantClassColor;
     public static int minutesBeforeFirstNotification;
     public static int updateIntervalSeconds;
-    public static String dbDataID;
+    public static String cloudID;
     public static Map<String, List<ClassButton>> classes;
 
     static {
@@ -56,7 +56,7 @@ public final class Settings {
             otherDayClassColor = getOrDefaultColor("otherDayClassColor", 84, 113, 142, settingsObject);
             pastClassColor = getOrDefaultColor("pastClassColor", 247, 238, 90, settingsObject);
             unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
-            dbDataID = settingsObject.getString("dbDataID", "null");
+            cloudID = settingsObject.getString("cloudID", "null");
             updateClassesData(getArraySetting("classes", settingsObject).stream()
                                                                         .map(JsonValue::asJsonObject)
                                                                         .map(ClassButton::fromJson)
@@ -112,7 +112,7 @@ public final class Settings {
                                  .add("otherDayClassColor", colorToString(otherDayClassColor))
                                  .add("pastClassColor", colorToString(pastClassColor))
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
-                                 .add("dbDataID", dbDataID)
+                                 .add("cloudID", cloudID)
                                  .add("classes", createClassesArray());
 
         try {

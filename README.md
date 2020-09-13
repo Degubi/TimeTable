@@ -1,12 +1,19 @@
+## Desktop Alkalmazás:
+
 ### Fő program képernyő:
-  - Új óra hozzáadás: Dupla kattintás a napra
-  - Óra módosítás/törlés/nem fontossá jelölés: Jobb kattintás az órára
+  - Fő alkalmazás, órarend létrehozás/szerkesztés/nézés
   - Következő óra: piros, elmúlt: sárga, következendő: zöld, más nap: kék, nem fontos: fehér
   - Gyakorlat: Vastag betű, Előadás: Normál betű
-  - Óra előtti tálca értesítés
+  - Órák előtti tálca értesítés
   - Névnapok a főképernyőn
   - Idő alapú éjszakai mód  
     <img src="images/base.jpg" width="1000"/>
+
+### Szerkesztés és importálás:
+  - Importálni Neptun órarend excel exportból lehet (1 hét exportálás)
+  - Új óra hozzáadás: Dupla kattintás a napra
+  - Óra módosítás/törlés/nem fontossá jelölés: Jobb kattintás az órára
+  <img src="images/editing.jpg" width="600"/>
 
 ### Tálca menü:
   - Alvó mód: Óra előtti értesítések kikapcsolása
@@ -20,13 +27,15 @@
   - Lehetőség van számítógéppel történő indításra is (háttérben marad a tálcán)  
    <img src="images/settings.jpg" width="350"/>
 
-### Letöltés, futtatás:
-  - 'Releases' Github menüfülből le kell szedni a legújabb telepítő exe-t
-  - Telepíteni kell (Ne a program files mappába)
-  - Az Asztalon levő parancsikonnal kell futtatni a programot
+## Telefon Alkalmazás:
+  - Másodlagos alkalmazás, csak nézni lehet az órarendet
+  <img src="images/phone.jpg" width="800"/>
 
-### Buildeléshez:
-  - Kell lennie Pythonnak telepítve
-  - Kell lennie Maven-nek telepítve
-  - Kell lennie jdk14-nek telepítve (egyenlőre hardcodeolva van az elérési út, jdk15 után javítva lesz)
-  - Lekell futtatni a build.py-t
+### Felhő:
+  - Órarendeket fellehet tölteni felhőbe
+  - Letölteni/szinkronizálni desktopon azonosító alapján, telefonon QR kódból/azonosítóval lehet
+
+### Letöltés, futtatás:
+  - 'Releases' Github menüfülből le kell szedni a legújabb telepítőket
+  - Desktop: Telepíteni kell (Ne a program files mappába), majd tálcán levő ikonnal futtatni
+  - Telefon: Apk fájl telepítés, majd TimeTable alkalmazás futtatás

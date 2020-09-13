@@ -3,9 +3,10 @@ package timetable.dao;
 import com.mongodb.client.*;
 import org.springframework.data.mongodb.core.*;
 import org.springframework.stereotype.*;
+import timetable.*;
 import timetable.model.*;
 
-@Repository("db")
+@Repository(Main.PROD)
 public /*non-final*/ class DBTimetableDao implements TimetableDao {
     private static final MongoTemplate database = new MongoTemplate(MongoClients.create(System.getenv("DB_CONNECTION")), "TimeTable");
     private static final String COLLECTION_CLASSES = "Classes";

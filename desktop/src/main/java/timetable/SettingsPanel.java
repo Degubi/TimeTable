@@ -24,12 +24,12 @@ public final class SettingsPanel extends JPanel {
     }
 
     private static Image createQRCode() {
-        if(Settings.dbDataID.equals("null")) {
+        if(Settings.cloudID.equals("null")) {
             return new BufferedImage(0, 0, BufferedImage.TYPE_INT_RGB);
         }
 
         try {
-            var bitmapImage = MatrixToImageWriter.toBufferedImage(new QRCodeWriter().encode(Settings.dbDataID, BarcodeFormat.QR_CODE, 300, 150));
+            var bitmapImage = MatrixToImageWriter.toBufferedImage(new QRCodeWriter().encode(Settings.cloudID, BarcodeFormat.QR_CODE, 300, 150));
             var outputImage = new BufferedImage(300, 150, BufferedImage.TYPE_INT_RGB);
             var time = LocalTime.now();
             var isDarkMode = time.isAfter(Settings.dayTimeEnd) || time.isBefore(Settings.dayTimeStart);
