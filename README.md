@@ -7,35 +7,35 @@
   - Órák előtti tálca értesítés
   - Névnapok a főképernyőn
   - Idő alapú éjszakai mód  
-    <img src="images/base.jpg" width="1000"/>
+    <img src="images/base.jpg" width="1100"/>
 
 ### Szerkesztés és importálás:
-  - Importálni Neptun órarend excel exportból lehet (1 hét exportálás)
+  - Importálni Neptun órarend excel exportból lehet (1 hét exportja)
   - Új óra hozzáadás: Dupla kattintás a napra
   - Óra módosítás/törlés/nem fontossá jelölés: Jobb kattintás az órára
-  <img src="images/editing.jpg" width="600"/>
+  <img src="images/editing.jpg" width="400"/>
 
 ### Tálca menü:
   - Alvó mód: Óra előtti értesítések kikapcsolása
   - Importálás: Excelből (Neptun órarend 1 hét exportja vagy kurzus exportja) vagy Json
   - Exportálás: Képbe, Excelbe (Neptun órarend formátumban) vagy Json-ba  
-   <img src="images/menu.jpg" width="250"/>
+   <img src="images/menu.jpg" width="350"/>
 
 ### Beállítások menü:
   - Minden szín testreszabható
   - Különféle időpontok/tartamok testreszabhatóak
   - Lehetőség van számítógéppel történő indításra is (háttérben marad a tálcán)  
-   <img src="images/settings.jpg" width="350"/>
+   <img src="images/settings.jpg" width="500"/>
 
-## Telefon Alkalmazás:
+## Telefonos Alkalmazás:
   - Másodlagos alkalmazás, csak nézni lehet az órarendet
-  <img src="images/phone.jpg" width="800"/>
+  <img src="images/phone.jpg" width="700"/>
 
-### Felhő:
+## Felhő:
   - Órarendeket fellehet tölteni felhőbe
   - Letölteni/szinkronizálni desktopon azonosító alapján, telefonon QR kódból/azonosítóval lehet
 
-### Letöltés, futtatás:
+## Letöltés, futtatás:
   - 'Releases' Github menüfülből le kell szedni a legújabb telepítőket
-  - Desktop: Telepíteni kell (Ne a program files mappába), majd tálcán levő ikonnal futtatni
+  - Desktop: Telepíteni kell az exe fájlt (ne a program files mappába), majd tálcán levő ikonnal futtatni
   - Telefon: Apk fájl telepítés, majd TimeTable alkalmazás futtatás

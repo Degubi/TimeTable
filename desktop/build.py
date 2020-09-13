@@ -17,7 +17,7 @@ call('mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=
 
 print('Creating TimeTable.jar')
 call('mvn package', shell = True)
-rename('target/TimeTable-1.0.jar', 'lib/TimeTable.jar')
+rename('target/TimeTable_Desktop-1.0.jar', 'lib/TimeTable.jar')
 
 print('Creating installer file')
 call((r'"C:\Program Files\Java\jdk-14.0.2\bin\jpackage" --runtime-image runtime -i lib --main-class timetable.Main --main-jar TimeTable.jar '

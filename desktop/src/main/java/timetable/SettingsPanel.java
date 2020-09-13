@@ -25,7 +25,7 @@ public final class SettingsPanel extends JPanel {
 
     private static Image createQRCode() {
         if(Settings.cloudID.equals("null")) {
-            return new BufferedImage(0, 0, BufferedImage.TYPE_INT_RGB);
+            return new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
         }
 
         try {

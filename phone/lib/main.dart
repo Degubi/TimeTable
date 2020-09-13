@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:barcode_scan/barcode_scan.dart';
 import 'package:http/http.dart' as http;
@@ -52,6 +51,8 @@ class ClassTableState extends State<ClassTable> {
         borderRadius: BorderRadius.circular(5),
         side: BorderSide(color: Colors.black87)
     );
+    final classButtonPadding = EdgeInsets.symmetric(vertical: 5);
+    final dayColumnPadding = EdgeInsets.symmetric(horizontal: 5);
 
     Class currentClass;
     Map<String, List<Class>> classes = Map();
@@ -61,6 +62,8 @@ class ClassTableState extends State<ClassTable> {
     @override
     Widget build(BuildContext context) {
         currentClass = null;
+
+        final now = DateTime.now();
 
         return Scaffold(
             appBar: AppBar(
@@ -92,12 +95,12 @@ class ClassTableState extends State<ClassTable> {
                     ]
                 ),
             body: SingleChildScrollView(
-                child: Column(children: [
-                Row(children: createColumnsForTable(context, DateTime.now()),
+                child: Row(
+                    children: this.classes.keys.map((k) => createColumnForDay(k, now)).toList(),
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.start)
-                ]
-            ))
+                    crossAxisAlignment: CrossAxisAlignment.start
+                )
+            )
         );
     }
 
@@ -184,7 +187,17 @@ class ClassTableState extends State<ClassTable> {
     }
 
     void updateClassListFromBackend(String id) async {
+        showDialog(
+            context: context,
+            child: AlertDialog(
+                title: Text('Szinkronizálás'),
+                contentPadding: EdgeInsets.all(16),
+                content: Text('Szinkronizálás a felhővel folyamatban')
+            )
+        );
         final backendResponse = await http.get('$backendURL?id=$id', headers: { 'Content-Type': 'application/json' });
+
+        Navigator.pop(context);
 
         if(backendResponse.statusCode == 200) {
             this.hasLocalID = true;
@@ -197,6 +210,21 @@ class ClassTableState extends State<ClassTable> {
             };
 
             this.settingsFile.writeAsStringSync(jsonEncode(fileContent));
+        }else{
+            showDialog(
+                context: context,
+                child: AlertDialog(
+                    title: Text('Hiba'),
+                    contentPadding: EdgeInsets.all(16),
+                    content: Text("Nem sikerült lekérni az órarendet ehhez az azonosítóhoz: \n'$id'"),
+                    actions: [
+                        RaisedButton(
+                            child: Text('Vissza'),
+                            onPressed: () => Navigator.pop(context)
+                        )
+                    ]
+                )
+            );
         }
     }
 
@@ -214,31 +242,32 @@ class ClassTableState extends State<ClassTable> {
         return classesObject;
     }
 
-    List<Column> createColumnsForTable(BuildContext context, DateTime now) {
-        return this.classes.keys.map((k) => Column(children: createButtonsForColumn(k, context, now)))
-                                .toList();
+    Widget createColumnForDay(String day, DateTime now) {
+        return Expanded(
+            child: Padding(
+                padding: dayColumnPadding,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: createButtonsForColumn(day, now)
+                )
+            )
+        );
     }
 
-    List<Widget> createButtonsForColumn(String day, BuildContext context, DateTime now) {
-        List<Widget> result = List();
+    List<Widget> createButtonsForColumn(String day, DateTime now) {
+        final result = List<Widget>();
+
         result.add(RaisedButton(
             onPressed: () => {},
             shape: buttonShape,
             child: Text(day)
         ));
 
-        result.add(SizedBox(height: 15));
-
-        final currentClasses = this.classes[day];
-        for(var i = 0; i < currentClasses.length; ++i) {
-            result.add(createClassButton(currentClasses[i], now, i, context));
-            result.add(SizedBox(height: 10));
-        }
-
+        this.classes[day].forEach((k) => result.add(createClassButton(k, now)));
         return result;
     }
 
-    Widget createClassButton(Class clazz, DateTime now, int index, BuildContext context) {
+    Widget createClassButton(Class clazz, DateTime now) {
         final today = dayList[now.weekday - 1];
         final isToday = clazz.day == today;
         final isBefore = isToday && now.isBefore(clazz.startTime);
@@ -254,11 +283,17 @@ class ClassTableState extends State<ClassTable> {
                            'Típus: ${clazz.type}\n' +
                            'Terem: ${clazz.room}';
 
-        return RaisedButton(
-            onPressed: () => {},
-            shape: buttonShape,
-            child: Text(buttonText, style: TextStyle(color: clazz.unImportant ? lightGray : Colors.black)),
-            color: clazz.unImportant ? unimportantClassColor : isNext ? currentClassColor : isBefore ? upcomingClassColor : isAfter ? pastClassColor : otherDayClassColor
+        return Padding(
+            padding: classButtonPadding,
+            child: RaisedButton(
+                onPressed: () => {},
+                shape: buttonShape,
+                child: Padding(
+                    padding: classButtonPadding,
+                    child: Text(buttonText, style: TextStyle(color: clazz.unImportant ? lightGray : Colors.black))
+                ),
+                color: clazz.unImportant ? unimportantClassColor : isNext ? currentClassColor : isBefore ? upcomingClassColor : isAfter ? pastClassColor : otherDayClassColor
+            )
         );
     }
 }
@@ -276,7 +311,7 @@ class Class {
         this.day = jsonData['day'],
         this.startTime = parseTimeFrom(jsonData['startTime'], now),
         this.endTime = parseTimeFrom(jsonData['endTime'], now),
-        this.name = jsonData['name'].substring(0, min(jsonData['name'].length as int, 15)),
+        this.name = jsonData['name'],
         this.type = jsonData['type'],
         this.room = jsonData['room'],
         this.unImportant = jsonData['unImportant'];
