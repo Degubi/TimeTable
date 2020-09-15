@@ -102,8 +102,8 @@ public final class PopupGuis{
         Components.addSettingsSection("Idő", 410, now, scrollPanel);
         Components.addSettingButton(startTimeBox, 450, "Nappali Időszak Kezdete", scrollPanel, now);
         Components.addSettingButton(endTimeBox, 500, "Nappali Időszak Vége", scrollPanel, now);
-        Components.addSettingButton(timeBeforeNoteBox, 550, "Első értesítés előtti idő Percben", scrollPanel, now);
-        Components.addSettingButton(updateIntervalBox, 600, "Óra Előtti Értesítések Percben", scrollPanel, now);
+        Components.addSettingButton(timeBeforeNoteBox, 550, "Első értesítés előtti idő percekben", scrollPanel, now);
+        Components.addSettingButton(updateIntervalBox, 600, "Értesítések közötti idő percekben", scrollPanel, now);
 
         Components.addSettingsSection("Felhő", 660, now, scrollPanel);
         Components.addSettingInfoLabel(710, "Felhő Azonosító: " + (Settings.cloudID.equals("null") ? "nincs" : Settings.cloudID), scrollPanel, now);

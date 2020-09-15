@@ -31,7 +31,7 @@ public final class Main {
     private static final JPanel mainPanel = new JPanel(new BorderLayout());
     private static final String BACKEND_URL = "https://timetable-backend.herokuapp.com/timetable";
     private static final HttpClient client = HttpClient.newHttpClient();
-    public static ClassButton currentClassButton;
+    private static ClassButton currentClassButton;
 
     public static final String[] days = {"Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
     public static final JLabel dateLabel = new JLabel("\0");
@@ -148,31 +148,39 @@ public final class Main {
     }
 
     private static void exportToCloud(@SuppressWarnings("unused") ActionEvent event) {
+        var userPwInput = JOptionPane.showInputDialog(mainPanel, "Írd be az órarend módosítás jelszavad!");
+
         Consumer<JDialog> exportFunction = dialog -> {
             var classesArray = Settings.createClassesArray();
             var objectToSend = Json.createObjectBuilder()
                                    .add("classes", classesArray)
+                                   .add("password", userPwInput == null ? "" : userPwInput)
                                    .build();
 
             var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.cloudID))
                                      .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
 
             var response = sendRequest(request, BodyHandlers.ofString());
-            var body = response.body();
+            var maybeCreatedBody = response.body();
 
-            if(!body.isBlank()) {
+            if(!maybeCreatedBody.isBlank()) {
                 dialog.setVisible(false);
-                Settings.cloudID = body;
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(body), null);
-                JOptionPane.showMessageDialog(mainPanel, "Új bejegyzés létrehozva, azonosító: " + body + " (másolva vágólapra)");
+                Settings.cloudID = maybeCreatedBody;
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(maybeCreatedBody), null);
+                JOptionPane.showMessageDialog(mainPanel, "Új órarend létrehozva, azonosító: " + maybeCreatedBody + " (másolva vágólapra)");
             }else {
-                if(response.statusCode() == 200) {
+                var updatedStatusCode = response.statusCode();
+
+                if(updatedStatusCode == 200) {
                     dialog.setVisible(false);
                     JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
+                }else if(updatedStatusCode == 401) {
+                    dialog.setVisible(false);
+                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
                 }else{
                     dialog.setVisible(false);
                     Settings.cloudID = "null";
-                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Az eddigi felhő azonosító törlésre került!");
+                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
                 }
             }
         };

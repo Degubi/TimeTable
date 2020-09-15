@@ -10,7 +10,7 @@ import javax.swing.*;
 
 public final class SettingsPanel extends JPanel {
 
-    public final Image imageToDraw = createQRCode();
+    private final Image imageToDraw = createQRCode();
 
     public SettingsPanel() {
         super(null);

@@ -20,7 +20,7 @@ call('mvn package', shell = True)
 rename('target/TimeTable_Desktop-1.0.jar', 'lib/TimeTable.jar')
 
 print('Creating installer file')
-call((r'"C:\Program Files\Java\jdk-14.0.2\bin\jpackage" --runtime-image runtime -i lib --main-class timetable.Main --main-jar TimeTable.jar '
+call((r'jpackage --runtime-image runtime -i lib --main-class timetable.Main --main-jar TimeTable.jar '
       r'--name TimeTable --vendor Degubi --description TimeTable --icon icon.ico '
       r'--win-per-user-install --win-dir-chooser --win-shortcut'))
 

@@ -161,7 +161,7 @@ public final class Components {
         }
     }
 
-    private static final class ClassEditorTableModel extends DefaultTableModel{
+    private static final class ClassEditorTableModel extends DefaultTableModel {
         @Override public int getRowCount() { return 6; }
         @Override public int getColumnCount() { return 2; }
         @Override public boolean isCellEditable(int rowIndex, int columnIndex) { return columnIndex == 1 && rowIndex != 1 && rowIndex != 2; }

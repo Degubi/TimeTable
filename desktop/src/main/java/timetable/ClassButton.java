@@ -73,24 +73,8 @@ public final class ClassButton extends MouseAdapter {
         if(event.getButton() == MouseEvent.BUTTON3) {
             var panel = new JPanel(null);
             panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(day, this)));
-
-            panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> {
-                if(JOptionPane.showConfirmDialog(Main.classesPanel, "Tényleg Törlöd?", "Törlés Megerősítés", JOptionPane.YES_NO_OPTION) == 0) {
-                    Settings.classes.get(day).removeIf(this::equals);
-                    Main.updateClassesGui();
-                }
-            }));
-
-            panel.add(Components.newClassToolButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> {
-                Settings.classes.get(day).stream()
-                        .filter(this::equals)
-                        .findFirst()
-                        .ifPresent(butt -> {
-                            butt.unImportant = !butt.unImportant;
-                            Main.updateClassesGui();
-                            ((JDialog)panel.getTopLevelAncestor()).dispose();
-                        });
-            }));
+            panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> onDeleteButtonPressed()));
+            panel.add(Components.newClassToolButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> onImportantButtonPressed(panel)));
 
             var frame = new JDialog((JFrame)Main.classesPanel.getTopLevelAncestor());
             var mouse = MouseInfo.getPointerInfo().getLocation();
@@ -101,6 +85,24 @@ public final class ClassButton extends MouseAdapter {
             frame.setLocationRelativeTo(null);
             frame.setBounds(mouse.x, mouse.y - 48, 32, 96);
             frame.setVisible(true);
+        }
+    }
+
+    private void onImportantButtonPressed(JPanel panel) {
+        Settings.classes.get(day).stream()
+                .filter(this::equals)
+                .findFirst()
+                .ifPresent(butt -> {
+                    butt.unImportant = !butt.unImportant;
+                    Main.updateClassesGui();
+                    ((JDialog)panel.getTopLevelAncestor()).dispose();
+                });
+    }
+
+    private void onDeleteButtonPressed() {
+        if(JOptionPane.showConfirmDialog(Main.classesPanel, "Tényleg Törlöd?", "Törlés Megerősítés", JOptionPane.YES_NO_OPTION) == 0) {
+            Settings.classes.get(day).removeIf(this::equals);
+            Main.updateClassesGui();
         }
     }
 
