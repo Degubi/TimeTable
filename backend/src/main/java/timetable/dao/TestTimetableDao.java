@@ -1,6 +1,7 @@
 package timetable.dao;
 
 import java.util.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.*;
 import timetable.*;
 import timetable.model.*;
@@ -16,12 +17,12 @@ public /*non-final*/ class TestTimetableDao implements TimetableDao {
     }
 
     @Override
-    public boolean update(String id, UserData data) {
+    public HttpStatus update(String id, UserData data) {
         if(storage.containsKey(id)) {
             storage.put(id, data);
-            return true;
+            return HttpStatus.OK;
         }
-        return false;
+        return HttpStatus.BAD_REQUEST;
     }
 
     @Override

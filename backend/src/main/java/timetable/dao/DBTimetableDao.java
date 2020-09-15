@@ -2,6 +2,7 @@ package timetable.dao;
 
 import com.mongodb.client.*;
 import org.springframework.data.mongodb.core.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.*;
 import timetable.*;
 import timetable.model.*;
@@ -18,16 +19,20 @@ public /*non-final*/ class DBTimetableDao implements TimetableDao {
     }
 
     @Override
-    public boolean update(String id, UserData data) {
+    public HttpStatus update(String id, UserData data) {
         var old = database.findById(id, UserData.class, COLLECTION_CLASSES);
 
         if(old != null) {
+            if(!data.password.equals(old.password)) {
+                return HttpStatus.UNAUTHORIZED;
+            }
+
             database.remove(old, COLLECTION_CLASSES);
             database.insert(new UserData(id, data), COLLECTION_CLASSES);
-            return true;
+            return HttpStatus.OK;
         }
 
-        return false;
+        return HttpStatus.BAD_REQUEST;
     }
 
     @Override

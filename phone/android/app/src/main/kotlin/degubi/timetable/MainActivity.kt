@@ -1,4 +1,4 @@
-package com.example.phone
+package degubi.timetable
 
 import io.flutter.embedding.android.FlutterActivity
 

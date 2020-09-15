@@ -27,12 +27,7 @@ public final class TimetableController {
 
     @PostMapping
     public ResponseEntity<String> createOrUpdate(@RequestParam String id, @RequestBody UserData clazz) {
-        if(id.equals("null")) {
-            return new ResponseEntity<>(timetableDao.create(clazz), HttpStatus.OK);
-        }
-        var updated = timetableDao.update(id, clazz);
-
-        return updated ? new ResponseEntity<>(HttpStatus.OK)
-                       : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return id.equals("null") ? new ResponseEntity<>(timetableDao.create(clazz), HttpStatus.OK)
+                                 : new ResponseEntity<>(timetableDao.update(id, clazz));
     }
 }
