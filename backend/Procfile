@@ -1,1 +1,0 @@
-web: java -Dserver.port=$PORT -jar target/TimeTable_Backend-1.0.jar
