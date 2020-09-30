@@ -13,8 +13,7 @@ import timetable.listeners.*;
 
 public final class ClassButton extends MouseAdapter {
     public static final Font importantClassFont = new Font("SansSerif", Font.BOLD, 12);
-    public static final Comparator<ClassButton> timeBasedOrder = Comparator.comparingInt((ClassButton button) -> Settings.indexOf(button.day, Main.days))
-                                                                           .thenComparing(button -> button.startTime)
+    public static final Comparator<ClassButton> timeBasedOrder = Comparator.comparing((ClassButton button) -> button.startTime)
                                                                            .thenComparing(button -> button.name);
     public final String day;
     public final LocalTime startTime;
@@ -33,7 +32,19 @@ public final class ClassButton extends MouseAdapter {
         this.endTime = endTime;
         this.room = room;
         this.unImportant = unImportant;
-        this.button = initButton();
+
+        var button = new JButton("<html>Óra: " + name.replace('_', ' ') +
+                                 "<br>Idő: " + startTime + "-" + endTime +
+                                 "<br>Típus: " + type +
+                                 "<br>Terem: " + room + "</html>");
+
+        if(type.charAt(0) == 'G') {
+            button.setFont(importantClassFont);
+        }
+
+        button.setFocusable(false);
+        button.addMouseListener(this);
+        this.button = button;
     }
 
     public static ClassButton fromEditorTable(JTable table, boolean unImportant) {
@@ -106,22 +117,6 @@ public final class ClassButton extends MouseAdapter {
         }
     }
 
-    private JButton initButton() {
-        var button = new JButton("<html>Óra: " + name.replace('_', ' ') +
-                                 "<br>Idő: " + startTime + "-" + endTime +
-                                 "<br>Típus: " + type +
-                                 "<br>Terem: " + room);
-
-        if(type.charAt(0) == 'G') {
-            button.setFont(importantClassFont);
-        }
-
-        button.setFocusable(false);
-        button.addMouseListener(this);
-
-        return button;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if(obj == this) {
@@ -132,10 +127,5 @@ public final class ClassButton extends MouseAdapter {
             return name.equals(button.name) && day.equals(button.day) && type.equals(button.type) && startTime.equals(button.startTime) && endTime.equals(button.endTime) && room.equals(button.room);
         }
         return false;
-    }
-
-    @Override
-    public String toString() {
-        return day + ' ' + name + ' ' + type + ' ' + startTime + ' ' + endTime + ' ' + room + ' ' + unImportant;
     }
 }

@@ -32,7 +32,7 @@ public final class Settings {
     public static Map<String, List<ClassButton>> classes;
 
     static {
-        var settingsPath = Path.of("app/settings.json");
+        var settingsPath = Path.of("./settings.json");
 
         if(!Files.exists(settingsPath)) {
             try {
@@ -116,7 +116,7 @@ public final class Settings {
                                  .add("classes", createClassesArray());
 
         try {
-            Files.writeString(Path.of("app/settings.json"), json.toJson(settingsObject.build()));
+            Files.writeString(Path.of("./settings.json"), json.toJson(settingsObject.build()));
         } catch (IOException e) {
             e.printStackTrace();
         }

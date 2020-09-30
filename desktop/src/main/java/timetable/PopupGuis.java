@@ -1,7 +1,11 @@
 package timetable;
 
+import com.google.zxing.*;
+import com.google.zxing.client.j2se.*;
+import com.google.zxing.qrcode.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
 import java.io.*;
 import java.nio.file.*;
 import java.time.*;
@@ -14,10 +18,10 @@ import javax.swing.border.*;
 import timetable.listeners.*;
 
 public final class PopupGuis{
-    public static final ImageIcon editIcon = Components.getIcon("edit.png", 32);
+    public static final ImageIcon editIcon   = Components.getIcon("edit.png", 32);
     public static final ImageIcon deleteIcon = Components.getIcon("delete.png", 32);
     public static final ImageIcon ignoreIcon = Components.getIcon("ignore.png", 32);
-    public static final ImageIcon unIgnore = Components.getIcon("unignore.png", 32);
+    public static final ImageIcon unIgnore   = Components.getIcon("unignore.png", 32);
 
     private PopupGuis() {}
 
@@ -83,7 +87,7 @@ public final class PopupGuis{
         Components.handleNightMode(startupBox, now);
         startupBox.setSize(200, 20);
 
-        var scrollPanel = new SettingsPanel();
+        var scrollPanel = new JPanel(null);
         Components.handleNightMode(scrollPanel, now);
         scrollPanel.setPreferredSize(new java.awt.Dimension(500, 1050));
         var scrollPane = new JScrollPane(scrollPanel);
@@ -119,7 +123,11 @@ public final class PopupGuis{
         deleteClassesButton.setForeground(Color.RED);
         deleteClassesButton.addActionListener(e -> handleClassReset(scrollPanel));
 
+        var qrCodeImage = new JLabel(generateQRCodeImage());
+        qrCodeImage.setBounds(350, 672, 300, 150);
+
         scrollPanel.add(deleteClassesButton);
+        scrollPanel.add(qrCodeImage);
 
         Runnable saveAction = () -> {
             try {
@@ -163,6 +171,35 @@ public final class PopupGuis{
         settingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         settingsFrame.setContentPane(scrollPane);
         settingsFrame.setVisible(true);
+    }
+
+    private static ImageIcon generateQRCodeImage() {
+        if(Settings.cloudID.equals("null")) {
+            return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB));
+        }
+
+        try {
+            var bitmapImage = MatrixToImageWriter.toBufferedImage(new QRCodeWriter().encode(Settings.cloudID, BarcodeFormat.QR_CODE, 300, 150));
+            var outputImage = new BufferedImage(300, 150, BufferedImage.TYPE_INT_RGB);
+            var time = LocalTime.now();
+            var isDarkMode = time.isAfter(Settings.dayTimeEnd) || time.isBefore(Settings.dayTimeStart);
+            var backgroundColor = (isDarkMode ? Settings.nightTimeColor : Settings.dayTimeColor).getRGB();
+            var foregroundColor = (isDarkMode ? Color.WHITE : Color.BLACK).getRGB();
+
+            for(var x = 0; x < 300; ++x) {
+                for(var y = 0; y < 150; ++y) {
+                    var originalPixel = bitmapImage.getRGB(x, y);
+                    var replacementPixel = originalPixel == -1 ? backgroundColor : foregroundColor;
+
+                    outputImage.setRGB(x, y, replacementPixel);
+                }
+            }
+
+            return new ImageIcon(outputImage);
+        } catch (WriterException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static void handleClassReset(JPanel scrollPanel) {
