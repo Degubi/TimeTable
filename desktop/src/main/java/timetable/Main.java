@@ -150,42 +150,44 @@ public final class Main {
     private static void exportToCloud(@SuppressWarnings("unused") ActionEvent event) {
         var userPwInput = JOptionPane.showInputDialog(mainPanel, "Írd be az órarend módosítás jelszavad!");
 
-        Consumer<JDialog> exportFunction = dialog -> {
-            var classesArray = Settings.createClassesArray();
-            var objectToSend = Json.createObjectBuilder()
-                                   .add("classes", classesArray)
-                                   .add("password", userPwInput == null ? "" : userPwInput)
-                                   .build();
+        if(userPwInput != null) {
+            Consumer<JDialog> exportFunction = dialog -> {
+                var classesArray = Settings.createClassesArray();
+                var objectToSend = Json.createObjectBuilder()
+                                       .add("classes", classesArray)
+                                       .add("password", userPwInput)
+                                       .build();
 
-            var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.cloudID))
-                                     .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
+                var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.cloudID))
+                                         .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
 
-            var response = sendRequest(request, BodyHandlers.ofString());
-            var maybeCreatedBody = response.body();
+                var response = sendRequest(request, BodyHandlers.ofString());
+                var maybeCreatedBody = response.body();
 
-            if(!maybeCreatedBody.isBlank()) {
-                dialog.setVisible(false);
-                Settings.cloudID = maybeCreatedBody;
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(maybeCreatedBody), null);
-                JOptionPane.showMessageDialog(mainPanel, "Új órarend létrehozva, azonosító: " + maybeCreatedBody + " (másolva vágólapra)");
-            }else {
-                var updatedStatusCode = response.statusCode();
-
-                if(updatedStatusCode == 200) {
+                if(!maybeCreatedBody.isBlank()) {
                     dialog.setVisible(false);
-                    JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
-                }else if(updatedStatusCode == 401) {
-                    dialog.setVisible(false);
-                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
-                }else{
-                    dialog.setVisible(false);
-                    Settings.cloudID = "null";
-                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
+                    Settings.cloudID = maybeCreatedBody;
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(maybeCreatedBody), null);
+                    JOptionPane.showMessageDialog(mainPanel, "Új órarend létrehozva, azonosító: " + maybeCreatedBody + " (másolva vágólapra)");
+                }else {
+                    var updatedStatusCode = response.statusCode();
+
+                    if(updatedStatusCode == 200) {
+                        dialog.setVisible(false);
+                        JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
+                    }else if(updatedStatusCode == 401) {
+                        dialog.setVisible(false);
+                        JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
+                    }else{
+                        dialog.setVisible(false);
+                        Settings.cloudID = "null";
+                        JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
+                    }
                 }
-            }
-        };
+            };
 
-        showTransferDialog("Mentés folyamatban...", exportFunction);
+            showTransferDialog("Mentés folyamatban...", exportFunction);
+        }
     }
 
     private static void importFromExcel(@SuppressWarnings("unused") ActionEvent event) {

@@ -12,5 +12,8 @@ open module degubi.timetable.backend {
     requires spring.data.mongodb;
     requires spring.web;
 
-    requires mongo.java.driver;
+    requires org.mongodb.driver.core;
+    requires org.mongodb.driver.sync.client;
+
+    requires jdk.net;
 }
