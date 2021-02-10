@@ -1,0 +1,60 @@
+name: Build Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build_desktop:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+
+      - name: Generate runtime
+        run: cd desktop && jlink --output ./runtime/ --no-man-pages --no-header-files --add-modules java.base,java.desktop,java.sql,jdk.charsets,java.net.http,jdk.crypto.ec,java.logging --compress=2
+
+      - name: Copy libraries
+        run: cd desktop && mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=resources
+
+      - name: Create jar
+        run: cd desktop && mvn package && move target/TimeTable_Desktop-1.0.jar resources/TimeTable.jar
+
+      - name: Create installer
+        run: cd desktop && jpackage --runtime-image runtime --input resources --main-class timetable.Main --main-jar TimeTable.jar --name TimeTable --vendor Degubi --description TimeTable --icon icon.ico --win-per-user-install --win-dir-chooser --win-shortcut
+
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: desktop/TimeTable-1.0.exe
+          asset_name: TimeTable.exe
+          tag: ${{ github.ref }}
+
+  build_android:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1
+
+      - name: Build app
+        run: cd phone && flutter pub get && flutter build apk
+
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: phone/build/app/outputs/flutter-apk/app.apk
+          asset_name: TimeTable.apk
+          tag: ${{ github.ref }}

@@ -72,10 +72,9 @@ public final class PopupGuis{
         var dayTimeColor = Components.newColorButton(200, 320, colorButtonListener, Settings.dayTimeColor);
         var nightTimeColor = Components.newColorButton(200, 380, colorButtonListener, Settings.nightTimeColor);
 
-        var startTimeBox = Components.newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
-        var endTimeBox = Components.newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
-        var timeBeforeNoteBox = Components.newComboBox(Integer.toString(Settings.minutesBeforeFirstNotification), 270, "30", "40", "50", "60", "70", "80", "90");
-        var updateIntervalBox = Components.newComboBox(Integer.toString(Settings.updateIntervalSeconds / 60), 340, "5", "10", "15", "20");
+        var dayModeStartTimeBox = Components.newComboBox(Settings.dayTimeStart.toString(), 60, timeValues);
+        var dayModeEndTimeBox = Components.newComboBox(Settings.dayTimeEnd.toString(), 120, timeValues);
+        var minutesBeforeClassNoteBox = Components.newComboBox(Integer.toString(Settings.minutesBeforeNextClassNotification), 270, "30", "40", "50", "60", "70", "80", "90");
 
         var now = LocalTime.now();
         var popupCheckBox = new JCheckBox((String)null, Settings.enablePopups);
@@ -89,10 +88,7 @@ public final class PopupGuis{
 
         var scrollPanel = new JPanel(null);
         Components.handleNightMode(scrollPanel, now);
-        scrollPanel.setPreferredSize(new java.awt.Dimension(500, 1050));
-        var scrollPane = new JScrollPane(scrollPanel);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-        scrollPane.setBorder(null);
+        scrollPanel.setPreferredSize(new java.awt.Dimension(500, 1000));
 
         Components.addSettingsSection("Színek", 10, now, scrollPanel);
         Components.addSettingButton(currentClass, 50, "Jelenlegi Óra Színe", scrollPanel, now);
@@ -104,35 +100,34 @@ public final class PopupGuis{
         Components.addSettingButton(nightTimeColor, 350, "Éjszakai Mód Háttérszíne", scrollPanel, now);
 
         Components.addSettingsSection("Idő", 410, now, scrollPanel);
-        Components.addSettingButton(startTimeBox, 450, "Nappali Időszak Kezdete", scrollPanel, now);
-        Components.addSettingButton(endTimeBox, 500, "Nappali Időszak Vége", scrollPanel, now);
-        Components.addSettingButton(timeBeforeNoteBox, 550, "Első értesítés előtti idő percekben", scrollPanel, now);
-        Components.addSettingButton(updateIntervalBox, 600, "Értesítések közötti idő percekben", scrollPanel, now);
+        Components.addSettingButton(dayModeStartTimeBox, 450, "Nappali Időszak Kezdete", scrollPanel, now);
+        Components.addSettingButton(dayModeEndTimeBox, 500, "Nappali Időszak Vége", scrollPanel, now);
+        Components.addSettingButton(minutesBeforeClassNoteBox, 550, "Óra előtti értesítés előtti idő percekben", scrollPanel, now);
 
-        Components.addSettingsSection("Felhő", 660, now, scrollPanel);
-        Components.addSettingInfoLabel(710, "Felhő Azonosító: " + (Settings.cloudID.equals("null") ? "nincs" : Settings.cloudID), scrollPanel, now);
+        Components.addSettingsSection("Felhő", 590, now, scrollPanel);
+        Components.addSettingInfoLabel(640, "Felhő Azonosító: " + (Settings.cloudID.equals("null") ? "nincs" : Settings.cloudID), scrollPanel, now);
 
-        Components.addSettingsSection("Egyéb", 770, now, scrollPanel);
-        Components.addSettingButton(popupCheckBox, 820, "Üzenetek Bekapcsolva", scrollPanel, now);
-        Components.addSettingButton(startupBox, 870, "Indítás PC Indításakor", scrollPanel, now);
+        Components.addSettingsSection("Egyéb", 700, now, scrollPanel);
+        Components.addSettingButton(popupCheckBox, 750, "Üzenetek Bekapcsolva", scrollPanel, now);
+        Components.addSettingButton(startupBox, 800, "Indítás PC Indításakor", scrollPanel, now);
 
-        Components.addSettingsSection("Veszély Zóna", 930, now, scrollPanel);
+        Components.addSettingsSection("Veszély Zóna", 840, now, scrollPanel);
         var deleteClassesButton = new JButton("Órarend Törlése");
-        deleteClassesButton.setBounds(100, 980, 120, 40);
+        deleteClassesButton.setBounds(100, 880, 120, 40);
         deleteClassesButton.setBackground(Color.GRAY);
         deleteClassesButton.setForeground(Color.RED);
         deleteClassesButton.addActionListener(e -> handleClassReset(scrollPanel));
 
         var qrCodeImage = new JLabel(generateQRCodeImage());
-        qrCodeImage.setBounds(350, 672, 300, 150);
+        qrCodeImage.setBounds(350, 602, 300, 150);
 
         scrollPanel.add(deleteClassesButton);
         scrollPanel.add(qrCodeImage);
 
         Runnable saveAction = () -> {
             try {
-                Settings.dayTimeStart = LocalTime.parse((CharSequence) startTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
-                Settings.dayTimeEnd = LocalTime.parse((CharSequence) endTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
+                Settings.dayTimeStart = LocalTime.parse((CharSequence) dayModeStartTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
+                Settings.dayTimeEnd = LocalTime.parse((CharSequence) dayModeEndTimeBox.getSelectedItem(), DateTimeFormatter.ISO_LOCAL_TIME);
                 Settings.enablePopups = popupCheckBox.isSelected();
                 Settings.currentClassColor = currentClass.getBackground();
                 Settings.currentClassColor = currentClass.getBackground();
@@ -142,8 +137,7 @@ public final class PopupGuis{
                 Settings.unimportantClassColor = unimportantClass.getBackground();
                 Settings.dayTimeColor = dayTimeColor.getBackground();
                 Settings.nightTimeColor = nightTimeColor.getBackground();
-                Settings.minutesBeforeFirstNotification = Integer.parseInt((String) timeBeforeNoteBox.getSelectedItem());
-                Settings.updateIntervalSeconds = Integer.parseInt((String) updateIntervalBox.getSelectedItem()) * 60;
+                Settings.minutesBeforeNextClassNotification = Integer.parseInt((String) minutesBeforeClassNoteBox.getSelectedItem());
                 Settings.saveSettings();
 
                 Main.updateClassesGui();
@@ -164,6 +158,9 @@ public final class PopupGuis{
             }
         };
 
+        var scrollPane = new JScrollPane(scrollPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(10);
+        scrollPane.setBorder(null);
         settingsFrame.addWindowListener(new WindowClosedListener(saveAction));
         settingsFrame.setBounds(0, 0, 800, 600);
         settingsFrame.setIconImage(Components.trayIcon);

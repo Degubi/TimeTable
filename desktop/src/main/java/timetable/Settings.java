@@ -26,8 +26,7 @@ public final class Settings {
     public static Color otherDayClassColor;
     public static Color pastClassColor;
     public static Color unimportantClassColor;
-    public static int minutesBeforeFirstNotification;
-    public static int updateIntervalSeconds;
+    public static int minutesBeforeNextClassNotification;
     public static String cloudID;
     public static Map<String, List<ClassButton>> classes;
 
@@ -44,8 +43,7 @@ public final class Settings {
             var settingsObject = json.fromJson(Files.readString(settingsPath), JsonObject.class);
 
             enablePopups = settingsObject.getBoolean("enablePopups", true);
-            minutesBeforeFirstNotification = settingsObject.getInt("minutesBeforeFirstNotification", 60);
-            updateIntervalSeconds = settingsObject.getInt("updateIntervalSeconds", 600);
+            minutesBeforeNextClassNotification = settingsObject.getInt("minutesBeforeNextClassNotification", 60);
             dayTimeStart = LocalTime.parse(settingsObject.getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
             dayTimeEnd = LocalTime.parse(settingsObject.getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
 
@@ -64,15 +62,6 @@ public final class Settings {
         } catch (JsonbException | IOException e) {
             throw new IllegalStateException("Something is fucked with settings brah");
         }
-    }
-
-    public static<T> int indexOf(T find, T[] array) {
-        for(var k = 0; k < array.length; ++k) {
-            if(array[k].equals(find)) {
-                return k;
-            }
-        }
-        return -1;
     }
 
     private Settings() {}
@@ -101,8 +90,7 @@ public final class Settings {
     public static void saveSettings() {
         var settingsObject = Json.createObjectBuilder()
                                  .add("enablePopups", enablePopups)
-                                 .add("minutesBeforeFirstNotification", minutesBeforeFirstNotification)
-                                 .add("updateIntervalSeconds", updateIntervalSeconds)
+                                 .add("minutesBeforeNextClassNotification", minutesBeforeNextClassNotification)
                                  .add("dayTimeEnd", dayTimeEnd.format(DateTimeFormatter.ISO_LOCAL_TIME))
                                  .add("dayTimeStart", dayTimeStart.format(DateTimeFormatter.ISO_LOCAL_TIME))
                                  .add("dayTimeColor", colorToString(dayTimeColor))
@@ -132,11 +120,7 @@ public final class Settings {
     }
 
     public static JsonArray getArraySetting(String key, JsonObject settingsObject){
-        if(!settingsObject.containsKey(key)) {
-            return Json.createArrayBuilder().build();
-        }
-
-        return settingsObject.getJsonArray(key);
+        return !settingsObject.containsKey(key) ? Json.createArrayBuilder().build() : settingsObject.getJsonArray(key);
     }
 
     public static void createStartupLink(String toSavePath) {

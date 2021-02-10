@@ -14,6 +14,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 15
+
     - name: Deploy to Heroku
       run: cd backend && mvn heroku:deploy -Dmaven.test.skip
       env:

@@ -31,12 +31,12 @@ public final class Main {
     private static final JPanel mainPanel = new JPanel(new BorderLayout());
     private static final String BACKEND_URL = "https://timetable-backend.herokuapp.com/timetable";
     private static final HttpClient client = HttpClient.newHttpClient();
+    private static final JLabel dateLabel = new JLabel("\0");
+    private static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
     private static ClassButton currentClassButton;
 
     public static final String[] days = {"Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
-    public static final JLabel dateLabel = new JLabel("\0");
     public static final JPanel classesPanel = new JPanel(null);
-    public static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
 
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
@@ -52,7 +52,6 @@ public final class Main {
 
         var screenshotItem = Components.newMenuItem("Kép", "screencap.png", Main::exportToImage);
         var frame = new JFrame("Órarend");
-
         frame.setBounds(0, 0, 1024, Math.min(768, Toolkit.getDefaultToolkit().getScreenSize().height - 50));
         frame.setLocationRelativeTo(null);
         frame.setContentPane(mainPanel);
@@ -67,8 +66,7 @@ public final class Main {
 
         var sleepMode = new JCheckBoxMenuItem("Alvó Mód", Components.getIcon("sleep.png", 24), false);
         var popMenu = new JPopupMenu();
-
-        popMenu.setPreferredSize(new Dimension(170, 200));
+        popMenu.setPreferredSize(new Dimension(170, 190));
         popMenu.add(Components.newMenuItem("Megnyitás", "open.png", SystemTrayListener::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
@@ -77,14 +75,14 @@ public final class Main {
         popMenu.add(Components.newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
         popMenu.add(Components.newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
-        SwingUtilities.updateComponentTreeUI(popMenu);
 
         tray.addMouseListener(new SystemTrayListener(popMenu));
         SystemTray.getSystemTray().add(tray);
         Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
         Thread.currentThread().setName("Time Label Updater");
 
-        var timer = Settings.updateIntervalSeconds - 100;
+        var minuteCounter = 59;
+        var lastNotificationClass = (ClassButton) null;
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
         var todayNames = sendRequest(HttpRequest.newBuilder(URI.create("https://api.abalin.net/today?country=hu")), ofObject())
                                .body()
@@ -98,20 +96,21 @@ public final class Main {
                 dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
             }
 
-            if(++timer >= Settings.updateIntervalSeconds) {
-                if(!sleepMode.isSelected() && !frame.isVisible()) {
-                    var nowTime = nowDate.toLocalTime();
+            var currentClass = currentClassButton;
+            if(++minuteCounter == 60 && currentClass != null) {
+                var timeBetween = Duration.between(nowDate.toLocalTime(), currentClass.startTime);
 
-                    if(Settings.enablePopups && currentClassButton != null && nowTime.isBefore(currentClassButton.startTime)) {
-                        var timeBetween = Duration.between(nowTime, currentClassButton.startTime);
-
-                        if(timeBetween.toMinutes() < Settings.minutesBeforeFirstNotification) {
-                            tray.displayMessage("Órarend", "Figyelem! Következő óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() + " perc múlva!\nÓra: " + currentClassButton.name + ' ' + currentClassButton.startTime + '-' + currentClassButton.endTime, MessageType.NONE);
-                        }
-                    }
-                    Components.handleNightMode(dateLabel, nowTime);
+                if(!sleepMode.isSelected() && Settings.enablePopups && timeBetween.toMinutes() < Settings.minutesBeforeNextClassNotification && lastNotificationClass != currentClass) {
+                    lastNotificationClass = currentClass;
+                    tray.displayMessage("Órarend", "Figyelem! Következő óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() +
+                                        " perc múlva!\nÓra: " + currentClass.name + ' ' + currentClass.startTime + '-' + currentClass.endTime, MessageType.NONE);
                 }
-                timer = 0;
+
+                minuteCounter = 0;
+                tray.setToolTip("Következő óra " + timeBetween.toHoursPart() + " óra " + timeBetween.toMinutesPart() +
+                                " perc múlva: " + currentClass.name + ' ' + currentClass.type +
+                                "\nIdőpont: " + currentClass.startTime + '-' + currentClass.endTime + "\nTerem: " + currentClass.room);
+
             }
 
             Thread.sleep(1000);
@@ -281,18 +280,26 @@ public final class Main {
         Components.handleNightMode(classesPanel, nowTime);
         Components.handleNightMode(dateLabel, nowTime);
 
-        Settings.classes
-                .forEach((day, classesPerDay) -> {
-                    var yPosition = new int[] {-40};
-                    var xPosition = 20 + Settings.indexOf(day, days) * 200;
-                    var isToday = day.equals(today);
+        Settings.classes.forEach((day, classesPerDay) -> {
+            var yPosition = new int[] { -40 };
+            var xPosition = 20 + indexOf(day, days) * 200;
+            var isToday = day.equals(today);
 
-                    classesPerDay.stream()
-                                 .sorted(ClassButton.timeBasedOrder)
-                                 .forEach(clazz -> positionAndAddButtonToPanel(nowTime, yPosition, xPosition, isToday, clazz));
-                });
+            classesPerDay.stream()
+                         .sorted(ClassButton.timeBasedOrder)
+                         .forEach(clazz -> positionAndAddButtonToPanel(nowTime, yPosition, xPosition, isToday, clazz));
+        });
 
         classesPanel.repaint();
+    }
+
+    public static<T> int indexOf(T find, T[] array) {
+        for(var k = 0; k < array.length; ++k) {
+            if(array[k].equals(find)) {
+                return k;
+            }
+        }
+        return -1;
     }
 
     private static void positionAndAddButtonToPanel(LocalTime nowTime, int[] yPosition, int xPosition, boolean isToday, ClassButton clazz) {
@@ -304,9 +311,6 @@ public final class Main {
 
         if(isNext) {
             currentClassButton = clazz;
-
-            var between = Duration.between(nowTime, clazz.startTime);
-            Main.tray.setToolTip("Következő óra " + between.toHoursPart() + " óra " + between.toMinutesPart() + " perc múlva: " + clazz.name + ' ' + clazz.type + "\nIdőpont: " + clazz.startTime + '-' + clazz.endTime + "\nTerem: " + clazz.room);
         }
         clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
         clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);

@@ -51,7 +51,7 @@ public final class ClassEditorTableKeyListener extends AbstractAction{
     }
 
     private static String getNextOrPrevColumn(boolean isNext, String[] columns, String day) {
-        var currentIndex = Settings.indexOf(day, columns);
+        var currentIndex = Main.indexOf(day, columns);
         return isNext ? columns[currentIndex == columns.length - 1 ? 0 : ++currentIndex] : columns[currentIndex == 0 ? columns.length - 1 : --currentIndex];
     }
 }
