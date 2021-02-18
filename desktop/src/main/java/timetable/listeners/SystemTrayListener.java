@@ -4,16 +4,30 @@ import java.awt.event.*;
 import javax.swing.*;
 import timetable.*;
 
-public final class SystemTrayListener extends MouseAdapter{
+public final class SystemTrayListener extends MouseAdapter {
     private final JPopupMenu popMenu;
+    private final JFrame stupidPopupMenuHelperFrame = new JFrame();
 
     public SystemTrayListener(JPopupMenu popMenu) {
         this.popMenu = popMenu;
+
+        stupidPopupMenuHelperFrame.setType(JFrame.Type.UTILITY);
+        stupidPopupMenuHelperFrame.setUndecorated(true);
+        stupidPopupMenuHelperFrame.setOpacity(0F);
+        stupidPopupMenuHelperFrame.addFocusListener(new FocusAdapter(){
+            @Override
+            public void focusLost(FocusEvent e) {
+                if(popMenu.isVisible()) {
+                    popMenu.setVisible(false);
+                }
+            }
+        });
     }
 
     @Override
     public void mouseReleased(MouseEvent event) {
         if(event.getButton() == MouseEvent.BUTTON3) {
+            stupidPopupMenuHelperFrame.setVisible(true);
             popMenu.setLocation(event.getX() - 160, event.getY());
             popMenu.setInvoker(popMenu);
             popMenu.setVisible(true);

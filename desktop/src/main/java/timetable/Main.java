@@ -33,7 +33,7 @@ public final class Main {
     private static final HttpClient client = HttpClient.newHttpClient();
     private static final JLabel dateLabel = new JLabel("\0");
     private static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
-    private static ClassButton currentClassButton;
+    private static ClassButton lastActiveClass = null;
 
     public static final String[] days = {"Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
     public static final JPanel classesPanel = new JPanel(null);
@@ -96,21 +96,25 @@ public final class Main {
                 dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
             }
 
-            var currentClass = currentClassButton;
-            if(++minuteCounter == 60 && currentClass != null) {
-                var timeBetween = Duration.between(nowDate.toLocalTime(), currentClass.startTime);
-
-                if(!sleepMode.isSelected() && Settings.enablePopups && timeBetween.toMinutes() < Settings.minutesBeforeNextClassNotification && lastNotificationClass != currentClass) {
-                    lastNotificationClass = currentClass;
-                    tray.displayMessage("Órarend", "Figyelem! Következő óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() +
-                                        " perc múlva!\nÓra: " + currentClass.name + ' ' + currentClass.startTime + '-' + currentClass.endTime, MessageType.NONE);
-                }
-
+            if(++minuteCounter == 60) {
                 minuteCounter = 0;
-                tray.setToolTip("Következő óra " + timeBetween.toHoursPart() + " óra " + timeBetween.toMinutesPart() +
-                                " perc múlva: " + currentClass.name + ' ' + currentClass.type +
-                                "\nIdőpont: " + currentClass.startTime + '-' + currentClass.endTime + "\nTerem: " + currentClass.room);
 
+                var currentClass = updateCurrentClass(nowDate);
+                if(currentClass != null) {
+                    var timeBetween = Duration.between(nowDate.toLocalTime(), currentClass.startTime);
+
+                    if(!sleepMode.isSelected() && Settings.enablePopups && timeBetween.toMinutes() <= Settings.minutesBeforeNextClassNotification && lastNotificationClass != currentClass) {
+                        lastNotificationClass = currentClass;
+                        tray.displayMessage("Órarend", "Figyelem! Következő óra: " + timeBetween.toHoursPart() + " óra " +  timeBetween.toMinutesPart() +
+                                            " perc múlva!\nÓra: " + currentClass.name + ' ' + currentClass.startTime + '-' + currentClass.endTime, MessageType.NONE);
+                    }
+
+                    tray.setToolTip("Következő óra " + timeBetween.toHoursPart() + " óra " + timeBetween.toMinutesPart() +
+                                    " perc múlva: " + currentClass.name + ' ' + currentClass.type +
+                                    "\nIdőpont: " + currentClass.startTime + '-' + currentClass.endTime + "\nTerem: " + currentClass.room);
+                }else{
+                    tray.setToolTip("Órarend");
+                }
             }
 
             Thread.sleep(1000);
@@ -270,7 +274,6 @@ public final class Main {
     public static void updateClassesGui() {
         classButtons.forEach(k -> classesPanel.remove(k.button));
         classButtons.clear();
-        currentClassButton = null;
 
         var nowDate = LocalDateTime.now();
         var today = days[nowDate.getDayOfWeek().ordinal()];
@@ -290,6 +293,7 @@ public final class Main {
                          .forEach(clazz -> positionAndAddButtonToPanel(nowTime, yPosition, xPosition, isToday, clazz));
         });
 
+        updateCurrentClass(nowDate);
         classesPanel.repaint();
     }
 
@@ -307,15 +311,31 @@ public final class Main {
 
         var isBefore = isToday && nowTime.isBefore(clazz.startTime);
         var isAfter = isToday && (nowTime.isAfter(clazz.startTime) || nowTime.equals(clazz.startTime));
-        var isNext = currentClassButton == null && !clazz.unImportant && isBefore || (isToday && nowTime.equals(clazz.startTime));
 
-        if(isNext) {
-            currentClassButton = clazz;
-        }
-        clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isNext ? Settings.currentClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
+        clazz.button.setBackground(clazz.unImportant ? Settings.unimportantClassColor : isBefore ? Settings.upcomingClassColor : isAfter ? Settings.pastClassColor : Settings.otherDayClassColor);
         clazz.button.setForeground(clazz.unImportant ? Color.LIGHT_GRAY : Color.BLACK);
 
         classesPanel.add(clazz.button);
         classButtons.add(clazz);
+    }
+
+    private static ClassButton updateCurrentClass(LocalDateTime nowDate) {
+        var nowTime = nowDate.toLocalTime();
+        var today = days[nowDate.getDayOfWeek().ordinal()];
+        var currentClass = classButtons.stream()
+                                       .filter(k -> k.day.equals(today) && !k.unImportant && (nowTime.isBefore(k.startTime) || nowTime.equals(k.startTime)))
+                                       .findFirst()
+                                       .orElse(null);
+
+        if(currentClass != null) {
+            currentClass.button.setBackground(Settings.currentClassColor);
+        }
+
+        if(currentClass != lastActiveClass && lastActiveClass != null) {
+            lastActiveClass.button.setBackground(Settings.pastClassColor);
+        }
+
+        lastActiveClass = currentClass;
+        return currentClass;
     }
 }
