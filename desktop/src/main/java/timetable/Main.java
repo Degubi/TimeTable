@@ -35,7 +35,7 @@ public final class Main {
     private static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
     private static ClassButton lastActiveClass = null;
 
-    public static final String[] days = {"Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"};
+    public static final String[] days = { "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap" };
     public static final JPanel classesPanel = new JPanel(null);
 
     public static void main(String[] args) throws Exception {
@@ -84,16 +84,12 @@ public final class Main {
         var minuteCounter = 59;
         var lastNotificationClass = (ClassButton) null;
         var displayTimeFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd. EEEE HH:mm:ss");
-        var todayNames = sendRequest(HttpRequest.newBuilder(URI.create("https://api.abalin.net/today?country=hu")), ofObject())
-                               .body()
-                               .getJsonObject("data")
-                               .getJsonObject("namedays")
-                               .getString("hu");
+
         while(true) {
             var nowDate = LocalDateTime.now();
 
             if(frame.isVisible()) {
-                dateLabel.setText(nowDate.format(displayTimeFormat) + ": " + todayNames);
+                dateLabel.setText(nowDate.format(displayTimeFormat));
             }
 
             if(++minuteCounter == 60) {

@@ -4,7 +4,7 @@ import java.awt.event.*;
 import java.time.*;
 import timetable.*;
 
-public final class CreateClassListener extends MouseAdapter{
+public final class CreateClassListener extends MouseAdapter {
     private final String dayStr;
 
     public CreateClassListener(String dayStr) {

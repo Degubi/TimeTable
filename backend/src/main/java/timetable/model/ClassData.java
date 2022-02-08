@@ -1,7 +1,7 @@
 package timetable.model;
 
+import com.fasterxml.jackson.annotation.*;
 import java.time.*;
-import javax.json.bind.annotation.*;
 import org.springframework.data.annotation.*;
 
 public final class ClassData {
@@ -14,15 +14,15 @@ public final class ClassData {
     public final String room;
     public final boolean unImportant;
 
-    @JsonbCreator
+    @JsonCreator
     @PersistenceConstructor
-    public ClassData(@JsonbProperty("day") String day,
-                     @JsonbProperty("startTime") LocalTime startTime,
-                     @JsonbProperty("endTime") LocalTime endTime,
-                     @JsonbProperty("name") String name,
-                     @JsonbProperty("type") String type,
-                     @JsonbProperty("room") String room,
-                     @JsonbProperty("unImportant") boolean unImportant) {
+    public ClassData(@JsonProperty("day") String day,
+                     @JsonProperty("startTime") LocalTime startTime,
+                     @JsonProperty("endTime") LocalTime endTime,
+                     @JsonProperty("name") String name,
+                     @JsonProperty("type") String type,
+                     @JsonProperty("room") String room,
+                     @JsonProperty("unImportant") boolean unImportant) {
 
         this.day = day;
         this.startTime = startTime;

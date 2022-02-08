@@ -5,7 +5,7 @@ import static timetable.Main.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public final class WindowMinimizedListener extends WindowAdapter{
+public final class WindowMinimizedListener extends WindowAdapter {
     private final JMenuItem screenshotItem;
 
     public WindowMinimizedListener(JMenuItem screenshotItem) {

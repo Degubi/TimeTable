@@ -5,7 +5,7 @@ import javax.swing.*;
 import timetable.*;
 
 @SuppressWarnings("boxing")
-public final class ClassEditorTableKeyListener extends AbstractAction{
+public final class ClassEditorTableKeyListener extends AbstractAction {
     private final JTable dataTable;
     private final char key;
 

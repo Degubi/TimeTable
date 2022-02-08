@@ -102,7 +102,6 @@ public final class Settings {
                                  .add("unimportantClassColor", colorToString(unimportantClassColor))
                                  .add("cloudID", cloudID)
                                  .add("classes", createClassesArray());
-
         try {
             Files.writeString(Path.of("./settings.json"), json.toJson(settingsObject.build()));
         } catch (IOException e) {

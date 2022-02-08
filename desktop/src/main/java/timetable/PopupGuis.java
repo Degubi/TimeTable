@@ -17,7 +17,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import timetable.listeners.*;
 
-public final class PopupGuis{
+public final class PopupGuis {
     public static final ImageIcon editIcon   = Components.getIcon("edit.png", 32);
     public static final ImageIcon deleteIcon = Components.getIcon("delete.png", 32);
     public static final ImageIcon ignoreIcon = Components.getIcon("ignore.png", 32);

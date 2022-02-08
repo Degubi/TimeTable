@@ -13,7 +13,7 @@ jobs:
     - name: Set up Java
       uses: actions/setup-java@v1
       with:
-        java-version: 15
+        java-version: 17
 
     - name: Deploy to Heroku
       run: cd backend && mvn heroku:deploy -Dmaven.test.skip

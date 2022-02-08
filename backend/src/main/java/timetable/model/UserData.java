@@ -1,10 +1,10 @@
 package timetable.model;
 
+import com.fasterxml.jackson.annotation.*;
 import java.nio.charset.*;
 import java.security.*;
 import java.time.*;
 import java.util.*;
-import javax.json.bind.annotation.*;
 import org.springframework.data.annotation.*;
 
 public final class UserData {
@@ -31,9 +31,9 @@ public final class UserData {
         this.password = password;
     }
 
-    @JsonbCreator
-    public UserData(@JsonbProperty("classes") ClassData[] classes,
-                    @JsonbProperty("password") String password) {
+    @JsonCreator
+    public UserData(@JsonProperty("classes") ClassData[] classes,
+                    @JsonProperty("password") String password) {
 
         this.classes = classes;
         this.creationDate = LocalDateTime.now();

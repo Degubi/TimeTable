@@ -1,6 +1,4 @@
 open module degubi.timetable.backend {
-    requires java.json;
-    requires java.json.bind;
     requires java.instrument;
 
     requires spring.beans;
@@ -14,6 +12,9 @@ open module degubi.timetable.backend {
 
     requires org.mongodb.driver.core;
     requires org.mongodb.driver.sync.client;
+
+    requires com.fasterxml.jackson.core;
+    requires com.fasterxml.jackson.databind;
 
     requires jdk.net;
 }
