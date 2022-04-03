@@ -2,19 +2,29 @@ package timetable;
 
 import static java.nio.file.StandardOpenOption.*;
 
-import jakarta.json.*;
-import jakarta.json.bind.*;
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.type.*;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.datatype.jsr310.*;
 import java.awt.*;
 import java.io.*;
+import java.net.http.HttpRequest.*;
+import java.net.http.HttpResponse.*;
 import java.nio.file.*;
 import java.time.*;
-import java.time.format.*;
 import java.util.*;
-import java.util.List;
-import java.util.stream.*;
 
 public final class Settings {
-    public static final Jsonb json = JsonbBuilder.create(new JsonbConfig().withFormatting(Boolean.TRUE));
+    private static final ObjectMapper json = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).configure(SerializationFeature.INDENT_OUTPUT, true).registerModule(new JavaTimeModule());
+
+    private static final String SETTING_CLOUD_ID = "cloudID";
+    private static final String SETTING_DAY_TIME_END = "dayTimeEnd";
+    private static final String SETTING_DAY_TIME_START = "dayTimeStart";
+    private static final String SETTING_MINUTES_BEFORE_NEXT_CLASS_NOTIFICATION = "minutesBeforeNextClassNotification";
+    private static final String SETTING_ENABLE_POPUPS = "enablePopups";
+
+    public static final String NULL_CLOUD_ID = "null";
+    public static final TypeReference<ArrayList<ClassButton>> CLASSES_TYPEREF = new TypeReference<>() {};
 
     public static boolean enablePopups;
     public static LocalTime dayTimeStart;
@@ -28,7 +38,7 @@ public final class Settings {
     public static Color unimportantClassColor;
     public static int minutesBeforeNextClassNotification;
     public static String cloudID;
-    public static Map<String, List<ClassButton>> classes;
+    public static ArrayList<ClassButton> classes;
 
     static {
         var settingsPath = Path.of("./settings.json");
@@ -40,12 +50,12 @@ public final class Settings {
         }
 
         try {
-            var settingsObject = json.fromJson(Files.readString(settingsPath), JsonObject.class);
+            var settingsObject = json.readValue(Files.readAllBytes(settingsPath), JsonNode.class);
 
-            enablePopups = settingsObject.getBoolean("enablePopups", true);
-            minutesBeforeNextClassNotification = settingsObject.getInt("minutesBeforeNextClassNotification", 60);
-            dayTimeStart = LocalTime.parse(settingsObject.getString("dayTimeStart", "07:00"), DateTimeFormatter.ISO_LOCAL_TIME);
-            dayTimeEnd = LocalTime.parse(settingsObject.getString("dayTimeEnd", "19:00"), DateTimeFormatter.ISO_LOCAL_TIME);
+            enablePopups = settingsObject.has(SETTING_ENABLE_POPUPS) ? settingsObject.get(SETTING_ENABLE_POPUPS).asBoolean() : true;
+            minutesBeforeNextClassNotification = settingsObject.has(SETTING_MINUTES_BEFORE_NEXT_CLASS_NOTIFICATION) ? settingsObject.get(SETTING_MINUTES_BEFORE_NEXT_CLASS_NOTIFICATION).asInt() : 60;
+            dayTimeStart = settingsObject.has(SETTING_DAY_TIME_START) ? json.readValue(json.treeAsTokens(settingsObject.get(SETTING_DAY_TIME_START)), LocalTime.class) : LocalTime.of(7, 0);
+            dayTimeEnd = settingsObject.has(SETTING_DAY_TIME_END) ? json.readValue(json.treeAsTokens(settingsObject.get(SETTING_DAY_TIME_END)), LocalTime.class) : LocalTime.of(19, 0);
 
             dayTimeColor = getOrDefaultColor("dayTimeColor", 235, 235, 235, settingsObject);
             nightTimeColor = getOrDefaultColor("nightTimeColor", 64, 64, 64, settingsObject);
@@ -54,56 +64,32 @@ public final class Settings {
             otherDayClassColor = getOrDefaultColor("otherDayClassColor", 84, 113, 142, settingsObject);
             pastClassColor = getOrDefaultColor("pastClassColor", 247, 238, 90, settingsObject);
             unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
-            cloudID = settingsObject.getString("cloudID", null);
-            updateClassesData(getArraySetting("classes", settingsObject).stream()
-                                                                        .map(JsonValue::asJsonObject)
-                                                                        .map(ClassButton::fromJson)
-                                                                        .collect(Collectors.groupingBy(k -> k.day)));
-        } catch (JsonbException | IOException e) {
+            cloudID = settingsObject.has(SETTING_CLOUD_ID) ? settingsObject.get(SETTING_CLOUD_ID).asText() : NULL_CLOUD_ID;
+            classes = settingsObject.has("classes") ? json.readValue(json.treeAsTokens(settingsObject.get("classes")), CLASSES_TYPEREF) : new ArrayList<>();
+        } catch (IOException e) {
             throw new IllegalStateException("Something is fucked with settings brah");
         }
     }
 
     private Settings() {}
 
-    public static JsonArray createClassesArray() {
-        return classes.values().stream()
-                      .flatMap(List::stream)
-                      .map(k -> Json.createObjectBuilder()
-                                    .add("day", k.day)
-                                    .add("name", k.name)
-                                    .add("type", k.type)
-                                    .add("startTime", k.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                    .add("endTime", k.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                    .add("room", k.room)
-                                    .add("unImportant", k.unImportant)
-                                    .build())
-                      .reduce(Json.createArrayBuilder(), JsonArrayBuilder::add, JsonArrayBuilder::addAll)
-                      .build();
-    }
-
-    public static void updateClassesData(Map<String, List<ClassButton>> newClasses) {
-        classes = newClasses;
-        Arrays.stream(Main.days, 0, 5).forEach(day -> classes.computeIfAbsent(day, ignore -> new ArrayList<>()));
-    }
-
     public static void saveSettings() {
-        var settingsObject = Json.createObjectBuilder()
-                                 .add("enablePopups", enablePopups)
-                                 .add("minutesBeforeNextClassNotification", minutesBeforeNextClassNotification)
-                                 .add("dayTimeEnd", dayTimeEnd.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                 .add("dayTimeStart", dayTimeStart.format(DateTimeFormatter.ISO_LOCAL_TIME))
-                                 .add("dayTimeColor", colorToString(dayTimeColor))
-                                 .add("nightTimeColor", colorToString(nightTimeColor))
-                                 .add("currentClassColor", colorToString(currentClassColor))
-                                 .add("upcomingClassColor", colorToString(upcomingClassColor))
-                                 .add("otherDayClassColor", colorToString(otherDayClassColor))
-                                 .add("pastClassColor", colorToString(pastClassColor))
-                                 .add("unimportantClassColor", colorToString(unimportantClassColor))
-                                 .add("cloudID", cloudID)
-                                 .add("classes", createClassesArray());
+        var settingsObject = Map.ofEntries(
+                                 Map.entry(SETTING_ENABLE_POPUPS, enablePopups),
+                                 Map.entry(SETTING_MINUTES_BEFORE_NEXT_CLASS_NOTIFICATION, minutesBeforeNextClassNotification),
+                                 Map.entry(SETTING_DAY_TIME_END, dayTimeEnd),
+                                 Map.entry(SETTING_DAY_TIME_START, dayTimeStart),
+                                 Map.entry("dayTimeColor", colorToString(dayTimeColor)),
+                                 Map.entry("nightTimeColor", colorToString(nightTimeColor)),
+                                 Map.entry("currentClassColor", colorToString(currentClassColor)),
+                                 Map.entry("upcomingClassColor", colorToString(upcomingClassColor)),
+                                 Map.entry("otherDayClassColor", colorToString(otherDayClassColor)),
+                                 Map.entry("pastClassColor", colorToString(pastClassColor)),
+                                 Map.entry("unimportantClassColor", colorToString(unimportantClassColor)),
+                                 Map.entry(SETTING_CLOUD_ID, cloudID),
+                                 Map.entry("classes", classes));
         try {
-            Files.writeString(Path.of("./settings.json"), json.toJson(settingsObject.build()));
+            Files.write(Path.of("./settings.json"), toBytes(settingsObject));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -113,13 +99,9 @@ public final class Settings {
         return color.getRed() + " " + color.getGreen() + " " + color.getBlue();
     }
 
-    private static Color getOrDefaultColor(String key, int r, int g, int b, JsonObject settingsObject) {
-        var color = settingsObject.getString(key, r + " " + g + " " + b).split(" ", 3);
+    private static Color getOrDefaultColor(String key, int r, int g, int b, JsonNode settingsObject) {
+        var color = (settingsObject.has(key) ? settingsObject.get(key).asText() : (r + " " + g + " " + b)).split(" ", 3);
         return new Color(Integer.parseInt(color[0]), Integer.parseInt(color[1]), Integer.parseInt(color[2]));
-    }
-
-    public static JsonArray getArraySetting(String key, JsonObject settingsObject){
-        return !settingsObject.containsKey(key) ? Json.createArrayBuilder().build() : settingsObject.getJsonArray(key);
     }
 
     public static void createStartupLink(String toSavePath) {
@@ -139,5 +121,47 @@ public final class Settings {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    public static byte[] toBytes(Object obj) {
+        try {
+            return json.writeValueAsBytes(obj);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static<T> BodyHandler<T> of(Class<T> type) {
+        return info -> BodySubscribers.mapping(BodySubscribers.ofByteArray(), data -> {
+            try {
+                return data.length == 0 ? null : json.readValue(data, type);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    public static<T> BodyHandler<T> of(TypeReference<T> typeRef) {
+        return info -> BodySubscribers.mapping(BodySubscribers.ofByteArray(), data -> {
+            try {
+                return data.length == 0 ? null : json.readValue(data, typeRef);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    public static BodyPublisher publisherOf(Object data) {
+        try {
+            return BodyPublishers.ofByteArray(json.writeValueAsBytes(data));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static BodyHandler<JsonNode> ofJsonObject() {
+        return of(JsonNode.class);
     }
 }

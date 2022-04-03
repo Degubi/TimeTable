@@ -14,16 +14,16 @@ public final class UsersController {
     }
 
     @GetMapping
-    public ResponseEntity<UserData> get(@RequestParam String id) {
+    public ResponseEntity<ClassData[]> getClasses(@RequestParam String id) {
         var user = users.findById(id);
 
-        return user.map(k -> new ResponseEntity<>(k, HttpStatus.OK))
+        return user.map(k -> new ResponseEntity<>(k.classes, HttpStatus.OK))
                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
     @PostMapping
-    public ResponseEntity<String> createOrUpdate(@RequestParam(required = false) String id, @RequestBody UserData newUserData) {
-        if(id == null) {
+    public ResponseEntity<String> createOrUpdate(@RequestParam String id, @RequestBody UserData newUserData) {
+        if(id.equals("null")) {
             return new ResponseEntity<>(users.insert(newUserData).id, HttpStatus.OK);
         }
 

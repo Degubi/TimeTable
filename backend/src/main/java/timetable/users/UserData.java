@@ -13,10 +13,10 @@ public final class UserData {
     private static final MessageDigest hasher = getHashAlgorithm();
 
     @Id
-    public transient String id;
+    public String id;
     public final ClassData[] classes;
-    public final transient LocalDateTime creationDate;
-    public final transient String password;
+    public final LocalDateTime creationDate;
+    public final String password;
 
     @PersistenceConstructor
     public UserData(String id, ClassData[] classes, LocalDateTime creationDate, String password) {

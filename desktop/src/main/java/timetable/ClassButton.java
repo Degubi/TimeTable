@@ -1,6 +1,6 @@
 package timetable;
 
-import jakarta.json.*;
+import com.fasterxml.jackson.annotation.*;
 import java.awt.*;
 import java.awt.Font;
 import java.awt.event.*;
@@ -22,9 +22,17 @@ public final class ClassButton extends MouseAdapter {
     public final String type;
     public final String room;
     public boolean unImportant;
-    public final JButton button;
+    public final transient JButton button;
 
-    public ClassButton(String day, String name, String type, LocalTime startTime, LocalTime endTime, String room, boolean unImportant) {
+    @JsonCreator
+    public ClassButton(@JsonProperty("day") String day,
+                       @JsonProperty("name") String name,
+                       @JsonProperty("type") String type,
+                       @JsonProperty("startTime") LocalTime startTime,
+                       @JsonProperty("endTime") LocalTime endTime,
+                       @JsonProperty("room") String room,
+                       @JsonProperty("unImportant") boolean unImportant) {
+
         this.day = day;
         this.name = name;
         this.type = type;
@@ -51,16 +59,9 @@ public final class ClassButton extends MouseAdapter {
         return new ClassButton((String) table.getValueAt(1, 1),
                                (String) table.getValueAt(0, 1),
                                (String) table.getValueAt(2, 1),
-                               LocalTime.parse((String) table.getValueAt(3, 1), DateTimeFormatter.ISO_LOCAL_TIME),
-                               LocalTime.parse((String) table.getValueAt(4, 1), DateTimeFormatter.ISO_LOCAL_TIME),
+                               LocalTime.parse((String) table.getValueAt(3, 1)),
+                               LocalTime.parse((String) table.getValueAt(4, 1)),
                                (String) table.getValueAt(5, 1), unImportant);
-    }
-
-    public static ClassButton fromJson(JsonObject object) {
-        return new ClassButton(object.getString("day"), object.getString("name"), object.getString("type"),
-                               LocalTime.parse(object.getString("startTime"), DateTimeFormatter.ISO_LOCAL_TIME),
-                               LocalTime.parse(object.getString("endTime"), DateTimeFormatter.ISO_LOCAL_TIME),
-                               object.getString("room"), object.getBoolean("unImportant"));
     }
 
     public static ClassButton fromTimetableExcel(Row classRow, DateTimeFormatter format) {
@@ -83,7 +84,7 @@ public final class ClassButton extends MouseAdapter {
     public void mousePressed(MouseEvent event) {
         if(event.getButton() == MouseEvent.BUTTON3) {
             var panel = new JPanel(null);
-            panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(day, this)));
+            panel.add(Components.newClassToolButton(0, PopupGuis.editIcon, e -> PopupGuis.showEditorForOldClass(this)));
             panel.add(Components.newClassToolButton(32, PopupGuis.deleteIcon, e -> onDeleteButtonPressed()));
             panel.add(Components.newClassToolButton(64, unImportant ? PopupGuis.unIgnore : PopupGuis.ignoreIcon, e -> onImportantButtonPressed(panel)));
 
@@ -100,32 +101,27 @@ public final class ClassButton extends MouseAdapter {
     }
 
     private void onImportantButtonPressed(JPanel panel) {
-        Settings.classes.get(day).stream()
-                .filter(this::equals)
-                .findFirst()
-                .ifPresent(butt -> {
-                    butt.unImportant = !butt.unImportant;
-                    Main.updateClassesGui();
-                    ((JDialog)panel.getTopLevelAncestor()).dispose();
-                });
+        unImportant = !unImportant;
+
+        Main.updateClassesGui();
+        ((JDialog)panel.getTopLevelAncestor()).dispose();
     }
 
     private void onDeleteButtonPressed() {
         if(JOptionPane.showConfirmDialog(Main.classesPanel, "Tényleg Törlöd?", "Törlés Megerősítés", JOptionPane.YES_NO_OPTION) == 0) {
-            Settings.classes.get(day).removeIf(this::equals);
+            Settings.classes.remove(this);
             Main.updateClassesGui();
         }
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj == this) {
-            return true;
-        }
-        if(obj instanceof ClassButton) {
-            var button = (ClassButton) obj;
-            return name.equals(button.name) && day.equals(button.day) && type.equals(button.type) && startTime.equals(button.startTime) && endTime.equals(button.endTime) && room.equals(button.room);
-        }
-        return false;
+        return obj == this ||
+              (obj instanceof ClassButton button && name.equals(button.name) &&
+                                                    day.equals(button.day) &&
+                                                    type.equals(button.type) &&
+                                                    startTime.equals(button.startTime) &&
+                                                    endTime.equals(button.endTime) &&
+                                                    room.equals(button.room));
     }
 }

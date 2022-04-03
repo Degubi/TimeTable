@@ -1,6 +1,5 @@
 package timetable;
 
-import jakarta.json.*;
 import java.awt.*;
 import java.awt.Color;
 import java.awt.TrayIcon.*;
@@ -9,9 +8,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.net.http.*;
-import java.net.http.HttpRequest.*;
 import java.net.http.HttpResponse.*;
-import java.nio.charset.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
@@ -29,7 +26,7 @@ import timetable.listeners.*;
 public final class Main {
     private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
     private static final JPanel mainPanel = new JPanel(new BorderLayout());
-    private static final String BACKEND_URL = "https://timetable-backend.herokuapp.com/timetable";
+    private static final String BACKEND_URL = "http://localhost:8080/timetable";
     private static final HttpClient client = HttpClient.newHttpClient();
     private static final JLabel dateLabel = new JLabel("\0");
     private static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
@@ -151,14 +148,10 @@ public final class Main {
 
         if(userPwInput != null) {
             Consumer<JDialog> exportFunction = dialog -> {
-                var classesArray = Settings.createClassesArray();
-                var objectToSend = Json.createObjectBuilder()
-                                       .add("classes", classesArray)
-                                       .add("password", userPwInput)
-                                       .build();
+                var objectToSend = Map.of("classes", Settings.classes, "password", userPwInput);
 
-                var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + (Settings.cloudID != null ? ("?id=" + Settings.cloudID) : "")))
-                                         .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
+                var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + (!Settings.cloudID.equals(Settings.NULL_CLOUD_ID) ? ("?id=" + Settings.cloudID) : "")))
+                                         .POST(Settings.publisherOf(objectToSend));
 
                 var response = sendRequest(request, BodyHandlers.ofString());
                 var responseStatusCode = response.statusCode();
@@ -168,7 +161,7 @@ public final class Main {
                 if(responseStatusCode == 401) {
                     JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
                 }else if(responseStatusCode == 400) {
-                    Settings.cloudID = null;
+                    Settings.cloudID = Settings.NULL_CLOUD_ID;
                     JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
                 }else if(responseStatusCode == 200) {
                     var optionalReceivedCloudID = response.body();
@@ -198,10 +191,10 @@ public final class Main {
                     var classesSheet = book.getSheetAt(0);
                     var format = DateTimeFormatter.ofPattern("uuuu.MM.dd. [HH:][H:]mm:ss");
 
-                    Settings.updateClassesData(StreamSupport.stream(classesSheet.spliterator(), false)
+                    Settings.classes = StreamSupport.stream(classesSheet.spliterator(), false)
                                                             .skip(1)  // Header
                                                             .map(row -> ClassButton.fromTimetableExcel(row, format))
-                                                            .collect(Collectors.groupingBy(k -> k.day)));
+                                                            .collect(Collectors.toCollection(ArrayList::new));
                     updateClassesGui();
                     dialog.setVisible(false);
                 }catch (FileNotFoundException e) {
@@ -221,13 +214,10 @@ public final class Main {
 
         if(userIDInput != null && !userIDInput.isBlank()) {
             Consumer<JDialog> importFunction = dialog -> {
-                JsonObject response = sendRequest(HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + userIDInput)), ofObject()).body();
+                var responseClasses = sendRequest(HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + userIDInput)), Settings.of(Settings.CLASSES_TYPEREF)).body();
 
-                if(response != null) {
-                    Settings.updateClassesData(Settings.getArraySetting("classes", response).stream()
-                            .map(JsonValue::asJsonObject)
-                            .map(ClassButton::fromJson)
-                            .collect(Collectors.groupingBy(k -> k.day)));
+                if(responseClasses != null) {
+                    Settings.classes = responseClasses;
 
                     dialog.setVisible(false);
                     Settings.cloudID = userIDInput;
@@ -251,11 +241,6 @@ public final class Main {
         }
     }
 
-    private static BodyHandler<JsonObject> ofObject() {
-        return info -> BodySubscribers.mapping(BodySubscribers.ofString(StandardCharsets.UTF_8),
-               data -> info.statusCode() != 200 ? null : Settings.json.fromJson(data, JsonObject.class));
-    }
-
 
     private static void showTransferDialog(String text, Consumer<JDialog> fun) {
         var jop = new JOptionPane(text, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[0]);
@@ -277,15 +262,17 @@ public final class Main {
         Components.handleNightMode(classesPanel, nowTime);
         Components.handleNightMode(dateLabel, nowTime);
 
-        Settings.classes.forEach((day, classesPerDay) -> {
-            var yPosition = new int[] { -40 };
-            var xPosition = 20 + indexOf(day, days) * 200;
-            var isToday = day.equals(today);
+        Settings.classes.stream()
+                .collect(Collectors.groupingBy(k -> k.day))
+                .forEach((day, classesPerDay) -> {
+                    var yPosition = new int[] { -40 };
+                    var xPosition = 20 + indexOf(day, days) * 200;
+                    var isToday = day.equals(today);
 
-            classesPerDay.stream()
-                         .sorted(ClassButton.timeBasedOrder)
-                         .forEach(clazz -> positionAndAddButtonToPanel(nowTime, yPosition, xPosition, isToday, clazz));
-        });
+                    classesPerDay.stream()
+                                 .sorted(ClassButton.timeBasedOrder)
+                                 .forEach(clazz -> positionAndAddButtonToPanel(nowTime, yPosition, xPosition, isToday, clazz));
+                });
 
         updateCurrentClass(nowDate);
         classesPanel.repaint();

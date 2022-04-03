@@ -10,7 +10,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.*;
-import java.util.List;
 import java.util.function.*;
 import java.util.stream.*;
 import javax.swing.*;
@@ -31,23 +30,21 @@ public final class PopupGuis {
         showClassEditorDialog(frame -> {
             if(editorTable.getCellEditor() != null) editorTable.getCellEditor().stopCellEditing();
 
-            Settings.classes.get(editorTable.getValueAt(1, 1))
-                    .add(ClassButton.fromEditorTable(editorTable, dataButton.unImportant));
+            Settings.classes.add(ClassButton.fromEditorTable(editorTable, dataButton.unImportant));
 
             Main.updateClassesGui();
             frame.dispose();
         }, editorTable);
     }
 
-    public static void showEditorForOldClass(String day, ClassButton dataButton) {
+    public static void showEditorForOldClass(ClassButton dataButton) {
         var editorTable = Components.createClassEditorTable(dataButton);
 
         showClassEditorDialog(frame -> {
             if(editorTable.getCellEditor() != null) editorTable.getCellEditor().stopCellEditing();
 
-            Settings.classes.get(day).remove(dataButton);
-            Settings.classes.get(editorTable.getValueAt(1, 1))
-                    .add(ClassButton.fromEditorTable(editorTable, dataButton.unImportant));
+            Settings.classes.remove(dataButton);
+            Settings.classes.add(ClassButton.fromEditorTable(editorTable, dataButton.unImportant));
 
             Main.updateClassesGui();
             frame.dispose();
@@ -105,7 +102,7 @@ public final class PopupGuis {
         Components.addSettingButton(minutesBeforeClassNoteBox, 550, "Óra előtti értesítés előtti idő percekben", scrollPanel, now);
 
         Components.addSettingsSection("Felhő", 590, now, scrollPanel);
-        Components.addSettingInfoLabel(640, "Felhő Azonosító: " + (Settings.cloudID == null ? "nincs" : Settings.cloudID), scrollPanel, now);
+        Components.addSettingInfoLabel(640, "Felhő Azonosító: " + (Settings.cloudID.equals(Settings.NULL_CLOUD_ID) ? "nincs" : Settings.cloudID), scrollPanel, now);
 
         Components.addSettingsSection("Egyéb", 700, now, scrollPanel);
         Components.addSettingButton(popupCheckBox, 750, "Üzenetek Bekapcsolva", scrollPanel, now);
@@ -171,7 +168,7 @@ public final class PopupGuis {
     }
 
     private static ImageIcon generateQRCodeImage() {
-        if(Settings.cloudID == null) {
+        if(Settings.cloudID.equals(Settings.NULL_CLOUD_ID)) {
             return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB));
         }
 
@@ -201,7 +198,7 @@ public final class PopupGuis {
 
     private static void handleClassReset(JPanel scrollPanel) {
         if(JOptionPane.showConfirmDialog(scrollPanel, "Biztos törlöd az összes órát?", "Órarend", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            Settings.classes.values().forEach(List::clear);
+            Settings.classes.clear();
             Main.updateClassesGui();
         }
     }
