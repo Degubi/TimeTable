@@ -1,4 +1,4 @@
-package timetable.model;
+package timetable.users;
 
 import com.fasterxml.jackson.annotation.*;
 import java.time.*;

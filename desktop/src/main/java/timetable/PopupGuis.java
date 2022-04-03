@@ -105,7 +105,7 @@ public final class PopupGuis {
         Components.addSettingButton(minutesBeforeClassNoteBox, 550, "Óra előtti értesítés előtti idő percekben", scrollPanel, now);
 
         Components.addSettingsSection("Felhő", 590, now, scrollPanel);
-        Components.addSettingInfoLabel(640, "Felhő Azonosító: " + (Settings.cloudID.equals("null") ? "nincs" : Settings.cloudID), scrollPanel, now);
+        Components.addSettingInfoLabel(640, "Felhő Azonosító: " + (Settings.cloudID == null ? "nincs" : Settings.cloudID), scrollPanel, now);
 
         Components.addSettingsSection("Egyéb", 700, now, scrollPanel);
         Components.addSettingButton(popupCheckBox, 750, "Üzenetek Bekapcsolva", scrollPanel, now);
@@ -171,7 +171,7 @@ public final class PopupGuis {
     }
 
     private static ImageIcon generateQRCodeImage() {
-        if(Settings.cloudID.equals("null")) {
+        if(Settings.cloudID == null) {
             return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB));
         }
 

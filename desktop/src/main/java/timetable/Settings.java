@@ -54,7 +54,7 @@ public final class Settings {
             otherDayClassColor = getOrDefaultColor("otherDayClassColor", 84, 113, 142, settingsObject);
             pastClassColor = getOrDefaultColor("pastClassColor", 247, 238, 90, settingsObject);
             unimportantClassColor = getOrDefaultColor("unimportantClassColor", 192, 192, 192, settingsObject);
-            cloudID = settingsObject.getString("cloudID", "null");
+            cloudID = settingsObject.getString("cloudID", null);
             updateClassesData(getArraySetting("classes", settingsObject).stream()
                                                                         .map(JsonValue::asJsonObject)
                                                                         .map(ClassButton::fromJson)

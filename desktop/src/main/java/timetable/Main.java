@@ -157,30 +157,28 @@ public final class Main {
                                        .add("password", userPwInput)
                                        .build();
 
-                var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + Settings.cloudID))
+                var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + (Settings.cloudID != null ? ("?id=" + Settings.cloudID) : "")))
                                          .POST(BodyPublishers.ofString(Settings.json.toJson(objectToSend)));
 
                 var response = sendRequest(request, BodyHandlers.ofString());
-                var maybeCreatedBody = response.body();
+                var responseStatusCode = response.statusCode();
 
-                if(!maybeCreatedBody.isBlank()) {
-                    dialog.setVisible(false);
-                    Settings.cloudID = maybeCreatedBody;
-                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(maybeCreatedBody), null);
-                    JOptionPane.showMessageDialog(mainPanel, "Új órarend létrehozva, azonosító: " + maybeCreatedBody + " (másolva vágólapra)");
-                }else {
-                    var updatedStatusCode = response.statusCode();
+                dialog.setVisible(false);
 
-                    if(updatedStatusCode == 200) {
-                        dialog.setVisible(false);
-                        JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
-                    }else if(updatedStatusCode == 401) {
-                        dialog.setVisible(false);
-                        JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
+                if(responseStatusCode == 401) {
+                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
+                }else if(responseStatusCode == 400) {
+                    Settings.cloudID = null;
+                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
+                }else if(responseStatusCode == 200) {
+                    var optionalReceivedCloudID = response.body();
+
+                    if(optionalReceivedCloudID != null && !optionalReceivedCloudID.isBlank()) {
+                        Settings.cloudID = optionalReceivedCloudID;
+                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(optionalReceivedCloudID), null);
+                        JOptionPane.showMessageDialog(mainPanel, "Új órarend létrehozva, azonosító: " + optionalReceivedCloudID + " (másolva vágólapra)");
                     }else{
-                        dialog.setVisible(false);
-                        Settings.cloudID = "null";
-                        JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
+                        JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
                     }
                 }
             };

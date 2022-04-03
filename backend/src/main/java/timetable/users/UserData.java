@@ -1,4 +1,4 @@
-package timetable.model;
+package timetable.users;
 
 import com.fasterxml.jackson.annotation.*;
 import java.nio.charset.*;
@@ -6,7 +6,9 @@ import java.security.*;
 import java.time.*;
 import java.util.*;
 import org.springframework.data.annotation.*;
+import org.springframework.data.mongodb.core.mapping.*;
 
+@Document("TimeTableUsers")
 public final class UserData {
     private static final MessageDigest hasher = getHashAlgorithm();
 
@@ -15,13 +17,6 @@ public final class UserData {
     public final ClassData[] classes;
     public final transient LocalDateTime creationDate;
     public final transient String password;
-
-    public UserData(String existingID, UserData data) {
-        this.id = existingID;
-        this.classes = data.classes;
-        this.creationDate = data.creationDate;
-        this.password = data.password;
-    }
 
     @PersistenceConstructor
     public UserData(String id, ClassData[] classes, LocalDateTime creationDate, String password) {
