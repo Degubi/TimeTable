@@ -29,7 +29,7 @@ public final class SystemTrayListener extends MouseAdapter {
         if(event.getButton() == MouseEvent.BUTTON3) {
             stupidPopupMenuHelperFrame.setVisible(true);
             popMenu.setLocation(event.getX() - 160, event.getY());
-            popMenu.setInvoker(popMenu);
+            popMenu.setInvoker(stupidPopupMenuHelperFrame);
             popMenu.setVisible(true);
         }
     }

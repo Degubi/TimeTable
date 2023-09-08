@@ -1,7 +1,5 @@
 package timetable.listeners;
 
-import static timetable.Main.*;
-
 import java.awt.event.*;
 import javax.swing.*;
 
@@ -20,8 +18,10 @@ public final class WindowMinimizedListener extends WindowAdapter {
 
     @Override
     public void windowIconified(WindowEvent e) {
-        classesPanel.getTopLevelAncestor().setVisible(false);
-        screenshotItem.setEnabled(false);
-        screenshotItem.setToolTipText("Nem lehet fényképet készíteni ha nem látszik az órarend");
+    	if(!System.getProperty("os.name").equals("Linux")) {   // This is bugged on Ubuntu, event fires when opening a window... -_-
+	        e.getWindow().setVisible(false);
+	        screenshotItem.setEnabled(false);
+	        screenshotItem.setToolTipText("Nem lehet fényképet készíteni ha nem látszik az órarend");
+    	}
     }
 }

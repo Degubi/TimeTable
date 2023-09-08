@@ -3,51 +3,40 @@ package timetable;
 import java.awt.*;
 import java.awt.Color;
 import java.awt.TrayIcon.*;
-import java.awt.datatransfer.*;
-import java.awt.event.*;
-import java.io.*;
-import java.net.*;
-import java.net.http.*;
-import java.net.http.HttpResponse.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.function.*;
 import java.util.stream.*;
-import javax.imageio.*;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.filechooser.*;
 import javax.swing.plaf.nimbus.*;
-import org.apache.poi.*;
-import org.apache.poi.ss.usermodel.*;
 import timetable.listeners.*;
 
 public final class Main {
     private static final ArrayList<ClassButton> classButtons = new ArrayList<>();
-    private static final JPanel mainPanel = new JPanel(new BorderLayout());
-    private static final String BACKEND_URL = "http://localhost:8080/timetable";
-    private static final HttpClient client = HttpClient.newHttpClient();
     private static final JLabel dateLabel = new JLabel("\0");
-    private static final TrayIcon tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
     private static ClassButton lastActiveClass = null;
 
     public static final String[] days = { "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap" };
     public static final JPanel classesPanel = new JPanel(null);
+    public static final String BACKEND_URL = "http://localhost:8080/timetable";
 
     public static void main(String[] args) throws Exception {
         UIManager.setLookAndFeel(new NimbusLookAndFeel());
         IntStream.range(0, 5).mapToObj(Main::newDayButton).forEach(classesPanel::add);
-        updateClassesGui();
 
         dateLabel.setBounds(350, 5, 300, 40);
         dateLabel.setFont(Components.bigFont);
         dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
         dateLabel.setBorder(new EmptyBorder(15, 0, 20, 0));
+
+        var mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(dateLabel, BorderLayout.PAGE_START);
         mainPanel.add(classesPanel, BorderLayout.CENTER);
 
-        var screenshotItem = Components.newMenuItem("Kép", "screencap.png", Main::exportToImage);
+        updateClassesGui();
+
+        var screenshotItem = Components.newMenuItem("Kép", "screencap.png", TransferUtils::exportToImage);
         var frame = new JFrame("Órarend");
         frame.setBounds(0, 0, 1024, Math.min(768, Toolkit.getDefaultToolkit().getScreenSize().height - 50));
         frame.setLocationRelativeTo(null);
@@ -67,12 +56,13 @@ public final class Main {
         popMenu.add(Components.newMenuItem("Megnyitás", "open.png", SystemTrayListener::openFromTray));
         popMenu.addSeparator();
         popMenu.add(sleepMode);
-        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Neptun Órarend Excel", "excel.png", Main::importFromExcel), Components.newMenuItem("Felhő", "db.png", Main::importFromCloud)));
-        popMenu.add(Components.newSideMenu("Mentés", "export.png", screenshotItem, Components.newMenuItem("Felhő", "db.png", Main::exportToCloud)));
+        popMenu.add(Components.newSideMenu("Importálás", "import.png", Components.newMenuItem("Neptun Órarend Excel", "excel.png", TransferUtils::importFromExcel), Components.newMenuItem("Felhő", "db.png", TransferUtils::importFromCloud)));
+        popMenu.add(Components.newSideMenu("Mentés", "export.png", screenshotItem, Components.newMenuItem("Felhő", "db.png", TransferUtils::exportToCloud)));
         popMenu.add(Components.newMenuItem("Beállítások", "settings.png", PopupGuis::showSettingsGui));
         popMenu.addSeparator();
         popMenu.add(Components.newMenuItem("Bezárás", "exit.png", e -> System.exit(0)));
 
+        var tray = new TrayIcon(Components.trayIcon.getScaledInstance(16, 16, Image.SCALE_SMOOTH), "Órarend");
         tray.addMouseListener(new SystemTrayListener(popMenu));
         SystemTray.getSystemTray().add(tray);
         Runtime.getRuntime().addShutdownHook(new Thread(Settings::saveSettings));
@@ -127,129 +117,6 @@ public final class Main {
         return topAdd;
     }
 
-    private static void exportToImage(@SuppressWarnings("unused") ActionEvent event) {
-        Consumer<JDialog> exportFunction = dialog -> {
-            var window = classesPanel.getTopLevelAncestor().getLocationOnScreen();
-            var fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_kk_HH_ss")) + ".png";
-            var exportFile = new File(fileName);
-
-            try {
-                ImageIO.write(new Robot().createScreenCapture(new Rectangle(window.x + 20, window.y + 80, 990, 650)), "PNG", exportFile);
-                Runtime.getRuntime().exec("explorer.exe /select," + exportFile);
-                dialog.setVisible(false);
-            } catch (HeadlessException | AWTException | IOException e1) {}
-        };
-
-        showTransferDialog("Mentés folyamatban...", exportFunction);
-    }
-
-    private static void exportToCloud(@SuppressWarnings("unused") ActionEvent event) {
-        var userPwInput = JOptionPane.showInputDialog(mainPanel, "Írd be az órarend módosítás jelszavad!");
-
-        if(userPwInput != null) {
-            Consumer<JDialog> exportFunction = dialog -> {
-                var objectToSend = Map.of("classes", Settings.classes, "password", userPwInput);
-
-                var request = HttpRequest.newBuilder(URI.create(BACKEND_URL + (!Settings.cloudID.equals(Settings.NULL_CLOUD_ID) ? ("?id=" + Settings.cloudID) : "")))
-                                         .POST(Settings.publisherOf(objectToSend));
-
-                var response = sendRequest(request, BodyHandlers.ofString());
-                var responseStatusCode = response.statusCode();
-
-                dialog.setVisible(false);
-
-                if(responseStatusCode == 401) {
-                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Hibás jelszó!");
-                }else if(responseStatusCode == 400) {
-                    Settings.cloudID = Settings.NULL_CLOUD_ID;
-                    JOptionPane.showMessageDialog(mainPanel, "Sikertelen mentés! Nem található ilyen azonosítójú órarend...\nAz eddigi felhő azonosító törlésre került!");
-                }else if(responseStatusCode == 200) {
-                    var optionalReceivedCloudID = response.body();
-
-                    if(optionalReceivedCloudID != null && !optionalReceivedCloudID.isBlank()) {
-                        Settings.cloudID = optionalReceivedCloudID;
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(optionalReceivedCloudID), null);
-                        JOptionPane.showMessageDialog(mainPanel, "Új órarend létrehozva, azonosító: " + optionalReceivedCloudID + " (másolva vágólapra)");
-                    }else{
-                        JOptionPane.showMessageDialog(mainPanel, "Sikeres mentés!");
-                    }
-                }
-            };
-
-            showTransferDialog("Mentés folyamatban...", exportFunction);
-        }
-    }
-
-    private static void importFromExcel(@SuppressWarnings("unused") ActionEvent event) {
-        var chooser = new JFileChooser(System.getProperty("user.home") + "/Desktop");
-        chooser.setDialogTitle("Órarend Importálás Választó");
-        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xls", "xlsx"));
-
-        if(chooser.showOpenDialog(classesPanel) == JFileChooser.APPROVE_OPTION) {
-            Consumer<JDialog> importFunction = dialog -> {
-                try(var book = WorkbookFactory.create(chooser.getSelectedFile().getAbsoluteFile())){
-                    var classesSheet = book.getSheetAt(0);
-                    var format = DateTimeFormatter.ofPattern("uuuu.MM.dd. [HH:][H:]mm:ss");
-
-                    Settings.classes = StreamSupport.stream(classesSheet.spliterator(), false)
-                                                            .skip(1)  // Header
-                                                            .map(row -> ClassButton.fromTimetableExcel(row, format))
-                                                            .collect(Collectors.toCollection(ArrayList::new));
-                    updateClassesGui();
-                    dialog.setVisible(false);
-                }catch (FileNotFoundException e) {
-                    dialog.setVisible(false);
-                    JOptionPane.showMessageDialog(mainPanel, "Az excel fájl használatban van!", "Hiba", JOptionPane.ERROR_MESSAGE);
-                } catch (EncryptedDocumentException | IOException e) {
-                    e.printStackTrace();
-                }
-            };
-
-            showTransferDialog("Importálás folyamatban...", importFunction);
-        }
-    }
-
-    private static void importFromCloud(@SuppressWarnings("unused") ActionEvent event) {
-        var userIDInput = JOptionPane.showInputDialog(mainPanel, "Írd be az órarend azonosítót!");
-
-        if(userIDInput != null && !userIDInput.isBlank()) {
-            Consumer<JDialog> importFunction = dialog -> {
-                var responseClasses = sendRequest(HttpRequest.newBuilder(URI.create(BACKEND_URL + "?id=" + userIDInput)), Settings.of(Settings.CLASSES_TYPEREF)).body();
-
-                if(responseClasses != null) {
-                    Settings.classes = responseClasses;
-
-                    dialog.setVisible(false);
-                    Settings.cloudID = userIDInput;
-                    updateClassesGui();
-                }else{
-                    dialog.setVisible(false);
-                    JOptionPane.showMessageDialog(mainPanel, "Nem található ilyen azonsítójú órarend! :(", "Hiba", JOptionPane.ERROR_MESSAGE);
-                }
-            };
-
-            showTransferDialog("Importálás folyamatban...", importFunction);
-        }
-    }
-
-    private static<T> HttpResponse<T> sendRequest(HttpRequest.Builder request, BodyHandler<T> bodyHandler) {
-        try {
-            return client.send(request.header("Content-Type", "application/json").build(), bodyHandler);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            throw new IllegalStateException("Huh?");
-        }
-    }
-
-
-    private static void showTransferDialog(String text, Consumer<JDialog> fun) {
-        var jop = new JOptionPane(text, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[0]);
-        var dialog = jop.createDialog(mainPanel, "Órarend");
-
-        new Thread(() -> fun.accept(dialog)).start();
-        dialog.setVisible(true);
-    }
-
     public static void updateClassesGui() {
         classButtons.forEach(k -> classesPanel.remove(k.button));
         classButtons.clear();
@@ -258,8 +125,8 @@ public final class Main {
         var today = days[nowDate.getDayOfWeek().ordinal()];
         var nowTime = nowDate.toLocalTime();
 
-        Components.handleNightMode(mainPanel, nowTime);
         Components.handleNightMode(classesPanel, nowTime);
+        Components.handleNightMode(classesPanel.getParent(), nowTime);
         Components.handleNightMode(dateLabel, nowTime);
 
         Settings.classes.stream()

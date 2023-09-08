@@ -5,7 +5,7 @@ on:
     types: [ created ]
 
 jobs:
-  build_desktop:
+  build_desktop_windows:
     runs-on: windows-latest
 
     steps:
@@ -13,7 +13,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v1
         with:
-          java-version: 17
+          java-version: 20
 
       - name: Generate runtime
         run: cd desktop && jlink --output ./runtime/ --no-man-pages --no-header-files --add-modules java.base,java.desktop,java.sql,jdk.charsets,java.net.http,jdk.crypto.ec,java.logging --compress=2
@@ -33,6 +33,36 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: desktop/TimeTable-1.0.exe
           asset_name: TimeTable.exe
+          tag: ${{ github.ref }}
+
+  build_desktop_linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 20
+
+      - name: Generate runtime
+        run: cd desktop && jlink --output ./runtime/ --no-man-pages --no-header-files --add-modules java.base,java.desktop,java.sql,jdk.charsets,java.net.http,jdk.crypto.ec,java.logging --compress=2
+
+      - name: Copy libraries
+        run: cd desktop && mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=resources
+
+      - name: Create jar
+        run: cd desktop && mvn package && mv target/TimeTable_Desktop-1.0.jar resources/TimeTable.jar
+
+      - name: Create installer
+        run: cd desktop && jpackage --runtime-image runtime --input resources --main-class timetable.Main --main-jar TimeTable.jar --name TimeTable --vendor Degubi --description TimeTable --icon icon.png --linux-shortcut
+
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: desktop/timetable_1.0_amd64.deb
+          asset_name: TimeTable.deb
           tag: ${{ github.ref }}
 
   build_android:

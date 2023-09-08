@@ -5,10 +5,8 @@ import java.awt.*;
 import java.awt.Font;
 import java.awt.event.*;
 import java.time.*;
-import java.time.format.*;
 import java.util.*;
 import javax.swing.*;
-import org.apache.poi.ss.usermodel.*;
 import timetable.listeners.*;
 
 public final class ClassButton extends MouseAdapter {
@@ -62,22 +60,6 @@ public final class ClassButton extends MouseAdapter {
                                LocalTime.parse((String) table.getValueAt(3, 1)),
                                LocalTime.parse((String) table.getValueAt(4, 1)),
                                (String) table.getValueAt(5, 1), unImportant);
-    }
-
-    public static ClassButton fromTimetableExcel(Row classRow, DateTimeFormatter format) {
-        var beginDate = LocalDateTime.parse(classRow.getCell(0).getStringCellValue(), format);
-        var endDate = LocalDateTime.parse(classRow.getCell(1).getStringCellValue(), format);
-        var summary = classRow.getCell(2).getStringCellValue();
-        var codeBeginParamIndex = summary.indexOf('(');
-        var code = summary.substring(codeBeginParamIndex + 1, summary.indexOf(')', codeBeginParamIndex));
-        var lastCodeChar = Character.toUpperCase(code.charAt(code.length() - 1));
-
-        var day = Main.days[beginDate.getDayOfWeek().ordinal()];
-        var className = summary.substring(0, codeBeginParamIndex - 1);
-        var classType = code.contains("SZV") ? "Szabvál" : lastCodeChar == 'G' || lastCodeChar == 'L' ? "Gyakorlat" : "Előadás";
-        var room = classRow.getCell(3).getStringCellValue();
-
-        return new ClassButton(day, className, classType, beginDate.toLocalTime(), endDate.toLocalTime(), room, false);
     }
 
     @Override
